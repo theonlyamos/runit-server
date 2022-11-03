@@ -1,0 +1,111 @@
+{% extends "account/layout.html" %}
+{% block content %}
+<div class="modal fade" id="functionModal" tabindex="-1" aria-labelledby="functionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-0">
+            <form action="{{ url_for('account.functions') }}" method="post">
+                <div class="modal-header text-bg-dark rounded-0">
+                    <h5 class="modal-title" id="functionModalLabel">New Function</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <select name="project_id" class="form-select rounded-0">
+                            <option selected disabled>Select Project</option>
+                            {% for project in projects %}
+                            <option value="{{project['_id']}}">{{ project['name'] | capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <select name="language" class="form-select rounded-0" required>
+                            <option selected disabled>Programming Language</option>
+                            {% for lang in languages %}
+                            <option value="{{lang}}">{{ lang | capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="name">Function Name</label>
+                        <input type="text"  name="name" class="form-control rounded-0" placeholder="name_of_function" required>
+                        <small class="text-muted text-italic">The function name should be descriptive. E.g: add_x_to_y, ip_location, sum.</small>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="description">Description</label>
+                        <textarea name="description" class="form-control rounded-0" placeholder="Brief description of what the function does"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-0" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-outline-dark bg-gradient rounded-0 shadow-sm">Create function</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    {% if functions %}
+    <div class="tools d-flex justify-content-end">
+        <a href="#functionModal" role="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal">
+            <i class="fas fa-terminal"></i>
+            New function
+        </a>
+    </div>
+    <div class="card rounded-0 border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-light table-hover table-striped table-bordered mb-0 small">
+                    <thead>
+                        <th>Name</th>
+                        <th>Project</th>
+                        <th>Updated At</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody>
+                        {% for function in functions %}
+                        <tr>
+                            <td>
+                                {{ function['name'] }}
+                                <i class="fab fa-{{icons[function['language']]}}" title="{{function['language'] | capitalize }}"></i>
+                            </td>
+                            <td>
+                                {{ function['project']['name']}}
+                            </td>
+                            <td>{{ function['updated_at'] }}</td>
+                            <td class="d-flex">
+                                <a href="" class="nav-link text-primary" title="Update Function">
+                                    <i class="fas fa-edit fa-fw"></i>
+                                </a>
+                                <a href="" class="nav-link text-success" title="Run Code">
+                                    <i class="fas fa-play fa-fw"></i>
+                                </a>
+                                <a href="" class="nav-link" title="Edit Code">
+                                    <i class="fas fa-code fa-fw"></i>
+                                </a>
+                                <a href="" class="nav-link text-danger" title="Delete Function">
+                                    <i class="fas fa-trash-alt fa-fw"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% if not functions %}
+<a href="#functionModal" class="nav-link d-flex flex-column text-center position-absolute" style="left: 50%; top: 25%; transform: translate(-50%, 50%);" data-bs-toggle="modal" role="button" aria-controls="functionModal">
+    <i class="fas fa-terminal fa-4x p-3 border text-black-50 hover:text-dark" style="border-style: dashed !important;"></i>
+    New function
+</a>
+{% endif %}
+{% endblock %}

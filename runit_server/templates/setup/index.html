@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block title %}
+{{super()}} | Setup Page
+{% endblock %}
+
+{% block content %}
+<main class="vh-100 vw-100 d-flex align-items-center justify-content-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-10 col-md-7 col-lg-5">
+                <div class="card shadow align-self-center">
+                    <div class="card-header p-2">
+                        <h5 class="text-center text-black-50 fs-4 p-0 m-0">{{'setup' | capitalize}}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form class="form-floating bg-gradient" action="{{ url_for('setup.initsetup') }}" method="post" id="setupForm">
+                            {% for (category, message) in get_flashed_messages(with_categories=True) %}
+                            <div
+                                class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+                                <strong>{{message}}</strong>
+                                <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                            <div id="setupWizard">
+                                <div class="setup-step">
+                                    <h6 class="text-center text-danger fs-6">Database Setup</h6>
+                                    <div class="form-group mb-1">
+                                        <label class="small" for="email">DBMS</label>
+                                        <select name="dbms" id="" class="form-select form-select-sm text-black-50" required onchange="selectDMEngine(this.value)">
+                                            <option></option>
+                                            <option value="mongodb">MongoDB</option>
+                                            <option value="mysql">Mysql</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-1">
+                                        <label class="small">Host</label>
+                                        <input type="text" value="127.0.0.1"
+                                            class="form-control form-control-sm text-black-50" name="dbhost" required>
+                                    </div>
+                                    <div class="form-group mb-1">
+                                        <label class="small">Port</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            name="dbport" required>
+                                    </div>
+                                    <div class="form-group mb-1">
+                                        <label class="small">Database Name</label>
+                                        <input type="text" name="dbname" value="runit"
+                                            class="form-control form-control-sm text-black-50" readonly>
+                                    </div>
+                                    <div class="form-group mb-1">
+                                        <label class="small">Database User</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            name="dbusername">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label class="small">Database Password</label>
+                                        <input type="password" class="form-control form-control-sm text-black-50"
+                                            name="dbpassword">
+                                    </div>
+                                </div>
+                                <div class="setup-step">
+                                    <h6 class="text-center text-danger fs-6">Administrator Setup</h6>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">Username</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            value="admin" name="adminusername" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">Password</label>
+                                        <input type="password" class="form-control form-control-sm text-black-50"
+                                            name="adminpassword" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer p-2 d-flex justify-content-between">
+                        <button type="button" class="btn btn-light bg-gradient px-4" id="setupBackButton">Back</button>
+                        <button type="button" class="btn btn-outline-primary bg-gradient shadow-sm px-4"
+                            id="setupNextButton">Next</button>
+                        <button type="button" class="btn btn-outline-success bg-gradient shadow-sm px-4 d-none"
+                            id="setupSubmitButton">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script src="{{url_for('static', filename='js/setup.js')}}"></script>
+{% endblock %}

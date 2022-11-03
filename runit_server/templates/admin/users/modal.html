@@ -1,0 +1,37 @@
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-0">
+            <form action="{{ url_for('account.projects') }}" method="post">
+                <div class="modal-header text-bg-dark rounded-0">
+                    <h5 class="modal-title fw-bolder" id="projectModalLabel">New Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <input type="text"  name="name" 
+                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
+                        placeholder="Name of the User" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <input type="email"  name="email" 
+                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
+                        placeholder="Email address of the User" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <input type="password"  name="password" 
+                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
+                        placeholder="Password" required>
+                    </div>
+                </div>
+                <div class="modal-footer p-0">
+                    <button type="button" class="btn btn-outline-danger rounded-0 m-0 px-4" data-bs-dismiss="modal">
+                        <small>Close</small>
+                    </button>
+                    <button type="submit" class="btn btn-dark rounded-0 m-0">
+                        <small>Create Project</small>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

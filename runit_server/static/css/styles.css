@@ -1,0 +1,158 @@
+* {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Lato";
+    font-size: 16px;
+    position: relative;
+}
+
+.font-lato {
+    font-family: "Lato";
+}
+
+.font-open-sans {
+    font-family: "Open Sans";
+}
+
+.font-josefin-sans {
+    font-family: "Josefin Sans";
+}
+
+.font-roboto {
+    font-family: "Roboto";
+}
+
+*:not(html) {
+    overflow: hidden;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}
+
+.carousel-item img {
+    max-height: 70vh;
+    object-fit: cover;
+    object-position: top;
+}
+
+.min-width-50vh {
+    min-height: 50vh;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+.ls-2 {
+    letter-spacing: 2px;
+}
+
+.gallery {
+    max-width: 100%;
+    overflow: hidden;
+    height: 150px;
+}
+
+.gallery img.gallery-item {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    cursor: pointer;
+    display: block;
+}
+
+.gallery img.gallery-item:hover {
+    opacity: 0.8;
+}
+
+.ftco-navbar-light {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    padding: 0;
+}
+
+.carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel .overlay {
+    position: absolute;
+    width: 100%;
+    height: 70vh;
+    background: transparent; 
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.separator {
+    position: relative;
+    height: 30vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.separator .overlay {
+    position: absolute;
+    width: 100%;
+    height: 30vh;
+    background: rgba(19, 18, 18, 0.7);
+    top: 0;
+    left: 0;
+    z-index: 1;
+    backdrop-filter: blur(3px);
+}
+
+.separator .h4 {
+    position: relative;
+    z-index: 2;
+}
+
+.bg-img {
+    position: relative;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.bg-img .overlay {
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.5);
+    z-index: 0;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(20px);
+}
+
+.nav-item .nav-link a {
+    font-size: large;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(5px);
+}
+
+@media screen and (min-width: 1024px) {
+    .carousel-item img {
+        max-height: 90vh;
+    }
+
+    .carousel .overlay {
+        height: 90vh;
+    }
+}

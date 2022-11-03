@@ -1,0 +1,173 @@
+{% extends "admin/layout.html" %}
+{% block title %} 
+{{super()}} | {{page | capitalize}} | {{project.name}}
+{% endblock %}
+
+{% block pagetitle %}
+<div class="d-flex align-items center">
+    <a href="{{url_for('admin.project', project_id=project.id)}}" class="nav-link p-0 text-black-50 hover:text-dark">
+        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
+    / 
+    <span>{{ project.name | upper}}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include 'admin/projects/modal.html' %}
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <div class="tools d-flex justify-content-end">
+        <div class="btn-group" role="group" aria-label="tool buttons">
+            <nav class="nav-item dropdown">
+                <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
+                    <i class="fas fa-terminal"></i>
+                </a>
+                <ul class="dropdown-menu rounded-0 shadow py-0">
+                    {% for func in funcs %}
+                    <li>
+                        <a href="{{func.link}}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
+                            <i class="fas fa-terminal fa-fw text-dark"></i> {{func.name}}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
+                <i class="fas fa-eye-slash"></i>
+            </a>
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-danger hover:shadow-sm mb-2" title="Delete Project">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="card rounded-0 border-0">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <small>Config</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <small>Functions</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <small>Settings</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
+                    <small>Logs</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
+                    <small>Console</small>
+                </button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold"></small>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                                <i class="fas fa-save fa-fw"></i> Update
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                        {% for key, value in project.items() %}
+                            <div class="col-md-4">
+                                <div class="form-group mb-2">
+                                    <label for="">
+                                        <small>{{key}}</small>
+                                    </label>
+                                    <input type="text" value="{{value}}" placeholder="" class="form-control form-control-sm bg-gradient text-muted" readonly>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade bg-light" id="nav-functions" role="tabpanel" aria-labelledby="nav-functions-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-md-6 d-flex flex-column">
+                                {% for func in funcs %}
+                                    <div class="d-flex justify-content-between align-items-center p-2 bg-white border border-light mb-2 rounded-1">
+                                        <a href="{{func.link}}" class="nav-link p-0" target="_blank">
+                                            <h4 class="small text-primary text-uppercase">{{func.name}}</h4>
+                                        </a>
+                                        <a href="{{func.link}}" class="nav-link p-0" target="_blank">
+                                            <i class="fas fa-terminal fa-fw text-bg-dark p-1 rounded-1"></i>
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card rounded-0 border-0 shadow-sm my-2">
+                            <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                                <small class="fw-bold">Environment Variables</small>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-dark" onclick="createEnv()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                                        <i class="fas fa-save fa-fw"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body pb-0">
+                                <form action="{{url_for('project.environ', project_id=project._id)}}" method="post" class="env-form">
+                                    {% for key, value in environs.items() %}
+                                    {% set id = 'env'+(loop.index | string) %}
+                                    {% set envKey = 'envKey'+(loop.index | string) %}
+                                        <div class="form-group row align-items-center mb-2" id="{{id}}">
+                                            <div class="col-5">
+                                                <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-sm key-input" data-name="{{envKey}}" required onkeyup="setEnvKey(this)">
+                                            </div>
+                                            <div class="col-1">
+                                                <span>=</span>
+                                            </div>
+                                            <div class="col-5">
+                                                <input type="text" name="{{key}}" value="{{value}}" placeholder="value" id="{{envKey}}" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="col-1">
+                                                <a href="javascript: deleteElem('{{id}}')" class="nav-link">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6"></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-logs" role="tabpanel" aria-labelledby="nav-logs-tab" tabindex="0">...</div>
+            <div class="tab-pane fade" id="nav-console" role="tabpanel" aria-labelledby="nav-console-tab" tabindex="0">
+                Terminal Console
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{{super()}}
+<script src="{{url_for('static', filename='js/projects.js')}}"></script>
+{% endblock %}

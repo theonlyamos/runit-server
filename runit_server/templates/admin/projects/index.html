@@ -1,0 +1,51 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}
+{{super()}} | {{page | capitalize}}
+{% endblock %}
+
+{% block content %}
+{% include 'modals/confirm.html' %}
+{% include 'projects/modal.html' %}
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% if projects %}
+
+    <div class="tools d-flex justify-content-end">
+        <div class="btn-group" role="group" aria-label="tool buttons">
+            <a href="{{url_for('project.index')}}" class="btn btn-sm btn-{{'' if view != 'list' else 'outline-'}}dark" role="button" title="Grid view">
+                <small><i class="fas fa-th-large fa-fw"></i></small>
+            </a>
+            <a href="{{url_for('project.index')}}?view=list" class="btn btn-sm btn-{{'' if view == 'list' else 'outline-'}}dark" role="button" title="Table view">
+                <small><i class="fas fa-th-list fa-fw"></i></small>
+            </a>
+            <a href="#confirmModal" role="button" class="btn btn-sm btn-danger" data-bs-toggle="modal">
+                <small><i class="fas fa-trash-alt fa-fw"></i></small>
+            </a>
+            <a href="#projectModal" role="button" class="btn btn-sm btn-primary" data-bs-toggle="modal">
+               <small>
+                <i class="fas fa-plus fa-fw"></i>
+                New Project
+               </small>
+            </a>
+        </div>
+    </div>
+    {% if view == 'list' %} 
+    {% include 'admin/projects/list.html' %} 
+    {% else %} 
+    {% include 'admin/projects/grid.html' %}
+    {% endif %}
+</div>
+{% endif %}
+{% if not projects %}
+<a href="#projectModal" class="nav-link d-flex flex-column text-center position-absolute" style="left: 50%; top: 25%; transform: translate(-50%, 50%);" data-bs-toggle="modal" role="button" aria-controls="projectModal">
+    <i class="fas fa-th-large fa-4x p-3 border text-black-50 hover:text-dark" style="border-style: dashed !important;"></i>
+    New Project
+</a>
+{% endif %}
+{% endblock %}

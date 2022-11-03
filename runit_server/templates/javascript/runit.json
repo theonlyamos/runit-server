@@ -1,0 +1,13 @@
+{
+    "name": "script",
+    "version": "0.0.1",
+    "description": "",
+    "homepage": "",
+    "language": "javascript",
+    "runtime": "node",
+    "start_file": "main.js",
+    "author": {
+        "name": "",
+        "email": ""
+    }
+}

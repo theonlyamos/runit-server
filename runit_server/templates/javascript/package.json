@@ -1,0 +1,16 @@
+{
+  "name": "jstarter",
+  "version": "0.0.1",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "runit"
+  ],
+  "author": "",
+  "license": "MIT"
+}

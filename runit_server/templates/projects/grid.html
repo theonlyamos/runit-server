@@ -1,0 +1,30 @@
+<div class="d-flex flex-wrap">
+{% for project in projects %}
+<div class="position-relative m-2 text-black">
+    <a href="{{url_for('project.details', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
+        <i class="fab fa-{{ icons[project.language]}} fa-fw fa-2x"></i>
+        <small>{{ project['name'] }}</small>
+    </a>
+    <nav class="nav-item dropdown position-absolute top-0" style="right: 0">
+        <a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+            <i class="fas fa-ellipsis-v"></i>
+        </a>
+        <ul class="dropdown-menu rounded-0 shadow">
+            <li>
+                <a href="{{url_for('public.run', project_id=project.id, function='index')}}" class="dropdown-item small py-0" target="_blank">
+                    Run
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a href="{{url_for('project.details', project_id=project.id)}}" class="dropdown-item small py-0">
+                    Details
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger small py-0" href="#">Delete</a></li>
+        </ul>
+    </nav>
+</div>
+{% endfor %}
+</div>

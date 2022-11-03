@@ -1,0 +1,159 @@
+{% extends "admin/layout.html" %}
+{% block title %} 
+{{super()}} | {{page | capitalize}} | {{user.name}}
+{% endblock %}
+
+{% block pagetitle %}
+<div class="d-flex align-items center">
+    <a href="{{url_for('admin.users')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
+    / 
+    <span>{{ user.name | upper}}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include 'admin/users/modal.html' %}
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <div class="card rounded-0 border-0">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <small>Projects <span class="bg-dark text-white px-1">{{user['projects']}}</span></small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <small>Profile</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-security-tab" data-bs-toggle="tab" data-bs-target="#nav-security" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false">
+                    <small>Security</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
+                    <small>Settings</small>
+                </button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+
+                <div class="card rounded-0 border-0 my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold"></small>
+                        <div class="tools d-flex justify-content-end">
+                            <div class="btn-group" role="group" aria-label="tool buttons">
+                                <a href="{{url_for('admin.user', user_id=user.id)}}" class="btn btn-sm btn-{{'' if view != 'list' else 'outline-'}}dark" role="button" title="Grid view">
+                                    <small><i class="fas fa-th-large fa-fw"></i></small>
+                                </a>
+                                <a href="{{url_for('admin.user', user_id=user.id)}}?view=list" class="btn btn-sm btn-{{'' if view == 'list' else 'outline-'}}dark" role="button" title="Table view">
+                                    <small><i class="fas fa-th-list fa-fw"></i></small>
+                                </a>
+                                <a href="#confirmModal" role="button" class="btn btn-sm btn-danger" data-bs-toggle="modal">
+                                    <small><i class="fas fa-trash-alt fa-fw"></i></small>
+                                </a>
+                                <a href="#projectModal" role="button" class="btn btn-sm btn-primary" data-bs-toggle="modal">
+                                   <small>
+                                    <i class="fas fa-plus fa-fw"></i>
+                                    New Project
+                                   </small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            {% if view == 'list' %} 
+                            {% include 'admin/projects/list.html' %} 
+                            {% else %} 
+                            {% include 'admin/projects/grid.html' %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
+                <div class="card rounded-0 border-0 my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold"></small>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                                <i class="fas fa-save fa-fw"></i> Update
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-md-8 mb-2">
+                                <div class="form-group d-flex border border-dark mb-2 rounded-end">
+                                    <div class="d-flex align-items-center justify-content-center border-end border-dark w-50 bg-dark text-white">Full Name</div>
+                                    <input type="text" value="{{user.name}}" placeholder="" class="form-control form-control-sm rounded-0 rounded-end">
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <div class="form-group d-flex border border-dark mb-2 rounded-end">
+                                    <div class="d-flex align-items-center justify-content-center border-end border-dark w-50 bg-dark text-white">Email Address</div>
+                                    <input type="text" value="{{user.email}}" placeholder="" class="form-control form-control-sm rounded-0 rounded-end bg-white" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <div class="form-group d-flex border border-dark mb-2 rounded-end">
+                                    <div class="d-flex align-items-center justify-content-center border-end border-dark w-50 bg-dark text-white">No. of Projects</div>
+                                    <input type="text" value="{{user.projects}}" placeholder="" class="form-control form-control-sm rounded-0 rounded-end bg-white" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <div class="form-group d-flex border border-dark mb-2 rounded-end">
+                                    <div class="d-flex align-items-center justify-content-center border-end border-dark w-50 bg-dark text-white">Signup Date</div>
+                                    <input type="text" value="{{user.created_at}}" placeholder="" class="form-control form-control-sm rounded-0 rounded-end bg-white" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-security" role="tabpanel" aria-labelledby="nav-logs-tab" tabindex="0">
+                <div class="row">
+                    <div class="col-md-6 pt-4">
+                        <div class="card">
+                            <div class="card-header">Update Password</div>
+                            <div class="card-body">
+                                <div class="form-group mb-2">
+                                    <label for="">
+                                        <small>Current Password</small>
+                                    </label>
+                                    <input type="password" value="" placeholder="" class="form-control form-control-sm">
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="">
+                                        <small>New Password</small>
+                                    </label>
+                                    <input type="password" value="" placeholder="" class="form-control form-control-sm">
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="">
+                                        <small>Confirm New Password</small>
+                                    </label>
+                                    <input type="password" value="" placeholder="" class="form-control form-control-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-console" role="tabpanel" aria-labelledby="nav-console-tab" tabindex="0">
+                Terminal Console
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{{super()}}
+<script src="{{url_for('static', filename='js/users.js')}}"></script>
+{% endblock %}

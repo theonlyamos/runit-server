@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<div class="p-4 w-100">
+    <div class="h5 text-center">
+        Welcome to your dashboard, <strong class="text-primary"><em>{{admin.name}}</em></strong>
+    </div>
+</div>
+<div class="d-flex flex-wrap justify-content-center py-5 px-3">
+    {% set menu = [
+        {'name': 'users', 'icon': 'users', 'url': 'admin.users'},
+        {'name': 'projects', 'icon': 'sitemap', 'url': 'admin.projects'},
+        {'name': 'functions', 'icon': 'terminal', 'url': 'account.functions'},
+        {'name': 'profile', 'icon': 'user', 'url': 'account.profile'}
+    ] %}
+    {% for item in menu %}
+    <a href="{{ url_for(item['url']) }}" 
+        class="nav-link p-5 m-2 border hover:shadow-sm text-black-50 hover:text-dark"
+        title="{{ item['name'] | capitalize }}">
+        <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

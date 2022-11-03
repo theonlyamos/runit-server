@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+<main class="vh-100 vw-100 d-flex align-items-center justify-content-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-10 col-md-7 col-lg-5">
+                <div class="card rounded-0 shadow align-self-center">
+                    <div class="card-body">
+                        <form class="form-floating bg-gradient" action="{{ url_for('public.login') }}" method="post">
+                            <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-black-50 fs-4">LOGIN</h5>
+                            {% for (category, message) in get_flashed_messages(with_categories=True) %}
+                            <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+                                <strong>{{message}}</strong>
+                                <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                            <div class="form-group mb-3">
+                                <label class="form-label" for="email">Email Address</label>
+                                <input type="email" class="form-control rounded-0" name="email" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label" for="password">Password</label>
+                                <input type="password" class="form-control rounded-0" name="password" required>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input rounded-0" name="remember_me">
+                                    <lable class="form-check-label">Remember Me</lable>
+                                </div>
+                                <a href="{{ url_for('public.register')}}" class="nav-link text-primary">
+                                    <small>Forgot Password?</small>
+                                </a>
+                            </div>
+                            <div class="form-group d-flex justify-content-end mb-3">
+                                <button type="submit" class="btn btn-outline-dark bg-gradient shadow-sm rounded-0 shadow px-4">Login</button>
+                            </div>
+                            <div class="form-group border-top text-center py-2">
+                                <a href="{{ url_for('public.register')}}" class="nav-link text-primary">
+                                    <small>REGISTER</small>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="{{url_for('admin.loginpage')}}" class="nav-link p-0 position-absolute" style="top: 100px; right: 150px">
+            <i class="fas fa-user-shield" title="User Login"></i>
+        </a>
+    </div>
+</main>
+{% endblock %}

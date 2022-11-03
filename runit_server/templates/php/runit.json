@@ -1,0 +1,13 @@
+{
+    "name": "php",
+    "version": "0.0.0",
+    "description": "",
+    "homepage": "",
+    "language": "php",
+    "runtime": "php",
+    "start_file": "runner.php",
+    "author": {
+        "name": "",
+        "email": ""
+    }
+}
