@@ -5,7 +5,7 @@
 
 {% block pagetitle %}
 <div class="d-flex align-items center">
-    <a href="{{url_for('admin.project', project_id=project.id)}}" class="nav-link p-0 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin.projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
         <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
     / 
     <span>{{ project.name | upper}}</span>

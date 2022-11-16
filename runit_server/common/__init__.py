@@ -5,8 +5,8 @@ from .apis import ProjectById
 from .apis import RunFunction
 from .apis import FunctionRS
 from .apis import FunctionById
+from .apis import Document
 
-from .database import Database
 from .utils import Utils
 
 from .security import authenticate

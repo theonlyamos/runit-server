@@ -1,12 +1,5 @@
-from datetime import datetime
-from typing import Dict, List
-import uuid
-
-from bson.objectid import ObjectId
-
-from ..common.database import Database
+from odbms import DBMS, Model
 from ..common.utils import Utils
-from .model import Model
 
 
 class Permission(Model):
@@ -32,13 +25,13 @@ class Permission(Model):
             "description": self.description
         }
 
-        if Database.dbms == 'mongodb':
+        if DBMS.Database.dbms == 'mongodb':
             data["created_at"] = self.created_at
             data["updated_at"] = self.updated_at
 
-        return Database.db.insert(Permission.TABLE_NAME, data)
+        return DBMS.Database.insert(Permission.TABLE_NAME, data)
     
-    def json(self)-> Dict:
+    def json(self)-> dict:
         '''
         Instance Method for converting Permission Instance to Dict
 

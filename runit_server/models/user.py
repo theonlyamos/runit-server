@@ -1,13 +1,6 @@
-from datetime import datetime
-from typing import Dict, List
-import uuid
+from odbms import DBMS, Model
 
-from bson.objectid import ObjectId
-
-from ..common.database import Database
 from ..common.utils import Utils
-from .model import Model
-
 
 class User(Model):
     '''A model class for user'''
@@ -22,7 +15,7 @@ class User(Model):
 
     def save(self):
         '''
-        Instance Method for saving User instance to database
+        Instance Method for saving User instance to Database
 
         @params None
         @return None
@@ -34,11 +27,11 @@ class User(Model):
             "password": Utils.hash_password(self.password)
         }
 
-        if Database.dbms == 'mongodb':
+        if DBMS.Database.dbms == 'mongodb':
             data["created_at"] = self.created_at
             data["updated_at"] = self.updated_at
 
-        return Database.db.insert(User.TABLE_NAME, data)
+        return DBMS.Database.insert(User.TABLE_NAME, data)
     
     def reset_password(self, new_password: str):
         '''
@@ -48,7 +41,7 @@ class User(Model):
         @return None
         '''
 
-        Database.db.update_one(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
+        DBMS.Database.update_one(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
     
     def projects(self):#-> List[Project]:
         '''
@@ -58,7 +51,7 @@ class User(Model):
         @return List of Project Instances
         '''
 
-        return Database.db.find('projects', {'user_id': self.id}, 'params')
+        return DBMS.Database.find('projects', {'user_id': self.id}, 'params')
     
     def count_projects(self)-> int:
         '''
@@ -68,9 +61,9 @@ class User(Model):
         @return int Count of Projects
         '''
 
-        return Database.db.count('projects', User.normalise({'user_id': self.id}, 'params'))
+        return DBMS.Database.count('projects', User.normalise({'user_id': self.id}, 'params'))
     
-    def json(self)-> Dict:
+    def json(self)-> dict:
         '''
         Instance Method for converting User Instance to Dict
 
@@ -95,5 +88,5 @@ class User(Model):
         @param email email address of the user 
         @return User instance
         '''
-        user = Database.db.find_one(User.TABLE_NAME, {"email": email})
+        user = DBMS.Database.find_one(User.TABLE_NAME, {"email": email})
         return cls(**Model.normalise(user)) if user else None

@@ -1,12 +1,9 @@
 from datetime import datetime
-from typing import Dict, List
-import uuid
 
 from bson.objectid import ObjectId
 
-from ..common.database import Database
+from odbms import DBMS, Model
 from ..common.utils import Utils
-from .model import Model
 
 
 class Role(Model):
@@ -34,13 +31,13 @@ class Role(Model):
             "permission_ids": self.permission_ids,
         }
 
-        if Database.dbms == 'mongodb':
+        if DBMS.Database.dbms == 'mongodb':
             data["created_at"] = self.created_at
             data["updated_at"] = self.updated_at
 
-        return Database.db.insert(Role.TABLE_NAME, data)
+        return DBMS.Database.db.insert(Role.TABLE_NAME, data)
     
-    def json(self)-> Dict:
+    def json(self)-> dict:
         '''
         Instance Method for converting Role Instance to Dict
 
@@ -65,6 +62,6 @@ class Role(Model):
         '''
         permissions = []
         for perm_id in self.permission_ids:
-            permissions.append(Database.db.find_one('permissions', {'id': perm_id}))
+            permissions.append(DBMS.Database.db.find_one('permissions', {'id': perm_id}))
         
         return permissions

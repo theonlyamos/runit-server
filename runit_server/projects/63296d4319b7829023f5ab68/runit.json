@@ -5,7 +5,6 @@
     "description": "",
     "homepage": "https://example.com/project_id/",
     "language": "php",
-    "framework": "",
     "runtime": "php",
     "start_file": "index.php",
     "author": {

@@ -5,12 +5,12 @@ from flask import Blueprint, flash, render_template, redirect, \
     url_for, request, session
     
 from bson.objectid import ObjectId
-from dotenv import load_dotenv, dotenv_values, set_key
+from dotenv import load_dotenv, dotenv_values, set_key, find_dotenv
 
+from odbms import DBMS
 from ..models import User
 from ..models import Project
 from ..models import Admin
-from ..common import Database
 from ..models import Function
 from ..common import Utils
 
@@ -117,39 +117,19 @@ def project(project_id):
         flash('Project does not exist', 'danger')
         return redirect(url_for('project.index'))
 
-@admin.route('/functions/', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@admin.get('/functions')
+@admin.get('/functions/')
 def functions():
     global EXTENSIONS
     global LANGUAGE_ICONS
-
-    if request.method == 'GET':
-        functions = Function.get_by_admin(session['admin_id'])
-        projects = Project.get_by_admin(session['admin_id'])
+    
+    functions = Function.get_by_admin(session['admin_id'])
+    projects = Project.get_by_admin(session['admin_id'])
+    
+    return render_template('functions/index.html', page='functions',\
+            functions=functions, projects=projects,\
+            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
         
-        return render_template('functions/index.html', page='functions',\
-                functions=functions, projects=projects,\
-                languages=EXTENSIONS, icons=LANGUAGE_ICONS)
-
-    elif request.method == 'POST':
-        name = request.form.get('name')
-        project_id = request.form.get('project_id')
-        language = request.form.get('language')
-        description = request.form.get('description')
-        date = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
-
-        if name and language:
-            data = {'name': name, 'admin_id': ObjectId(session['admin_id']),\
-                    'filename': name+EXTENSIONS[language],\
-                    'project_id': ObjectId(project_id), \
-                    'language': language, 'description': description,\
-                    'created_at': date, 'updated_at': date}
-
-            Database.db.functions.insert_one(data)
-            flash('Function created successfully', category='success')
-        else:
-            flash('Error: Name and Language fields are required!', category='danger')
-        return redirect(url_for('admin.functions'))
-
 @admin.route('/profile/')
 def profile():
     return render_template('admin/profile.html', page='profile')

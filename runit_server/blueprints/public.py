@@ -7,10 +7,13 @@ from ..models import User
 import os
 from dotenv import load_dotenv
 
-from ..runit import RunIt
+from runit import RunIt
 
 load_dotenv()
-PROJECTS_DIR = os.path.realpath(os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects'))
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+HOMEDIR = os.path.realpath(os.path.join(CURRENT_PATH, '..'))
+PROJECTS_DIR = os.path.realpath(os.path.join(CURRENT_PATH, '..', 'projects'))
 
 public = Blueprint('public', __name__)
 
@@ -29,8 +32,8 @@ def index():
 @public.get('/<string:project_id>/')
 def project(project_id):
     if os.path.isdir(os.path.join(PROJECTS_DIR, project_id)):
-        result = RunIt.start(project_id, 'index')
-        os.chdir(os.getenv('RUNIT_HOMEDIR'))
+        result = RunIt.start(project_id, 'index', os.path.join(PROJECTS_DIR, project_id))
+        os.chdir(HOMEDIR)
         return result
 
     return RunIt.notfound()
@@ -38,8 +41,8 @@ def project(project_id):
 @public.get('/<string:project_id>/<string:function>/')
 def run(project_id, function):
     if os.path.isdir(os.path.join(PROJECTS_DIR, project_id)):
-        result = RunIt.start(project_id, function)
-        os.chdir(os.getenv('RUNIT_HOMEDIR'))
+        result = RunIt.start(project_id, function, os.path.join(PROJECTS_DIR, project_id))
+        os.chdir(HOMEDIR)
         return result
 
     return RunIt.notfound()
@@ -81,22 +84,3 @@ def login():
         flash('Invalid Login Credentials', 'danger')
     return redirect(url_for('public.index'))
 
-
-'''
-@public.route('/<account>/', methods=['GET','POST','PUT','PATCH','DELETE'])
-def main(account):
-    if (os.path.isdir(os.path.join('accounts', account))):
-        result = RunIt.start(account)
-        return result
-    else:
-        return RunIt.notfound()
-
-@public.route('/<account>/<page>/', methods=['GET','POST','PUT','PATCH','DELETE'])
-def page(account, page='index'):
-    if (os.path.isdir(os.path.join('accounts', account))):
-        result = RunIt.start(account, page)
-        #os.chdir(os.path.join('..', '..'))
-        return result
-    else:
-        return RunIt.notfound()
-'''

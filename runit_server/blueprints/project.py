@@ -13,7 +13,7 @@ from ..models import Project
 from ..models import User
 
 
-from ..runit import RunIt
+from runit import RunIt
 
 load_dotenv()
 EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}

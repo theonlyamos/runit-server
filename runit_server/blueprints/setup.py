@@ -7,7 +7,7 @@ from ..models import User
 import os
 from dotenv import load_dotenv, dotenv_values, set_key, find_dotenv
 
-from ..runit import RunIt
+from runit import RunIt
 
 load_dotenv()
 

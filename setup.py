@@ -1,7 +1,7 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
-VERSION = '0.0.5'
+VERSION = '0.1.2'
 
 setup(
     name='runit-server',
@@ -12,15 +12,16 @@ setup(
     long_description='Run standalone functions on the web',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['requests','python-dotenv','flask','flask-jwt-extended',
-    'flask-restful'],
+    install_requires=['requests','python-dotenv', 'python-runit', 
+                      'odbms', 'flask','flask-jwt-extended', 
+                      'flask-restful', 'waitress'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={
         'Source': 'https://github.com/theonlyamos/runit-server/',
         'Tracker': 'https://github.com/theonlyamos/runit-server/issues',
     },
     classifiers=[
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',
@@ -33,7 +34,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'runit-server=runit_server.app:run',
+            'runit-server=runit_server.cli:main',
         ],
     }
 )

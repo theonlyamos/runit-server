@@ -1,13 +1,13 @@
+from odbms import DBMS, normalise
 from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_jwt
 
 from werkzeug.utils import secure_filename
 
-from .database import Database
-from ..models.function import Function
-from ..models.project import Project
-from ..models.user import User
+from ..models import Function
+from ..models import Project
+from ..models import User
 from .security import authenticate
 
 import os
@@ -188,3 +188,34 @@ class RunFunction(Resource):
             project = Project.get(function['project_id'])
             function['project'] = project.json() if project else project
         return function
+
+class Document(Resource):
+    '''
+    Api for manipulating documents (crud)
+    '''
+
+    # @jwt_required()
+    def post(self, project_id, collection):
+        '''
+        Api for retrieving documents
+
+        @param project_id Project ID
+        @param collection Collection Name
+        @return Documents Documents from collection
+        '''
+        try:
+            data = request.get_json()
+            if 'filter' in data.keys() and not 'columns' in data.keys():
+                results = DBMS.Database.find(collection, data['filter'])
+            elif 'columns' in data.keys() and not 'filter' in data.keys():
+                results = DBMS.Database.find(collection, projection=data['columns'])
+            elif 'filter' in data.keys() and 'columns' in data.keys():
+                results = DBMS.Database.find(collection, data['filter'], data['columns'])
+            else:
+                results = DBMS.Database.find(collection)
+                
+            return [normalise(result) for result in results]
+        except Exception as e:
+            print(str(e))
+            return {'status': 'error', 'msg': str(e)}
+   

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..models import Project
-from ..runit import RunIt
+from runit import RunIt
 
 import os
 from dotenv import load_dotenv

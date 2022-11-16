@@ -1,5 +1,7 @@
 include README.md
 
+recursive-exclude accounts/
+recursive-exclude projects/
 
 recursive-include runit/tools/ nodejs *.js
 

@@ -5,8 +5,7 @@
     "description": "",
     "homepage": "http://runit.test:9000/6328851e0758e1b087c3c2f5/gettime/",
     "language": "javascript",
-    "framework": "",
-    "runtime": null,
+    "runtime": "node",
     "start_file": "main.js",
     "author": {
         "name": "Amos Amissah",

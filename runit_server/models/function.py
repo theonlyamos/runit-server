@@ -1,11 +1,4 @@
-from datetime import datetime
-from typing import Dict
-import uuid
-
-from bson.objectid import ObjectId
-
-from ..common.database import Database
-from .model import Model
+from odbms import DBMS, Model
 
 EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
 
@@ -39,11 +32,11 @@ class Function(Model):
         if self.project_id:
             data.update({'project_id': self.project_id})
         
-        if Database.dbms == 'mongodb':
+        if DBMS.Database.dbms == 'mongodb':
             data["created_at"]: self.created_at
             data["updated_at"]: self.updated_at
 
-        return Database.db.insert(Model.normalise(data, 'params'))
+        return DBMS.Database.insert(Model.normalise(data, 'params'))
     
     def project(self):#-> Project:
         '''
@@ -54,9 +47,9 @@ class Function(Model):
         '''
 
         #return Project.get(self.project_id)
-        return Database.db.find('projects', Model.normalise({'id': self.project_id}, 'params'))
+        return DBMS.Database.find('projects', Model.normalise({'id': self.project_id}, 'params'))
 
-    def user(self):#-> User:
+    def user(self):
         '''
         Instance Method for retrieving User of Function instance
         
@@ -64,9 +57,9 @@ class Function(Model):
         @return User instance
         '''
 
-        return Database.db.find_one('users', Model.normalise({'id': self.user_id}, 'params'))
+        return DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params'))
     
-    def json(self)-> Dict:
+    def json(self)-> dict:
         '''
         Instance Method for converting instance to dict()
 
@@ -95,7 +88,7 @@ class Function(Model):
         @param project_id:str _id of the of project
         @return List of Function instances
         '''
-        functions = Database.db.find(cls.TABLE_NAME, Model.normalise({'project_id': project_id}, 'params'))
+        functions = DBMS.Database.find(cls.TABLE_NAME, Model.normalise({'project_id': project_id}, 'params'))
         return [cls(**Model.normalise(elem)) for elem in functions]
     
     @classmethod
@@ -106,5 +99,5 @@ class Function(Model):
         @param user_id:str _id of the user
         @return List of Function instances
         '''
-        functions = Database.db.find(cls.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
+        functions = DBMS.Database.find(cls.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
         return [cls(**Model.normalise(elem)) for elem in functions]

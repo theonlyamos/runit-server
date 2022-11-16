@@ -1,12 +1,10 @@
 from datetime import datetime
-from typing import Dict, List
 import uuid
 
 from bson.objectid import ObjectId
 
-from ..common.database import Database
+from odbms import DBMS, Model
 from ..common.utils import Utils
-from .model import Model
 
 
 class Admin(Model):
@@ -36,11 +34,11 @@ class Admin(Model):
             "password": Utils.hash_password(self.password)
         }
 
-        if Database.dbms == 'mongodb':
+        if DBMS.Database.dbms == 'mongodb':
             data["created_at"] = self.created_at
             data["updated_at"] = self.updated_at
 
-        return Database.db.insert(Admin.TABLE_NAME, data)
+        return DBMS.Database.insert(Admin.TABLE_NAME, data)
     
     def reset_password(self, new_password: str):
         '''
@@ -50,10 +48,10 @@ class Admin(Model):
         @return None
         '''
 
-        Database.db.update_one(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': new_password})
+        DBMS.Database.update_one(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': new_password})
     
 
-    def json(self)-> Dict:
+    def json(self)-> dict:
         '''
         Instance Method for converting Admin Instance to Dict
 
@@ -78,7 +76,7 @@ class Admin(Model):
         @return List[Role] of Admin Instance
         '''
 
-        return Database.db.find_one('roles', Admin.normalise({'id': self.role_id}, 'params'))
+        return DBMS.Database.find_one('roles', Admin.normalise({'id': self.role_id}, 'params'))
 
 
     @classmethod
@@ -89,5 +87,5 @@ class Admin(Model):
         @param username username of the admin 
         @return Admin instance
         '''
-        admin = Database.db.find_one(Admin.TABLE_NAME, {"username": username})
+        admin = DBMS.Database.find_one(Admin.TABLE_NAME, {"username": username})
         return cls(**Model.normalise(admin)) if admin else None
