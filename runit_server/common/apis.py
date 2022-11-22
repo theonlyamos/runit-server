@@ -205,16 +205,35 @@ class Document(Resource):
         '''
         try:
             data = request.get_json()
-            if 'filter' in data.keys() and not 'columns' in data.keys():
-                results = DBMS.Database.find(collection, data['filter'])
-            elif 'columns' in data.keys() and not 'filter' in data.keys():
-                results = DBMS.Database.find(collection, projection=data['columns'])
-            elif 'filter' in data.keys() and 'columns' in data.keys():
-                results = DBMS.Database.find(collection, data['filter'], data['columns'])
+
+            if not 'function' in data.keys():
+                raise SyntaxError('No database function to run')
+
+            
+            function = data['function']
+
+            if function == 'all' or function == 'find_many':
+                result = DBMS.Database.find(collection, data['filter'], data['columns'])
+
+            elif function == 'find_one':
+                result = DBMS.Database.find_one(collection, data['filter'], data['columns'])
+
+            elif function == 'insert':
+                result = DBMS.Database.insert(collection, data['document'])
+
+            elif function == 'update':
+                result = DBMS.Database.update(collection, data['filter'], data['update'])
+            
+            elif function == 'count':
+                result = DBMS.Database.count(collection, data['filter'])
+
+            if type(result) == list:
+                return [normalise(result) for result in results]
+            elif type(result) == int:
+                return {'count': result}
             else:
-                results = DBMS.Database.find(collection)
-                
-            return [normalise(result) for result in results]
+                return normalise(result)
+
         except Exception as e:
             print(str(e))
             return {'status': 'error', 'msg': str(e)}
