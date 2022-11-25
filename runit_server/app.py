@@ -20,7 +20,7 @@ api = Api(app, prefix='/api')
 
 load_dotenv()
 app.secret_key =  os.getenv('RUNIT_SECRET_KEY')
-app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
+#app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
 app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 
@@ -34,12 +34,10 @@ jwt = JWTManager(app)
 REQUESTS = []
 
 #api.add_resource(RunFunction, '/<string:project_id>/<string:function>/')
-api.add_resource(Login, '/login')
 api.add_resource(Login, '/login/')
 api.add_resource(Account, '/account/')
 api.add_resource(ProjectRS, '/projects/')
 api.add_resource(ProjectById, '/projects/<string:project_id>/')
-api.add_resource(Document, '/document/<string:project_id>/<string:collection>')
 api.add_resource(Document, '/document/<string:project_id>/<string:collection>/')
 #api.add_resource(RunFunction, '/<string:project_id>/<string:function>/')
 #api.add_resource(FunctionRS, '/functions/')
