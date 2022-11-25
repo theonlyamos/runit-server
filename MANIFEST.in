@@ -1,10 +1,9 @@
 include README.md
 recursive-include runit_server/templates *
 recursive-include runit_server/static *
+recursive-include runit/tools *
 
 recursive-exclude accounts *
 recursive-exclude projects *
 
-recursive-include runit/tools nodejs *.js
 
-recursive-include runit/tools tools php *.php
