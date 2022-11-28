@@ -9,7 +9,7 @@ from .app import app
 
 load_dotenv()
 
-VERSION = "0.1.2"
+VERSION = "0.1.7"
 
 def setup_runit(args):
     '''
@@ -19,24 +19,40 @@ def setup_runit(args):
     @return None
     '''
     global parser
-    domain = args.domain
+    domain = args.domain if hasattr(args, 'domain') else ''
     allowed = ['dbms', 'dbhost', 'dbport', 
                'dbusername', 'dbpassword', 'dbname']
+    default_settings = {
+        'RUNIT_HOMEDIR': os.path.realpath(__file__),
+        'RUNIT_SERVERNAME': '',
+        'dbms': 'mongodb',
+        'dbhost': 'localhost',
+        'dbport': '27017',
+        'dbusername': '',
+        'dbpassword': '',
+        'dbname': 'runit',
+        'setup': ''
+    }
+    env_file = find_dotenv()
+    if not env_file:
+        with open('.env', 'wt'):
+            pass
+        env_file = find_dotenv()
+        for key, value in default_settings.items():
+            set_key(env_file, key, value)
+        load_dotenv()
     
     settings = dotenv_values(find_dotenv())
     if not domain:
-        default = os.environ['RUNIT_SERVERNAME']
+        default = settings['RUNIT_SERVERNAME']
         domain = input(f'Server Address [{default}]: ')
         domain = domain if domain else default
     
     for key, value in settings.items():
         if key in allowed:
-            if getattr(args, key):
-                settings[key] = getattr(args, key)
-            else:
-                settings[key] = input(f'{key} [{value}]: ')
-                if key != 'dbusername' and key != 'dbpassword':
-                    settings[key] = settings[key] if settings[key] else value
+            settings[key] = input(f'{key} [{value}]: ')
+            if key != 'dbusername' and key != 'dbpassword':
+                settings[key] = settings[key] if settings[key] else value
     
     settings['RUNIT_SERVERNAME'] = domain
     settings['RUNIT_HOMEDIR'] = os.path.join('..', os.path.realpath(os.path.split(__file__)[0]))
@@ -49,8 +65,14 @@ def setup_runit(args):
         set_key(find_dotenv(), key, value)
 
 def run_server(args = None):
-    app.run(host=args.host, port=args.port, debug=args.debug)
-    # serve(app, listen=f"*:{args.port}")
+    if not find_dotenv():
+        print('[#] Complete Setup configuration first.\n')
+        setup_runit(args)
+    else:
+        if args and args.production:
+            serve(app, listen=f"*:{args.port}")
+        else:
+            app.run(host=args.host, port=args.port, debug=args.debug)
 
 def get_arguments():
     global parser
@@ -71,6 +93,7 @@ def get_arguments():
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Host address to run server on')
     parser.add_argument('--port', type=int, default=9000, help='Host port to run server on')
     parser.add_argument('--debug', type=bool, choices=[True, False], default=True, help="Enable debug mode")
+    parser.add_argument('--production', action='store_true', help="Run in production mode")
     parser.add_argument('-v','--version', action='version', version=f'%(prog)s {VERSION}')
     parser.set_defaults(func=run_server)
     return parser.parse_args()

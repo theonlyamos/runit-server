@@ -35,7 +35,7 @@ class Role(Model):
             data["created_at"] = self.created_at
             data["updated_at"] = self.updated_at
 
-        return DBMS.Database.db.insert(Role.TABLE_NAME, data)
+        return DBMS.Database.insert(Role.TABLE_NAME, data)
     
     def json(self)-> dict:
         '''

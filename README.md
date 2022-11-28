@@ -34,7 +34,7 @@ runit-server --help
 
 ### Setup Server
 Run ```runit-server setup --help``` for help message.
-***Follow the prompts to complete the setup after running the below comman.***
+***Follow the prompts to complete the setup after running the below command.***
 ```shell
 runit-server setup
 ```
