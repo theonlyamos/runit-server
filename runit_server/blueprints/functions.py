@@ -7,7 +7,10 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 functions = Blueprint('functions', __name__)
 

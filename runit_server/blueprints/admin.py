@@ -20,7 +20,10 @@ from runit import RunIt
 EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
 LANGUAGE_ICONS = {'python': 'python', 'python3': 'python', 'php': 'php',
                   'javascript': 'node-js', 'typescript': 'node-js'}
-PROJECTS_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'projects'))
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))
 

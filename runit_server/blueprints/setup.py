@@ -11,8 +11,6 @@ from runit import RunIt
 
 load_dotenv()
 
-PROJECTS_DIR = os.path.realpath(os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects'))
-
 setup = Blueprint('setup', __name__, url_prefix='/setup', static_folder=os.path.join('..','static'))
 
 '''

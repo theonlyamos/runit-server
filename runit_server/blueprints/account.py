@@ -15,7 +15,10 @@ from ..models import Function
 from runit import RunIt
 
 load_dotenv()
-PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
 LANGUAGE_ICONS = {'python': 'python', 'python3': 'python', 'php': 'php',

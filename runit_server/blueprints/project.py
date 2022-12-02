@@ -16,10 +16,14 @@ from ..models import User
 from runit import RunIt
 
 load_dotenv()
+
 EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}
 LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
                   'javascript': 'node-js', 'typescript': 'node-js'}
-PROJECTS_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'projects'))
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 project = Blueprint('project', __name__, url_prefix='/projects', template_folder=os.path.join('..','..','templates'), static_folder=os.path.join('..','static'))
 
