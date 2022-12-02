@@ -10,7 +10,7 @@ from .app import app
 load_dotenv()
 
 CURDIR = os.path.split(os.path.realpath(__file__))[0]
-VERSION = "0.1.8"
+VERSION = "0.1.9"
 
 def create_folders():
     if not os.path.exists(os.path.join(CURDIR, 'projects')):

@@ -1,7 +1,7 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
-VERSION = '0.1.8'
+VERSION = '0.1.9'
 
 with open('README.md', 'rt') as file:
     description = file.read()
@@ -17,7 +17,7 @@ setup(
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 
                       'odbms', 'flask','flask-jwt-extended', 
-                      'flask-restful', 'waitress'],
+                      'flask-restful', 'waitress', 'passlib'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={
         'Source': 'https://github.com/theonlyamos/runit-server/',
