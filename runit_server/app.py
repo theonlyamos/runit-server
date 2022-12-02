@@ -58,11 +58,12 @@ def complete_setup():
     global app
     settings = dotenv_values(find_dotenv())
     print('--Setting up database')
-    DBMS.initialize(settings['dbms'], settings['dbhost'], settings['dbport'],
-                    settings['dbusername'], settings['dbpassword'], settings['dbname'])
+    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATATABSE_PORT'],
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
+                    settings['DATABASE_NAME'])
 
-    if 'setup' in settings.keys() and settings['setup'] == 'completed':
-        if settings['dbms'] == 'mysql':
+    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
+        if settings['DBMS'] == 'mysql':
             DBMS.Database.setup()
             print('[--] Database setup complete')
     if not Role.count():
@@ -98,11 +99,11 @@ def init():
     global app
     settings = dotenv_values(find_dotenv())
 
-    if 'setup' in settings.keys() and settings['setup'] == 'completed':
-        DBMS.initialize(settings['dbms'], settings['dbhost'], settings['dbport'],
-                    settings['dbusername'], settings['dbpassword'], settings['dbname'])
+    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
+        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATATABSE_PORT'],
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
+                    settings['DATABASE_NAME'])
     else:
-        print('Setting up database...')
         return redirect('/setup')
     if not (os.path.exists(os.path.join(os.curdir, 'accounts'))):
         os.mkdir(os.path.join(os.curdir, 'accounts'))

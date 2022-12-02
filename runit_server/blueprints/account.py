@@ -5,14 +5,17 @@ from sys import prefix
 from flask import Blueprint, flash, render_template, redirect, \
     url_for, request, session
 from bson.objectid import ObjectId
+from dotenv import load_dotenv
 
 from odbms import DBMS
 from ..models import Project
 from ..models import User
 from ..models import Function
 
-
 from runit import RunIt
+
+load_dotenv()
+PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
 
 EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
 LANGUAGE_ICONS = {'python': 'python', 'python3': 'python', 'php': 'php',
@@ -34,7 +37,7 @@ def index():
 def projects():
     user_id = session['user_id']
     if request.method == 'GET':
-        projects = Project.get_by_user(user_id)
+        projects = [project for project in Project.get_by_user(user_id) if project in os.listdir(PROJECTS_DIR)]
         return render_template('projects/index.html', page='projects',\
              projects=projects)
 

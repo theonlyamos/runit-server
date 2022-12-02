@@ -22,7 +22,7 @@ This will provide you with the globally accessible ```runit-server``` command.
 ```shell
 git clone https://github.com/theonlyamos/runit-server.git
 cd runit-server
-pip install -e .
+pip install .
 ```
 
 ## Usage

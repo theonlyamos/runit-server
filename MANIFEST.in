@@ -3,7 +3,6 @@ include runit_server/favicon.ico
 
 recursive-include runit_server/templates *
 recursive-include runit_server/static *
-recursive-include runit_server/tools *
 
 recursive-exclude accounts *
 recursive-exclude projects *

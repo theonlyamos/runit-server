@@ -26,7 +26,7 @@
                                     <h6 class="text-center text-danger fs-6">Database Setup</h6>
                                     <div class="form-group mb-1">
                                         <label class="small" for="email">DBMS</label>
-                                        <select name="dbms" id="" class="form-select form-select-sm text-black-50" required onchange="selectDMEngine(this.value)">
+                                        <select name="DBMS" id="" class="form-select form-select-sm text-black-50" required onchange="selectDMEngine(this.value)">
                                             <option></option>
                                             <option value="mongodb">MongoDB</option>
                                             <option value="mysql">Mysql</option>
@@ -35,27 +35,45 @@
                                     <div class="form-group mb-1">
                                         <label class="small">Host</label>
                                         <input type="text" value="127.0.0.1"
-                                            class="form-control form-control-sm text-black-50" name="dbhost" required>
+                                            class="form-control form-control-sm text-black-50" name="DATABASE_HOST" required>
                                     </div>
                                     <div class="form-group mb-1">
                                         <label class="small">Port</label>
                                         <input type="text" class="form-control form-control-sm text-black-50"
-                                            name="dbport" required>
+                                            name="DATABASE_PORT" required>
                                     </div>
                                     <div class="form-group mb-1">
                                         <label class="small">Database Name</label>
-                                        <input type="text" name="dbname" value="runit"
-                                            class="form-control form-control-sm text-black-50" readonly>
+                                        <input type="text" name="DATABASE_NAME" value="runit"
+                                            class="form-control form-control-sm text-black-50">
                                     </div>
                                     <div class="form-group mb-1">
                                         <label class="small">Database User</label>
                                         <input type="text" class="form-control form-control-sm text-black-50"
-                                            name="dbusername">
+                                            name="DATABASE_USERNAME">
                                     </div>
                                     <div class="form-group mb-3">
                                         <label class="small">Database Password</label>
                                         <input type="password" class="form-control form-control-sm text-black-50"
-                                            name="dbpassword">
+                                            name="DATABASE_PASSWORD">
+                                    </div>
+                                </div>
+                                <div class="setup-step">
+                                    <h6 class="text-center text-danger fs-6">Runtime Setup</h6>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">Python Runtime</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            value="python" name="RUNTIME_PYTHON" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">PHP Runtime</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            value="php" name="RUNTIME_PHP" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">Javascript Runtime</label>
+                                        <input type="text" class="form-control form-control-sm text-black-50"
+                                            value="node" name="RUNTIME_JAVASCRIPT" required>
                                     </div>
                                 </div>
                                 <div class="setup-step">

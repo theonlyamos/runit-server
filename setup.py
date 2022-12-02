@@ -1,7 +1,10 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
-VERSION = '0.1.7'
+VERSION = '0.1.8'
+
+with open('README.md', 'rt') as file:
+    description = file.read()
 
 setup(
     name='runit-server',
@@ -9,7 +12,7 @@ setup(
     author='Amos Amissah',
     author_email='theonlyamos@gmail.com',
     description='Backend for python-runit',
-    long_description='Run standalone functions on the web',
+    long_description=description,
     packages=find_packages(),
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 

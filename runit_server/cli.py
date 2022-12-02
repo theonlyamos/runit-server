@@ -9,7 +9,15 @@ from .app import app
 
 load_dotenv()
 
-VERSION = "0.1.7"
+CURDIR = os.path.split(os.path.realpath(__file__))[0]
+VERSION = "0.1.8"
+
+def create_folders():
+    if not os.path.exists(os.path.join(CURDIR, 'projects')):
+        os.mkdir(os.path.join(CURDIR, 'projects'))
+    
+    if not os.path.exists(os.path.join(CURDIR, 'accounts')):
+        os.mkdir(os.path.join(CURDIR, 'accounts'))
 
 def setup_runit(args):
     '''
@@ -20,18 +28,23 @@ def setup_runit(args):
     '''
     global parser
     domain = args.domain if hasattr(args, 'domain') else ''
-    allowed = ['dbms', 'dbhost', 'dbport', 
-               'dbusername', 'dbpassword', 'dbname']
+    allowed = ['DBMS', 'DATABASE_HOST', 'DATATABSE_PORT', 
+               'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
+               'DATABASE_NAME', 'RUNTIME_PYTHON',
+               'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
     default_settings = {
-        'RUNIT_HOMEDIR': os.path.realpath(__file__),
+        'RUNIT_HOMEDIR': CURDIR,
         'RUNIT_SERVERNAME': '',
-        'dbms': 'mongodb',
-        'dbhost': 'localhost',
-        'dbport': '27017',
-        'dbusername': '',
-        'dbpassword': '',
-        'dbname': 'runit',
-        'setup': ''
+        'DBMS': 'mongodb',
+        'DATABASE_HOST': 'localhost',
+        'DATABASE_PORT': 27017,
+        'DATABASE_USERNAME': '',
+        'DATABASE_PASSWORD': '',
+        'DATABASE_NAME': 'runit',
+        'RUNTIME_PYTHON': 'python',
+        'RUNTIME_PHP': 'php',
+        'RUNTIME_JAVASCRIPT': 'node',
+        'SETUP': ''
     }
     env_file = find_dotenv()
     if not env_file:
@@ -45,21 +58,22 @@ def setup_runit(args):
     settings = dotenv_values(find_dotenv())
     if not domain:
         default = settings['RUNIT_SERVERNAME']
-        domain = input(f'Server Address [{default}]: ')
+        domain = input(f'RUNIT_SERVERNAME [{default}]: ')
         domain = domain if domain else default
     
     for key, value in settings.items():
         if key in allowed:
             settings[key] = input(f'{key} [{value}]: ')
-            if key != 'dbusername' and key != 'dbpassword':
+            if key != 'DATABASE_USERNAME' and key != 'dbpassword':
                 settings[key] = settings[key] if settings[key] else value
     
     settings['RUNIT_SERVERNAME'] = domain
     settings['RUNIT_HOMEDIR'] = os.path.join('..', os.path.realpath(os.path.split(__file__)[0]))
     
-    if settings['RUNIT_SERVERNAME'] and settings['dbms'] and \
-        settings['dbhost'] and settings['dbport'] and settings['dbname']:
-        settings['setup'] = 'completed'
+    if settings['RUNIT_SERVERNAME'] and settings['DATABASE_PASSWORD'] and \
+        settings['DATABASE_HOST'] and settings['DATABASE_PORT'] and \
+        settings['DATABASE_NAME']:
+        settings['SETUP'] = 'completed'
     
     for key, value in settings.items():
         set_key(find_dotenv(), key, value)

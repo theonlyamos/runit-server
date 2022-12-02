@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from runit import RunIt
 
 load_dotenv()
-PROJECTS_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'projects')
+PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
 
 def stringifyObjectIds(model: object, properties: list)-> object:
     for property in properties:
@@ -213,26 +213,26 @@ class Document(Resource):
             function = data['function']
 
             if function == 'all' or function == 'find_many':
-                result = DBMS.Database.find(collection, data['filter'], data['columns'])
+                results = DBMS.Database.find(collection, data['filter'], data['columns'])
 
             elif function == 'find_one':
-                result = DBMS.Database.find_one(collection, data['filter'], data['columns'])
+                results = DBMS.Database.find_one(collection, data['filter'], data['columns'])
 
             elif function == 'insert':
-                result = DBMS.Database.insert(collection, data['document'])
+                results = DBMS.Database.insert(collection, data['document'])
 
             elif function == 'update':
-                result = DBMS.Database.update(collection, data['filter'], data['update'])
+                results = DBMS.Database.update(collection, data['filter'], data['update'])
             
             elif function == 'count':
-                result = DBMS.Database.count(collection, data['filter'])
+                results = DBMS.Database.count(collection, data['filter'])
 
-            if type(result) == list:
+            if type(results) == list:
                 return [normalise(result) for result in results]
-            elif type(result) == int:
-                return {'count': result}
+            elif type(results) == int:
+                return {'count': results}
             else:
-                return normalise(result)
+                return normalise(results)
 
         except Exception as e:
             print(str(e))
