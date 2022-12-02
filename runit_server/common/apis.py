@@ -17,7 +17,9 @@ from datetime import datetime, timedelta
 from runit import RunIt
 
 load_dotenv()
-PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
+
+#PROJECTS_DIR = os.path.join(os.getenv('RUNIT_HOMEDIR'), 'projects')
+PROJECTS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def stringifyObjectIds(model: object, properties: list)-> object:
     for property in properties:
