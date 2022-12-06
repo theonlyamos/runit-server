@@ -27,14 +27,15 @@ PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))
 
+@admin.before_request
+def authorize():
+    print('hello', request.url_path)
+    # if not 'admin_id' in session:
+    #     return redirect(url_for('admin.loginpage'))
+
 @admin.get('/login/')
 def loginpage():
     return render_template('admin/login.html', title='Login')
-
-# @admin.before_request
-# def authorize():
-#     if not 'admin_id' in session:
-#         return redirect(url_for('admin.loginpage'))
 
 @admin.route('/')
 def index():
@@ -96,7 +97,6 @@ def projects():
 @admin.get('/projects/<project_id>/')
 def project(project_id):
     old_curdir = os.curdir
-    # user_id = session['user_id']
     
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     if not os.path.isfile('.env'):
@@ -109,7 +109,7 @@ def project(project_id):
 
     funcs = []
     for func in runit.get_functions():
-        funcs.append({'name': func, 'link': f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/"})
+        funcs.append({'name': func, 'link': f"/{project_id}/{func}/"})
     
     os.chdir(old_curdir)
     project = Project.get(project_id)

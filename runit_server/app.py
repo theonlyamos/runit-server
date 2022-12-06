@@ -19,7 +19,7 @@ app = Flask(__name__)
 api = Api(app, prefix='/api')
 
 load_dotenv()
-app.secret_key =  os.getenv('RUNIT_SECRET_KEY')
+app.secret_key =  "dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf"
 #app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
 app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
@@ -57,15 +57,17 @@ app.register_blueprint(admin, subdomain='admin')
 def complete_setup():
     global app
     settings = dotenv_values(find_dotenv())
+    
     print('--Setting up database')
-    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATATABSE_PORT'],
+    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
                     settings['DATABASE_NAME'])
 
     if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
         if settings['DBMS'] == 'mysql':
             DBMS.Database.setup()
-            print('[--] Database setup complete')
+    
+    print('[--] Database setup complete')
     if not Role.count():
         print('[#] Populating Roles')
         Role('developer', []).save()
@@ -97,19 +99,20 @@ def get_parameters():
 @app.before_first_request
 def init():
     global app
-    settings = dotenv_values(find_dotenv())
-
-    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATATABSE_PORT'],
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
-                    settings['DATABASE_NAME'])
-    else:
-        return redirect('/setup')
+    
     if not (os.path.exists(os.path.join(os.curdir, 'accounts'))):
         os.mkdir(os.path.join(os.curdir, 'accounts'))
     if not (os.path.exists(os.path.join(os.curdir, 'projects'))):
         os.mkdir(os.path.join(os.curdir, 'projects'))
 
+    settings = dotenv_values(find_dotenv())
+
+    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
+        print('--Setting up database connection')
+        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
+                    settings['DATABASE_NAME'])
+    
 @app.before_request
 def startup():
     # if not os.path.exists('.env'):

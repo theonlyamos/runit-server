@@ -45,7 +45,7 @@ def index():
 def details(project_id):
     old_curdir = os.curdir
     user_id = session['user_id']
-    
+    print(request.scheme, request.host_url)
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     if not os.path.isfile('.env'):
         file = open('.env', 'w')
@@ -57,7 +57,7 @@ def details(project_id):
 
     funcs = []
     for func in runit.get_functions():
-        funcs.append({'name': func, 'link': f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/"})
+        funcs.append({'name': func})
     
     os.chdir(old_curdir)
     project = Project.get(project_id)

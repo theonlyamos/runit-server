@@ -5,7 +5,7 @@ from ..common.security import authenticate
 from ..models import User
 
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv, dotenv_values
 
 from runit import RunIt
 
@@ -25,6 +25,10 @@ def initial():
 
 @public.route('/')
 def index():
+    settings = dotenv_values(find_dotenv())
+
+    if settings is None or settings['SETUP'] != 'completed':
+        return redirect(url_for('setup.index'))
     if 'user_id' in session:
         return redirect(url_for('account.index'))
     return render_template('login.html')
@@ -38,6 +42,7 @@ def project(project_id):
 
     return RunIt.notfound()
 
+@public.get('/<string:project_id>/<string:function>')
 @public.get('/<string:project_id>/<string:function>/')
 def run(project_id, function):
     if os.path.isdir(os.path.join(PROJECTS_DIR, project_id)):

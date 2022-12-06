@@ -7,10 +7,37 @@ from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
 
 from .app import app
 
+from odbms import DBMS
+from .models import Role, Admin
+
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
-VERSION = "0.2.1"
+VERSION = "0.2.2"
+
+def setup_database():
+    '''
+    Connect to database using connection settings from .env
+    
+    @params None
+    @return None
+    '''
+    settings = dotenv_values(find_dotenv())
+    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
+                    settings['DATABASE_NAME'])
+    if settings['DBMS'] == 'mysql':
+        DBMS.Database.setup()
+    
+    print('[--] Database setup complete')
+    
+    if not Role.count():
+        print('[#] Populating Roles')
+        Role('developer', []).save()
+        Role('superadmin', []).save()
+        Role('subadmin', []).save()
+        print('[--] Roles populated')
+    
 
 def create_folders():
     if not os.path.exists(os.path.join(CURDIR, 'projects')):
@@ -19,6 +46,44 @@ def create_folders():
     if not os.path.exists(os.path.join(CURDIR, 'accounts')):
         os.mkdir(os.path.join(CURDIR, 'accounts'))
 
+def create_dot_env(settings: dict):
+    '''
+    Create .env file and populate with {settings}
+    
+    @param settings dict Dictionary of default settings
+    @return None
+    '''
+    
+    with open('.env', 'wt') as file:
+        pass
+    for key, value in settings.items():
+        set_key(find_dotenv(), key, value)
+
+def create_default_admin():
+    '''
+    Create the default administrator account
+    
+    @params None
+    @return None
+    '''
+    create_account = True
+    if Admin.count():
+        create_account = False
+        
+        print('[!] Default Administrator account already exists.')
+        answer = input('[$] Would you like to reset the account? [yes|no]: ')
+        if answer.lower() == 'yes':
+            create_account = True
+            
+    if create_account:
+        print('[#] Create default administrator account')
+        adminusername = input('Administrator Username: ')
+        adminpassword = input('Administrator Password: ')
+        
+        if adminusername and adminpassword:
+            Admin('Administrator', adminusername, adminpassword, 1).save()
+        
+
 def setup_runit(args):
     '''
     Setup Runit server side
@@ -26,9 +91,8 @@ def setup_runit(args):
     @params args
     @return None
     '''
-    global parser
     domain = args.domain if hasattr(args, 'domain') else ''
-    allowed = ['DBMS', 'DATABASE_HOST', 'DATATABSE_PORT', 
+    allowed = ['DBMS', 'DATABASE_HOST', 'DATABASE_PORT', 
                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
                'DATABASE_NAME', 'RUNTIME_PYTHON',
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
@@ -37,7 +101,7 @@ def setup_runit(args):
         'RUNIT_SERVERNAME': '',
         'DBMS': 'mongodb',
         'DATABASE_HOST': 'localhost',
-        'DATABASE_PORT': 27017,
+        'DATABASE_PORT': '27017',
         'DATABASE_USERNAME': '',
         'DATABASE_PASSWORD': '',
         'DATABASE_NAME': 'runit',
@@ -46,16 +110,14 @@ def setup_runit(args):
         'RUNTIME_JAVASCRIPT': 'node',
         'SETUP': ''
     }
-    env_file = find_dotenv()
-    if not env_file:
-        with open('.env', 'wt'):
-            pass
-        env_file = find_dotenv()
-        for key, value in default_settings.items():
-            set_key(env_file, key, value)
-        load_dotenv()
-    
+
     settings = dotenv_values(find_dotenv())
+    
+    if settings is None or settings.keys() != default_settings.keys():
+        create_dot_env(default_settings)
+
+    settings = dotenv_values(find_dotenv())
+    
     if not domain:
         default = settings['RUNIT_SERVERNAME']
         domain = input(f'RUNIT_SERVERNAME [{default}]: ')
@@ -70,23 +132,26 @@ def setup_runit(args):
     settings['RUNIT_SERVERNAME'] = domain
     settings['RUNIT_HOMEDIR'] = os.path.join('..', os.path.realpath(os.path.split(__file__)[0]))
     
-    if settings['RUNIT_SERVERNAME'] and settings['DATABASE_PASSWORD'] and \
-        settings['DATABASE_HOST'] and settings['DATABASE_PORT'] and \
-        settings['DATABASE_NAME']:
+    if settings['DBMS'] and settings['DATABASE_HOST'] \
+        and settings['DATABASE_PORT'] and settings['DATABASE_NAME']:
         settings['SETUP'] = 'completed'
     
     for key, value in settings.items():
         set_key(find_dotenv(), key, value)
+    
+    setup_database()
+    create_default_admin()
 
 def run_server(args = None):
     if not find_dotenv():
         print('[#] Complete Setup configuration first.\n')
         setup_runit(args)
+        print('')
+
+    if args and args.production:
+        serve(app, listen=f"*:{args.port}")
     else:
-        if args and args.production:
-            serve(app, listen=f"*:{args.port}")
-        else:
-            app.run(host=args.host, port=args.port, debug=args.debug)
+        app.run(host=args.host, port=args.port, debug=args.debug)
 
 def get_arguments():
     global parser

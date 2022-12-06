@@ -31,7 +31,7 @@
                 <ul class="dropdown-menu rounded-0 shadow py-0">
                     {% for func in funcs %}
                     <li>
-                        <a href="{{func.link}}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
+                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
                             <i class="fas fa-terminal fa-fw text-dark"></i> {{func.name}}
                         </a>
                     </li>
