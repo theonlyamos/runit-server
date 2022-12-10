@@ -65,6 +65,7 @@ def create():
 @database.get('/<database_id>/')
 def details(database_id):
     database = Database.get(database_id)
+    
     if database:
         return render_template('databases/details.html', page='databases',\
             database=database.json())

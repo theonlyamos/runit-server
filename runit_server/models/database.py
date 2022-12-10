@@ -53,3 +53,12 @@ class Database(Model):
         
         return [cls(**Model.normalise(elem)) for elem in databases]
 
+    def json(self)-> dict:
+        '''
+        Instance Method for converting instance to Dict
+
+        @paramas None
+        @return Dict() format of Database instance
+        '''
+        
+        return self.__dict__

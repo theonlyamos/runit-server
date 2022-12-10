@@ -1,5 +1,6 @@
 from flask import Blueprint, redirect, render_template, \
      request, session, url_for, flash, jsonify
+from flask_jwt_extended import create_access_token
 
 from ..common.security import authenticate
 from ..models import User
@@ -84,6 +85,7 @@ def login():
         session['user_id'] = user.id
         session['user_name'] = user.name
         session['user_email'] = user.email
+        session['access_token'] = create_access_token(user.id)
         return redirect(url_for('account.index'))
     else:
         flash('Invalid Login Credentials', 'danger')
