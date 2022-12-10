@@ -52,6 +52,17 @@ class Role(Model):
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
+    
+    @classmethod
+    def get_by_name(cls, name: str):
+        '''
+        Class Method for retrieving role by name 
+
+        @param name Name of the role 
+        @return Role instance
+        '''
+        role = DBMS.Database.find_one(Role.TABLE_NAME, {"name": name})
+        return cls(**Model.normalise(role)) if role else None
 
     def permissions(self):
         '''

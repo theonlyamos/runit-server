@@ -1,5 +1,5 @@
 from odbms import DBMS, normalise
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_jwt
 
@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 from ..models import Function
 from ..models import Project
 from ..models import User
+from ..models import Database
 from .security import authenticate
 
 import os
@@ -109,9 +110,9 @@ class ProjectRS(Resource):
 
             funcs = []
             for func in runit.get_functions():
-                funcs.append(f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
+                funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
             result['functions'] = funcs
-            result['homepage'] = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/"
+            result['homepage'] = f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/"
             return result
         except Exception as e:
             return {'status': 'error', 'msg': str(e)}
@@ -197,7 +198,7 @@ class Document(Resource):
     Api for manipulating documents (crud)
     '''
 
-    # @jwt_required()
+    @jwt_required()
     def post(self, project_id, collection):
         '''
         Api for retrieving documents
@@ -206,38 +207,53 @@ class Document(Resource):
         @param collection Collection Name
         @return Documents Documents from collection
         '''
+
         try:
             data = request.get_json()
 
             if not 'function' in data.keys():
                 raise SyntaxError('No database function to run')
-
             
             function = data['function']
 
             if function == 'all' or function == 'find_many':
-                results = DBMS.Database.find(collection, data['filter'], data['columns'])
+                results = Database.find({'project_id': project_id, 'name': collection})
+                #results = DBMS.Database.find(db, {}, data['columns'])
 
             elif function == 'find_one':
-                results = DBMS.Database.find_one(collection, data['filter'], data['columns'])
+                data['filter']['project_id'] = project_id
+                data['filter']['name'] = collection
+                results = Database.find(data['filter'])[0]
+                #results = DBMS.Database.find_one(db, normalise(data['filter'], 'params'), data['columns'])
 
             elif function == 'insert':
-                results = DBMS.Database.insert(collection, data['document'])
+                main_data = {'name': collection, 'user_id': get_jwt_identity(), **data['document']}
+                new = Database(**main_data)
+                results = new.save().inserted_id
+                #results = DBMS.Database.insert(db, normalise(main_data, 'params')).inserted_id
 
             elif function == 'update':
-                results = DBMS.Database.update(collection, data['filter'], data['update'])
+                data['filter']['name'] = collection
+                data['filter']['user_id'] = get_jwt_identity()
+                results = Database.update(data['filter'], data['update'])
+                #results = DBMS.Database.update(db, normalise(data['filter'], 'params'), normalise(data['update'], 'params'))
             
             elif function == 'count':
-                results = DBMS.Database.count(collection, data['filter'])
-
-            if type(results) == list:
-                return [normalise(result) for result in results]
-            elif type(results) == int:
-                return {'count': results}
+                data['filter']['name'] = collection
+                results = Database.count(data['filter'])
+                #results = DBMS.Database.count(db, normalise(data['filter'], 'params'))
+            
+            if function == 'find_many' or function == 'all':
+                return jsonify([result.json() for result in results])
+            elif function == 'find_one':
+                return jsonify(results.json())
+            elif function == 'insert':
+                return jsonify({'status': 'success', 'msg': 'Operation successful', 'insert_id': str(results)})
+            elif function == 'count':
+                return jsonify({'count': results})
             else:
-                return normalise(results)
+                return jsonify({'status': 'success', 'msg': 'Operation successful'})
 
         except Exception as e:
-            print(str(e))
-            return {'status': 'error', 'msg': str(e)}
+            return jsonify({'status': 'error', 'msg': str(e)})
    

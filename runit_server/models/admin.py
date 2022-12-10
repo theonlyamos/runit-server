@@ -11,12 +11,13 @@ class Admin(Model):
     '''A model class for admin'''
     TABLE_NAME = 'admins'
 
-    def __init__(self, name, username, password, role_id, created_at=None, updated_at=None, id=None):
+    def __init__(self, email, name, username, password, role, created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
+        self.email = email
         self.username = username
         self.name = name
         self.password = password
-        self.role_id = role_id
+        self.role = role
         
 
     def save(self):
@@ -28,9 +29,10 @@ class Admin(Model):
         '''
 
         data = {
+            "email": self.email,
             "name": self.name,
             "username": self.username,
-            "role_id": self.role_id,
+            "role": self.role,
             "password": Utils.hash_password(self.password)
         }
 
@@ -61,14 +63,15 @@ class Admin(Model):
 
         return {
             "id": str(self.id),
+            "email": self.email,
             "name": self.name,
-            "role": self.role(),
+            "role": self.get_role(),
             "username": self.username,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
     
-    def role(self):
+    def get_role(self):
         '''
         Instance Method for retrieving Admin Role
 
@@ -76,7 +79,7 @@ class Admin(Model):
         @return List[Role] of Admin Instance
         '''
 
-        return DBMS.Database.find_one('roles', Admin.normalise({'id': self.role_id}, 'params'))
+        return DBMS.Database.find_one('roles', Admin.normalise({'name': self.role}, 'params'))
 
 
     @classmethod
@@ -88,4 +91,15 @@ class Admin(Model):
         @return Admin instance
         '''
         admin = DBMS.Database.find_one(Admin.TABLE_NAME, {"username": username})
+        return cls(**Model.normalise(admin)) if admin else None
+    
+    @classmethod
+    def get_by_role(cls, role: str):
+        '''
+        Class Method for retrieving admin by role 
+
+        @param role Role of the admin 
+        @return Admin instance
+        '''
+        admin = DBMS.Database.find_one(Admin.TABLE_NAME, {"role": role})
         return cls(**Model.normalise(admin)) if admin else None

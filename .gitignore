@@ -38,6 +38,9 @@ MANIFEST
 *.manifest
 *.spec
 
+# Project Folders
+runit_server/projects/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

@@ -1,0 +1,117 @@
+{% extends "account/layout.html" %}
+{% block title %} 
+{{super()}} | {{page | capitalize}} | {{database.name}}
+{% endblock %}
+
+{% block pagetitle %}
+<div class="d-flex align-items center">
+    <a href="{{url_for('database.index')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
+    / 
+    <span>{{ database.name | upper}}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include 'databases/modal.html' %}
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <div class="tools d-flex justify-content-end">
+        <div class="btn-group" role="group" aria-label="tool buttons">
+            <a href="{{ url_for('database.index')}}" role="button" class="btn btn-sm btn-secondary bg-gradient hover:shadow-sm mb-2" title="Disable Database">
+                <i class="fas fa-eye-slash"></i>
+            </a>
+            <a href="{{ url_for('database.index')}}" role="button" class="btn btn-sm btn-danger bg-gradient hover:shadow-sm mb-2" title="Delete Database">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="card rounded-0 border-0">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <small>Details</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-collections" type="button" role="tab" aria-controls="nav-collections" aria-selected="true">
+                    <small>Collections</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <small>Settings</small>
+                </button>
+                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
+                    <small>Console</small>
+                </button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold"></small>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-sm btn-primary bg-gradient border-0" onclick="updateEnvs()">
+                                <i class="fas fa-save fa-fw"></i> Update
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+						<div class='w-100' style='wrap: wrap'>
+							<code>
+								{{database}}
+							</code>
+						</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade bg-light" id="nav-collections" role="tabpanel" aria-labelledby="nav-collections-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-md-6 d-flex flex-column">
+    
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card rounded-0 border-0 shadow-sm my-2">
+                            <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-dark" onclick="createEnv()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                                        <i class="fas fa-save fa-fw"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body pb-0">
+                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6"></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-console" role="tabpanel" aria-labelledby="nav-console-tab" tabindex="0">
+                Terminal Console
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{{super()}}
+<script src="{{url_for('static', filename='js/databases.js')}}"></script>
+{% endblock %}

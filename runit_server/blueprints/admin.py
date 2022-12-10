@@ -29,8 +29,8 @@ admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.jo
 
 @admin.before_request
 def authorize():
-    print('hello', request.url_path)
-    # if not 'admin_id' in session:
+    pass
+    #if not 'admin_id' in session:
     #     return redirect(url_for('admin.loginpage'))
 
 @admin.get('/login/')
@@ -123,6 +123,19 @@ def project(project_id):
 @admin.get('/functions')
 @admin.get('/functions/')
 def functions():
+    global EXTENSIONS
+    global LANGUAGE_ICONS
+    
+    functions = Function.get_by_admin(session['admin_id'])
+    projects = Project.get_by_admin(session['admin_id'])
+    
+    return render_template('functions/index.html', page='functions',\
+            functions=functions, projects=projects,\
+            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
+
+@admin.get('/databases')
+@admin.get('/databases/')
+def databases():
     global EXTENSIONS
     global LANGUAGE_ICONS
     

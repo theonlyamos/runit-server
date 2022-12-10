@@ -20,7 +20,7 @@ api = Api(app, prefix='/api')
 
 load_dotenv()
 app.secret_key =  "dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf"
-#app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
+app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
 app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 
@@ -44,13 +44,14 @@ api.add_resource(Document, '/document/<string:project_id>/<string:collection>/')
 #api.add_resource(FunctionById, '/functions/<string:function_id>/')
 
 
-from .blueprints import public, account, functions, project, admin, setup
+from .blueprints import public, account, functions, project, database, admin, setup
 
 app.register_blueprint(setup)
 app.register_blueprint(public)
 app.register_blueprint(functions)
 app.register_blueprint(account)
 app.register_blueprint(project)
+app.register_blueprint(database)
 app.register_blueprint(admin, subdomain='admin')
 
 @app.route('/complete_setup/')

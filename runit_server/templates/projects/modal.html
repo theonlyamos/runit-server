@@ -1,7 +1,7 @@
 <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content rounded-0">
-            <form action="{{ url_for('account.projects') }}" method="post">
+            <form action="{{ url_for('project.create') }}" method="post">
                 <div class="modal-header text-bg-dark rounded-0">
                     <h5 class="modal-title fw-bolder" id="projectModalLabel">New Project</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -17,13 +17,27 @@
                             <option selected disabled>
                                 <i class="fas fa-code fa-fw"></i> Programming Language
                             </option>
-                            {% for lang in languages %}
-                            <option value="{{lang}}">
+                            {% for lang in icons %}
+                            <option value="{{lang | lower }}">
                                 <i class="fab fa-{{icons[lang]}} fa-fw"></i> {{ lang | capitalize }}
                             </option>
                             {% endfor %}
                         </select>
                     </div>
+					<div class="form-group mb-3">
+						<textarea class="form-control form-control-sm" name="description" placeholder="Project Description"></textarea>
+					</div>
+					<div class="form-group mb-3">
+						<label for="database" class="small">Create database for project?</label>
+						<div class="form-check">
+							<label class="form-check-label small">NO</label>
+							<input type="radio" name="database" value=0 checked class="form-check-input">
+						</div>
+						<div class="form-check">
+							<label class="form-check-label small">YES</label>
+							<input type="radio" name="database" value=1 class="form-check-input">
+						</div>
+					</div>
                 </div>
                 <div class="modal-footer p-0">
                     <button type="button" class="btn btn-light rounded-0 m-0" data-bs-dismiss="modal">

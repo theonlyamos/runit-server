@@ -72,6 +72,18 @@ def functions():
             functions=functions, projects=projects,\
             languages=EXTENSIONS, icons=LANGUAGE_ICONS)
 
+@account.get('/databases')
+@account.get('/databases/')
+def databases():
+    global EXTENSIONS
+    global LANGUAGE_ICONS
+
+    functions = Function.get_by_user(session['user_id'])
+    projects = Project.get_by_user(session['user_id'])
+    
+    return render_template('functions/index.html', page='functions',\
+            functions=functions, projects=projects,\
+            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
  
 @account.get('/profile')
 @account.get('/profile/')

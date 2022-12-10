@@ -9,17 +9,20 @@ from flask import Blueprint, flash, render_template, redirect, \
 from bson.objectid import ObjectId
 from dotenv import load_dotenv, dotenv_values, set_key
 
+from ..models import Database
 from ..models import Project
 from ..models import User
 
-
-from runit import RunIt
+from runit import RunIt, TEMPLATES_FOLDER
 
 load_dotenv()
 
 EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}
+
 LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
-                  'javascript': 'node-js', 'typescript': 'node-js'}
+                  'javascript': 'node-js'}
+LANGUAGE_TO_RUNTIME = {'python': 'python', 'php': 'php',
+                  'javascript': 'node'}
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
@@ -38,14 +41,72 @@ def index():
     view = request.args.get('view')
     view = view if view else 'grid'
     projects = Project.get_by_user(user_id)
+    
     return render_template('projects/index.html', page='projects',\
             projects=projects, view=view, icons=LANGUAGE_ICONS)
+
+@project.post('/')
+def create():
+    user_id = session['user_id']
+    user = User.get(user_id)
+    
+    name = request.form.get('name')
+    language = request.form.get('language')
+    description = request.form.get('description')
+    
+    if name and language:
+        # name = RunIt.set_project_name(args.name)
+        # if RunIt.exists(name):
+        #    print(f'{name} project already Exists')
+        #    sys.exit(1)
+        
+        config = {}
+        config['name'] = name
+        config['language'] = language
+        config['runtime'] = LANGUAGE_TO_RUNTIME[language]
+        config['description'] = description
+        config['author'] = {}
+        config['author']['name'] = user.name
+        config['author']['email'] = user.email
+        
+        project = Project(user_id, **config)
+        project_id = project.save().inserted_id
+        project_id = str(project_id)
+        project.id = project_id
+        
+        homepage = f"{request.base_url}/{project_id}/"
+        project.update({'homepage': homepage})
+
+        config['_id'] = project_id
+        config['homepage'] = homepage
+        
+        os.chdir(PROJECTS_DIR)
+        
+        config['name'] = project_id
+        new_runit = RunIt(**config)
+        
+        new_runit._id = project_id
+        new_runit.name = name
+        
+        os.chdir(os.path.join(PROJECTS_DIR, project_id))
+        new_runit.update_config()
+        
+        os.chdir(HOMEDIR)
+        
+        if (request.form.get('database')):
+            # Create database for project
+            new_db = Database(name+'_db', user_id, project_id).save()
+        
+        flash('Project Created Successfully.', category='success')
+    else:
+        flash('Missing required fields.', category='danger')
+    return redirect(url_for('project.index'))
 
 @project.get('/<project_id>/')
 def details(project_id):
     old_curdir = os.curdir
     user_id = session['user_id']
-    print(request.scheme, request.host_url)
+    
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     if not os.path.isfile('.env'):
         file = open('.env', 'w')
@@ -81,28 +142,21 @@ def environ(project_id):
     flash('Environment variables updated successfully', category='success')
     return redirect(url_for('project.details', project_id=project_id))
 
-@project.post('/')
-def new_project():
-    user_id = session['user_id']
-    name = request.form.get('name')
-    date = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
-    project_id=None
-    if name:
-        project_id = Project(name, user_id).save()
-        flash('Project created successfully', category='success')
-    else:
-        flash('Name of the project is required', category='danger')
-    if project_id:
-        return redirect(url_for('project.details', project_id=project_id))
-    else:
-        return redirect(url_for('project.new_project'))
-
 @project.patch('/')
 def update_project():
     user_id = session['user_id']
     return render_template('projects/index.html', page='projects', projects=[])
 
-@project.delete('/')
-def delete_project():
+@project.post('/delete/<project_id>/')
+def delete(project_id):
     user_id = session['user_id']
-    return render_template('projects/index.html', page='projects', projects=[])
+    project = Project.get(project_id)
+    if project:
+        result = Project.remove({'_id': project_id, 'user_id': user_id})
+        os.chdir(PROJECTS_DIR)
+        os.system(f'rm -rf {project_id}')
+        os.chdir(HOMEDIR)
+        flash('Project deleted successfully', category='success')
+    else:
+        flash('Project was not found. Operation not successful.', category='danger')
+    return redirect(url_for('project.index'))

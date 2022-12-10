@@ -29,7 +29,7 @@ def setup_database():
     if settings['DBMS'] == 'mysql':
         DBMS.Database.setup()
     
-    print('[--] Database setup complete')
+    # print('[--] Database setup complete')
     
     if not Role.count():
         print('[#] Populating Roles')
@@ -59,29 +59,41 @@ def create_dot_env(settings: dict):
     for key, value in settings.items():
         set_key(find_dotenv(), key, value)
 
-def create_default_admin():
+def create_default_admin(args_is_true: bool = False):
     '''
     Create the default administrator account
     
     @params None
     @return None
     '''
+    if args_is_true:
+        setup_database()
+        
     create_account = True
     if Admin.count():
         create_account = False
         
-        print('[!] Default Administrator account already exists.')
+        result = Admin.find({})
+        if len(result):
+            admin = result[0]
+            print(f'[!] Default Administrator account already exists [{admin.username}]')
         answer = input('[$] Would you like to reset the account? [yes|no]: ')
         if answer.lower() == 'yes':
+            Admin.remove({'username': admin.username})
             create_account = True
             
     if create_account:
         print('[#] Create default administrator account')
+        adminemail = input('Administrator Email Address: ')
+        adminname = input('Administrator Full Name: ')
         adminusername = input('Administrator Username: ')
         adminpassword = input('Administrator Password: ')
+        adminrole = input('Administrator role: [superadmin] ')
+        adminrole = adminrole if adminrole else 'superadmin'
         
-        if adminusername and adminpassword:
-            Admin('Administrator', adminusername, adminpassword, 1).save()
+        if adminemail and adminusername and adminpassword and adminrole:
+            Admin(adminemail, adminname, adminusername, adminpassword, adminrole).save()
+            print('[!] Administrator account created successfully.')
         
 
 def setup_runit(args):
@@ -91,6 +103,9 @@ def setup_runit(args):
     @params args
     @return None
     '''
+    if args.admin:
+        return create_default_admin(args.admin)
+        
     domain = args.domain if hasattr(args, 'domain') else ''
     allowed = ['DBMS', 'DATABASE_HOST', 'DATABASE_PORT', 
                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
@@ -167,6 +182,7 @@ def get_arguments():
     setup_parser.add_argument('--dbusername', type=str, help="Database user username")
     setup_parser.add_argument('--dbpassword', type=str, help="Database user password")
     setup_parser.add_argument('--dbname', type=str, help="Database name")
+    setup_parser.add_argument('--admin', action='store_true', help="Manage administrator account")
     setup_parser.set_defaults(func=setup_runit)
     
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Host address to run server on')

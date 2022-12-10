@@ -22,7 +22,11 @@
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger small py-0" href="#">Delete</a></li>
+            <li>
+				<form method="post" action="{{ url_for('project.delete', project_id=project.id) }}">
+					<button type="submit" class="btn btn-link text-danger small py-0" style="text-decoration: none">Delete</button>
+				</form>
+			</li>
         </ul>
     </nav>
 </div>

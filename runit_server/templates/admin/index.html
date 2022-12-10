@@ -10,7 +10,7 @@
         {'name': 'users', 'icon': 'users', 'url': 'admin.users'},
         {'name': 'projects', 'icon': 'sitemap', 'url': 'admin.projects'},
         {'name': 'functions', 'icon': 'terminal', 'url': 'account.functions'},
-        {'name': 'profile', 'icon': 'user', 'url': 'account.profile'}
+        {'name': 'databases', 'icon': 'database', 'url': 'admin.databases'}
     ] %}
     {% for item in menu %}
     <a href="{{ url_for(item['url']) }}" 
