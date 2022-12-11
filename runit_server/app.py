@@ -5,7 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
 from odbms import DBMS
-from .common import  Login, Account, ProjectById, ProjectRS, Document
+from .common import  Login, Account, ProjectById, ProjectRS, ProjectCloneRS, Document
 
 from .models import Admin
 from .models import Role
@@ -38,6 +38,7 @@ api.add_resource(Login, '/login/')
 api.add_resource(Account, '/account/')
 api.add_resource(ProjectRS, '/projects/')
 api.add_resource(ProjectById, '/projects/<string:project_id>/')
+api.add_resource(ProjectCloneRS, '/projects/clone/<string:project>/')
 api.add_resource(Document, '/document/<string:project_id>/<string:collection>/')
 #api.add_resource(RunFunction, '/<string:project_id>/<string:function>/')
 #api.add_resource(FunctionRS, '/functions/')

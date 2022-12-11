@@ -19,22 +19,24 @@
                         </td>
                         <td>{{ database['updated_at'] }}</td>
                         <td class="text-center">
-                            <nav class="dropdown">
-                                <a class="nav-link p-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v bg-white border rounded-circle"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-left position-fixed rounded-0 shadow" role="menu">
-                                    <li>
-                                        <a href="{{url_for('database.details', database_id=database['id'])}}" class="dropdown-item small py-0">
-                                            Details
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item small py-0" href="#">Update</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger small py-0" href="#">Delete</a></li>
-                                </ul>
-                            </nav>
+                            <nav class="nav-item dropdown position-absolute top-0" style="right: 0">
+								<a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+									<i class="fas fa-ellipsis-v"></i>
+								</a>
+								<ul class="dropdown-menu rounded-0 shadow">
+									<li>
+										<a href="{{url_for('database.details', database_id=database.id)}}" class="dropdown-item small py-0">
+											Details
+										</a>
+									</li>
+									<li><hr class="dropdown-divider"></li>
+									<li>
+										<form method="post" action="{{ url_for('database.delete', database_id=database.id) }}">
+											<button type="submit" class="btn btn-link text-danger small py-0" style="text-decoration: none">Delete</button>
+										</form>
+									</li>
+								</ul>
+							</nav>
                         </td>
                     </tr>
                     {% endfor %}

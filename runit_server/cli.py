@@ -13,7 +13,7 @@ from .models import Role, Admin
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 
 def setup_database():
     '''

@@ -117,6 +117,37 @@ class ProjectRS(Resource):
         except Exception as e:
             return {'status': 'error', 'msg': str(e)}
 
+class ProjectCloneRS(Resource):
+    '''
+    Projects Api
+    '''
+
+    @jwt_required()
+    def get(self, project_id):
+        '''
+        Clone project from terminal
+        
+        @param project_id str ID of the project to clone
+        @return Compressed file of files in project directory
+        '''
+        
+        project = Project.find({'project_id': project_id, 'user_id': get_jwt_identity()})
+        if len(project):
+            os.chdir(os.path.join(PROJECTS_DIR, project_id))
+            config = RunIt.load_config()
+            
+            if not config:
+                raise FileNotFoundError
+            
+            project = RunIt(**config)
+            filename = project.compress()
+            os.chdir(HOMEDIR)
+            print(filename)
+            
+            return send_from_directory(os.path.join(PROJECTS_DIR, project_id), filename, as_attachment=True)
+        else:
+            return jsonify({'status': 'error', 'msg': 'Project does not exist'})
+
 class ProjectById(Resource):
     '''
     Project Api
@@ -227,9 +258,8 @@ class Document(Resource):
                 #results = DBMS.Database.find_one(db, normalise(data['filter'], 'params'), data['columns'])
 
             elif function == 'insert':
-                main_data = {'name': collection, 'user_id': get_jwt_identity(), **data['document']}
-                new = Database(**main_data)
-                results = new.save().inserted_id
+                update_document = {collection: data['document']}
+                results = Database.update({'project_id': project_id, 'user_id': get_jwt_identity()}, update_document)
                 #results = DBMS.Database.insert(db, normalise(main_data, 'params')).inserted_id
 
             elif function == 'update':
@@ -248,7 +278,7 @@ class Document(Resource):
             elif function == 'find_one':
                 return jsonify(results.json())
             elif function == 'insert':
-                return jsonify({'status': 'success', 'msg': 'Operation successful', 'insert_id': str(results)})
+                return jsonify({'status': 'success', 'msg': 'Operation successful'})
             elif function == 'count':
                 return jsonify({'count': results})
             else:

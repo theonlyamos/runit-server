@@ -27,7 +27,7 @@ class Database(Model):
         if DBMS.Database.dbms == 'mongodb':
             data["created_at"]: self.created_at
             data["updated_at"]: self.updated_at
-        print(data)
+
         return DBMS.Database.insert(Database.TABLE_NAME, Model.normalise(data, 'params'))
     
     def user(self):
