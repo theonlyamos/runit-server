@@ -3,11 +3,12 @@ from odbms import DBMS, Model
 class Database(Model):
     TABLE_NAME = 'databases'
 
-    def __init__(self, name, user_id, project_id = None, created_at=None, updated_at=None, id=None, **kwargs):
+    #def __init__(self, name, user_id, project_id = None, created_at=None, updated_at=None, id=None, **kwargs):
+    def __init__(self, created_at=None, updated_at=None, id=None, **kwargs):
         super().__init__(created_at, updated_at, id)
-        self.name = name
-        self.user_id = user_id
-        self.project_id = project_id
+        #self.name = name
+        #self.user_id = user_id
+        #self.project_id = project_id
 
         for key, value in kwargs.items():
             self.__setattr__(key, value)

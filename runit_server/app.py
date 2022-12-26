@@ -110,7 +110,6 @@ def init():
     settings = dotenv_values(find_dotenv())
 
     if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        print('--Setting up database connection')
         DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
                     settings['DATABASE_NAME'])

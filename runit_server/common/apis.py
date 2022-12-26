@@ -123,17 +123,23 @@ class ProjectCloneRS(Resource):
     '''
 
     @jwt_required()
-    def get(self, project_id):
+    def get(self, project):
         '''
         Clone project from terminal
         
         @param project_id str ID of the project to clone
         @return Compressed file of files in project directory
         '''
+        global PROJECTS_DIR
+        PROJECTS_DIR = os.path.realpath(os.path.join(CURRENT_PATH, '..', 'projects'))
         
-        project = Project.find({'project_id': project_id, 'user_id': get_jwt_identity()})
+        project = Project.find({'name': project, 'user_id': get_jwt_identity()})
+        
         if len(project):
-            os.chdir(os.path.join(PROJECTS_DIR, project_id))
+            if not os.path.exists(os.path.join(PROJECTS_DIR, project[0].id)):
+                raise Exception('Project not found!')
+                
+            os.chdir(os.path.join(PROJECTS_DIR, project[0].id))
             config = RunIt.load_config()
             
             if not config:
@@ -241,21 +247,23 @@ class Document(Resource):
 
         try:
             data = request.get_json()
-
+            
             if not 'function' in data.keys():
                 raise SyntaxError('No database function to run')
             
             function = data['function']
 
-            if function == 'all' or function == 'find_many':
-                results = Database.find({'project_id': project_id, 'name': collection})
-                #results = DBMS.Database.find(db, {}, data['columns'])
+            if function == 'all' or function == 'all' or function == 'find_many':
+                projection = {collection: {'$elemMatch': data['_filter']}}
+                #data['_filter']['project_id'] = project_id
+                #results = Database.find({'project_id': project_id}, projection)
+                results = Database.find({'project_id': project_id})
+                #results = DBMS.Database.find(db, {}, data['projection'])
 
             elif function == 'find_one':
-                data['filter']['project_id'] = project_id
-                data['filter']['name'] = collection
-                results = Database.find(data['filter'])[0]
-                #results = DBMS.Database.find_one(db, normalise(data['filter'], 'params'), data['columns'])
+                data['_filter']['project_id'] = project_id
+                results = Database.find_one(data['_filter'], data['projection'])
+                #results = DBMS.Database.find_one(db, normalise(data['_filter'], 'params'), data['projection'])
 
             elif function == 'insert':
                 update_document = {collection: data['document']}
@@ -263,20 +271,20 @@ class Document(Resource):
                 #results = DBMS.Database.insert(db, normalise(main_data, 'params')).inserted_id
 
             elif function == 'update':
-                data['filter']['name'] = collection
-                data['filter']['user_id'] = get_jwt_identity()
-                results = Database.update(data['filter'], data['update'])
-                #results = DBMS.Database.update(db, normalise(data['filter'], 'params'), normalise(data['update'], 'params'))
+                data['_filter']['name'] = collection
+                data['_filter']['user_id'] = get_jwt_identity()
+                results = Database.update(data['_filter'], data['update'])
+                #results = DBMS.Database.update(db, normalise(data['_filter'], 'params'), normalise(data['update'], 'params'))
             
             elif function == 'count':
-                data['filter']['name'] = collection
-                results = Database.count(data['filter'])
-                #results = DBMS.Database.count(db, normalise(data['filter'], 'params'))
+                data['_filter']['name'] = collection
+                results = Database.count(data['_filter'])
+                #results = DBMS.Database.count(db, normalise(data['_filter'], 'params'))
             
-            if function == 'find_many' or function == 'all':
-                return jsonify([result.json() for result in results])
+            if function == 'find_many' or function == 'find' or function == 'all':
+                return jsonify([result.json()[collection] for result in results][0])
             elif function == 'find_one':
-                return jsonify(results.json())
+                return jsonify(results.json()[collection])
             elif function == 'insert':
                 return jsonify({'status': 'success', 'msg': 'Operation successful'})
             elif function == 'count':

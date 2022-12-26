@@ -66,8 +66,8 @@
                     </div>
                     <div class="card-body pb-0">
 						<div class='w-100' style='wrap: wrap'>
-							<code>
-								{{database}}
+							<code id="database">
+								
 							</code>
 						</div>
                     </div>
@@ -136,6 +136,10 @@
 {% endblock %}
 
 {% block scripts %} 
+<script>
+let db = JSON.parse({{ database | tojson }})
+document.getElementById("database").textContent = JSON.stringify(db, null, 4);
+</script>
 {{super()}}
 <script src="{{url_for('static', filename='js/databases.js')}}"></script>
 {% endblock %}

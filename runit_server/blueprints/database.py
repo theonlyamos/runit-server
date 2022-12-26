@@ -1,6 +1,7 @@
 
 import os
 import sys
+import json
 from time import sleep
 from datetime import datetime
 
@@ -68,7 +69,7 @@ def details(database_id):
     
     if database:
         return render_template('databases/details.html', page='databases',\
-            database=database.json())
+            database=json.dumps(database.json()))
     else:
         flash('Database does not exist', 'danger')
         return redirect(url_for('database.index'))

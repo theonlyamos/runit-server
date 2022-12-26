@@ -4,6 +4,8 @@ LABEL maintainer="Amos Amissah"
 
 ENV TZ=UTC
 
+WORKDIR /app/
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update \
@@ -37,7 +39,9 @@ RUN apt-get update \
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
-RUN python3 -m pip install runit-server
+COPY . /app/
+
+RUN mv .env.development .env                                                                                                                                                                                                                                      RUN python3 -m pip install . 
 
 EXPOSE 9000
 
