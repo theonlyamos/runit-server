@@ -41,7 +41,9 @@ RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
 COPY . /app/
 
-RUN mv .env.development .env                                                                                                                                                                                                                                      RUN python3 -m pip install . 
+RUN mv .env.development .env
+
+RUN python3 -m pip install .
 
 EXPOSE 9000
 
