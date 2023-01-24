@@ -21,7 +21,7 @@ mysql-connector==2.2.9
 mysql-connector-python==8.0.30
 mysqlclient==2.1.1
 passlib==1.7.4
-protobuf==3.20.1
+protobuf==3.20.2
 pycparser==2.21
 PyJWT==2.4.0
 pymongo==4.1.1
