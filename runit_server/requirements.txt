@@ -1,10 +1,10 @@
 aniso8601==9.0.1
-certifi==2021.10.8
+certifi==2022.12.7
 cffi==1.15.0
 charset-normalizer==2.0.12
 click==8.1.2
 colorama==0.4.5
-cryptography==37.0.2
+cryptography==38.0.3
 dnspython==2.2.1
 Flask==2.1.1
 Flask-JWT-Extended==4.4.0
@@ -21,7 +21,7 @@ mysql-connector==2.2.9
 mysql-connector-python==8.0.30
 mysqlclient==2.1.1
 passlib==1.7.4
-protobuf==3.20.1
+protobuf==3.20.2
 pycparser==2.21
 PyJWT==2.4.0
 pymongo==4.1.1
