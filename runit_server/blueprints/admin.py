@@ -18,11 +18,11 @@ from ..common import Utils
 from runit import RunIt
 
 EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
-LANGUAGE_ICONS = {'python': 'python', 'python3': 'python', 'php': 'php',
+LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
                   'javascript': 'node-js', 'typescript': 'node-js'}
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+HOMEDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))

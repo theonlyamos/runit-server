@@ -25,7 +25,7 @@ LANGUAGE_TO_RUNTIME = {'python': 'python', 'php': 'php',
                   'javascript': 'node'}
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+HOMEDIR =  os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 project = Blueprint('project', __name__, url_prefix='/projects', template_folder=os.path.join('..','..','templates'), static_folder=os.path.join('..','static'))
@@ -149,14 +149,18 @@ def update_project():
 
 @project.post('/delete/<project_id>/')
 def delete(project_id):
-    user_id = session['user_id']
-    project = Project.get(project_id)
-    if project:
-        result = Project.remove({'_id': project_id, 'user_id': user_id})
-        os.chdir(PROJECTS_DIR)
-        os.system(f'rm -rf {project_id}')
-        os.chdir(HOMEDIR)
-        flash('Project deleted successfully', category='success')
-    else:
-        flash('Project was not found. Operation not successful.', category='danger')
-    return redirect(url_for('project.index'))
+    try:
+        user_id = session['user_id']
+        project = Project.get(project_id)
+        if project:
+            result = Project.remove({'_id': project_id, 'user_id': user_id})
+            os.chdir(PROJECTS_DIR)
+            os.remove(project_id)
+            os.chdir(HOMEDIR)
+            flash('Project deleted successfully', category='success')
+        else:
+            flash('Project was not found. Operation not successful.', category='danger')
+    except:
+        flash('Error deleting project. Try again later.', category='danger')
+        return redirect(url_for('project.index'))
+    

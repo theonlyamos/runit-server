@@ -13,6 +13,7 @@ from .models import Role, Admin
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
+WORKDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
 VERSION = "0.2.3"
 
 def setup_database():
@@ -40,11 +41,14 @@ def setup_database():
     
 
 def create_folders():
-    if not os.path.exists(os.path.join(CURDIR, 'projects')):
-        os.mkdir(os.path.join(CURDIR, 'projects'))
+    if not os.path.exists(WORKDIR):
+        os.mkdir(WORKDIR)
     
-    if not os.path.exists(os.path.join(CURDIR, 'accounts')):
-        os.mkdir(os.path.join(CURDIR, 'accounts'))
+    if not (os.path.exists(os.path.join(WORKDIR, 'accounts'))):
+        os.mkdir(os.path.join(WORKDIR, 'accounts'))
+        
+    if not (os.path.exists(os.path.join(WORKDIR, 'projects'))):
+        os.mkdir(os.path.join(WORKDIR, 'projects'))
 
 def create_dot_env(settings: dict):
     '''
@@ -112,6 +116,7 @@ def setup_runit(args):
                'DATABASE_NAME', 'RUNTIME_PYTHON',
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
     default_settings = {
+        'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR'),
         'RUNIT_HOMEDIR': CURDIR,
         'RUNIT_SERVERNAME': '',
         'DBMS': 'mongodb',

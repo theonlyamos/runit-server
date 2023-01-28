@@ -15,6 +15,8 @@ import logging
 from datetime import timedelta
 from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
+WORKDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
+
 app = Flask(__name__)
 api = Api(app, prefix='/api')
 
@@ -102,10 +104,14 @@ def get_parameters():
 def init():
     global app
     
-    if not (os.path.exists(os.path.join(os.curdir, 'accounts'))):
-        os.mkdir(os.path.join(os.curdir, 'accounts'))
-    if not (os.path.exists(os.path.join(os.curdir, 'projects'))):
-        os.mkdir(os.path.join(os.curdir, 'projects'))
+    if not os.path.exists(WORKDIR):
+        os.mkdir(WORKDIR)
+    
+    if not (os.path.exists(os.path.join(WORKDIR, 'accounts'))):
+        os.mkdir(os.path.join(WORKDIR, 'accounts'))
+        
+    if not (os.path.exists(os.path.join(WORKDIR, 'projects'))):
+        os.mkdir(os.path.join(WORKDIR, 'projects'))
 
     settings = dotenv_values(find_dotenv())
 

@@ -3,7 +3,7 @@ from flask import request, jsonify
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_jwt
 
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, send_from_directory
 
 from ..models import Function
 from ..models import Project
@@ -20,7 +20,7 @@ from runit import RunIt
 load_dotenv()
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
+HOMEDIR =  os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 def stringifyObjectIds(model: object, properties: list)-> object:
@@ -95,7 +95,7 @@ class ProjectRS(Resource):
                 project = Project.get(data['_id'])
                 del data['_id']
                 project.update(data, {'id': project.id})
-    
+
             if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
                 os.mkdir(os.path.join(PROJECTS_DIR, project_id))
             filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
@@ -105,14 +105,16 @@ class ProjectRS(Resource):
             os.chdir(os.path.join(PROJECTS_DIR, project_id))
             #os.unlink(secure_filename(file.filename))
             runit = RunIt(**RunIt.load_config())
+            
             runit._id = project_id
             runit.update_config()
-
+            
             funcs = []
             for func in runit.get_functions():
                 funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
+            
             result['functions'] = funcs
-            result['homepage'] = f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/"
+            result['homepage'] = funcs[0]
             return result
         except Exception as e:
             return {'status': 'error', 'msg': str(e)}
@@ -150,7 +152,7 @@ class ProjectCloneRS(Resource):
             os.chdir(HOMEDIR)
             print(filename)
             
-            return send_from_directory(os.path.join(PROJECTS_DIR, project_id), filename, as_attachment=True)
+            return send_from_directory(os.path.join(PROJECTS_DIR, project.id), filename, as_attachment=True)
         else:
             return jsonify({'status': 'error', 'msg': 'Project does not exist'})
 
