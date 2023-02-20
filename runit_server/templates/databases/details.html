@@ -37,16 +37,10 @@
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
                 <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <small>Details</small>
-                </button>
-                <button class="nav-link rounded-0" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-collections" type="button" role="tab" aria-controls="nav-collections" aria-selected="true">
-                    <small>Collections</small>
+                    <small>Documents</small>
                 </button>
                 <button class="nav-link rounded-0" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
-                    <small>Settings</small>
-                </button>
-                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
-                    <small>Console</small>
+                    <small>Schema</small>
                 </button>
 				<button class="nav-link rounded-0" id="nav-initialization-tab" data-bs-toggle="tab" data-bs-target="#nav-initialization" type="button" role="tab" aria-controls="nav-initialization" aria-selected="false">
                     <small>Initialization</small>
@@ -59,13 +53,13 @@
                     <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
                         <small class="fw-bold"></small>
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-sm btn-primary bg-gradient border-0" onclick="updateEnvs()">
-                                <i class="fas fa-save fa-fw"></i> Update
+                            <button type="submit" class="btn btn-sm btn-outline-dark bg-gradient border-0" data-bs-toggle="modal" data-bs-target="#databaseModal">
+                                <i class="fas fa-folder-plus fa-fw" style="font-size: 16px;"></i> Insert
                             </button>
                         </div>
                     </div>
                     <div class="card-body pb-0">
-						<div class='w-100' style='wrap: wrap'>
+						<div class='w-100' style='white-space: pre-line;'>
 							<code id="database">
 								
 							</code>
@@ -73,41 +67,52 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade bg-light" id="nav-collections" role="tabpanel" aria-labelledby="nav-collections-tab" tabindex="0">
-                <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
-                    <div class="card-body pb-0">
-                        <div class="row">
-                            <div class="col-md-6 d-flex flex-column">
-    
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <div class="card rounded-0 border-0 shadow-sm my-2">
-                            <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                            <div class="card-header p-0 p-2 d-flex justify-content-end aling-items-center">
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-dark" onclick="createEnv()">
+                                    <button type="button" class="btn btn-sm btn-dark" onclick="createSchema()">
                                         <i class="fas fa-plus"></i>
                                     </button>
-                                    <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary border-primary" onclick="updateSchemas()">
                                         <i class="fas fa-save fa-fw"></i> Save
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body pb-0">
-                
-                            </div>
                         </div>
+                        <form action="{{url_for('database.schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
+                            {% for key, value in database.schema.items() %}
+                            {% set id = 'schema'+(loop.index | string) %}
+                            {% set schemaKey = 'schemaKey'+(loop.index | string) %}
+                                <div class="form-group row align-items-center mb-2" id="{{id}}">
+                                    <div class="col-5">
+                                        <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-sm key-input" data-name="{{schemaKey}}" required onkeyup="setSchemaKey(this)">
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <span>=</span>
+                                    </div>
+                                    <div class="col-5">
+                                        <select name="{{key}}" id="{{schemaKey}}" class="form-select form-select-sm" required>
+                                            <option disabled>Type</option>
+                                            <option value="str">String</option>
+                                            <option value="text" {{'selected' if value == 'text' else ''}}>Text</option>
+                                            <option value="int" {{'selected' if value == 'int' else ''}}>Integer</option>
+                                            <option value="float" {{'selected' if value == 'float' else ''}}>Float</option>
+                                            <option value="bool" {{'selected' if value == 'bool' else ''}}>Boolean</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-1">
+                                        <a href="javascript: deleteElem('{{id}}')" class="nav-link">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </form>
                     </div>
-                    <div class="col-md-6"></div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="nav-console" role="tabpanel" aria-labelledby="nav-console-tab" tabindex="0">
-                Terminal Console
             </div>
 			<div class="tab-pane fade" id="nav-initialization" role="tabpanel" aria-labelledby="nav-initialization-tab" tabindex="0">
                 <div class="card rounded-0 border-0 shadow-sm my-2">
@@ -115,7 +120,7 @@
                         <small class="fw-bold"></small>
                     </div>
                     <div class="card-body pb-0">
-						<div class='w-100' style='wrap: wrap'>
+						<div class='w-100'>
 							<code>
 								<pre style="white-space: pre-line">
 									from runit-database import Document
@@ -136,10 +141,10 @@
 {% endblock %}
 
 {% block scripts %} 
-<script>
+<!-- <script>
 let db = JSON.parse({{ database | tojson }})
 document.getElementById("database").textContent = JSON.stringify(db, null, 4);
-</script>
+</script> -->
 {{super()}}
 <script src="{{url_for('static', filename='js/databases.js')}}"></script>
 {% endblock %}

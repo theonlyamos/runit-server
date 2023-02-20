@@ -11,9 +11,11 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv, dotenv_values, set_key
 
 from ..models import Database
+from ..models import Collection
 from ..models import Project
 from ..models import User
 
+from odbms import DBMS
 
 from runit import RunIt
 
@@ -40,6 +42,10 @@ def index():
     view = request.args.get('view')
     view = view if view else 'grid'
     databases = Database.get_by_user(user_id)
+    for db in databases:
+        stats = DBMS.Database.db.command('collstats', db.collection_name)
+        db.stats = {'size': int(stats['totalSize'])/1024, 'count': stats['count']}
+        print(db.json())
     projects = Project.get_by_user(user_id)
     
     return render_template('databases/index.html', page='databases',\
@@ -53,7 +59,9 @@ def create():
     project_id = request.form.get('project_id')
     
     if name and project_id:
-        data = {'name': name, 'user_id': user_id, 'project_id': project_id}
+        collection_name = f"{name}_{user_id}_{project_id}"
+        data = {'name': name, 'collection_name': collection_name,
+                'project_id': project_id,'user_id': user_id}
         
         new_db = Database(**data)
         results = new_db.save().inserted_id
@@ -68,23 +76,35 @@ def details(database_id):
     database = Database.get(database_id)
     
     if database:
-        return render_template('databases/details.html', page='databases',\
-            database=json.dumps(database.json()))
+        Collection.TABLE_NAME = database.collection_name
+        collection = Collection.find({})
+        
+        schema_names_to_input_types = {
+            'str': 'text',
+            'text': 'textarea',
+            'int': 'number',
+            'float': 'number',
+            'bool': 'checkbox'
+        }
+        
+        return render_template('databases/details.html', 
+                page='databases',\
+                database=database.json(), 
+                collection=collection,
+                inputTypes=schema_names_to_input_types)
     else:
         flash('Database does not exist', 'danger')
         return redirect(url_for('database.index'))
 
-@database.post('/<database_id>/')
-def environ(database_id):
-    env_file = os.path.realpath(os.path.join(PROJECTS_DIR, database_id, '.env'))
-    file = open(env_file, 'w')
-    file.close()
-    
-    for key, value in request.form.items():
-        set_key(env_file, key, value)
-
-    database = Database.get(database_id)
-    flash('Environment variables updated successfully', category='success')
+@database.post('/schema/<database_id>/')
+def schema(database_id):
+    try:
+        data = request.form.to_dict()
+        Database.update({'id': database_id}, {'schema': data})
+        
+        flash('Schema updated successfully', category='success')
+    except Exception as e:
+        flash(str(e), category='danger')
     return redirect(url_for('database.details', database_id=database_id))
 
 @database.patch('/')

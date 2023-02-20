@@ -4,7 +4,7 @@ class Project(Model):
     TABLE_NAME = 'projects'
 
     def __init__(self, user_id, name, version="0.0.1", description="", homepage="",
-    language="", runtime="", start_file="", author={}, created_at=None, updated_at=None, id=None):
+    language="", runtime="", start_file="", private=False, author={}, created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.name = name
         self.user_id = user_id
@@ -13,6 +13,7 @@ class Project(Model):
         self.homepage = homepage
         self.language = language
         self.runtime = runtime
+        self.private = private
         self.start_file = start_file
         self.author = author
 
@@ -32,6 +33,7 @@ class Project(Model):
             "homepage": self.homepage,
             "language": self.language,
             "runtime": self.runtime,
+            "private": self.private,
             "start_file": self.start_file,
             "author": self.author
         }
@@ -88,6 +90,7 @@ class Project(Model):
             "homepage": self.homepage,
             "language": self.language,
             "runtime": self.runtime,
+            "private": self.private,
             "start_file": self.start_file,
             "author": self.author,
             "functions": self.count_functions(),

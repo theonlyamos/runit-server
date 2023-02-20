@@ -36,20 +36,25 @@ def index():
 
 @public.get('/<string:project_id>/')
 def project(project_id):
-    if os.path.isdir(os.path.join(PROJECTS_DIR, project_id)):
-        result = RunIt.start(project_id, 'index', os.path.join(PROJECTS_DIR, project_id))
-        os.chdir(HOMEDIR)
-        return result
+    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
+    if os.path.isdir(current_project_dir):
+        if not RunIt.is_private(project_id, current_project_dir):
+            result = RunIt.start(project_id, 'index', current_project_dir)
+            os.chdir(HOMEDIR)
+            
+            return result
 
     return RunIt.notfound()
 
 @public.get('/<string:project_id>/<string:function>')
 @public.get('/<string:project_id>/<string:function>/')
 def run(project_id, function):
-    if os.path.isdir(os.path.join(PROJECTS_DIR, project_id)):
-        result = RunIt.start(project_id, function, os.path.join(PROJECTS_DIR, project_id))
-        os.chdir(HOMEDIR)
-        return result
+    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
+    if os.path.isdir(current_project_dir):
+        if not RunIt.is_private(project_id, current_project_dir):
+            result = RunIt.start(project_id, function, current_project_dir)
+            os.chdir(HOMEDIR)
+            return result
 
     return RunIt.notfound()
 
