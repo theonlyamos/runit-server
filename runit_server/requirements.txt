@@ -4,9 +4,9 @@ cffi==1.15.0
 charset-normalizer==2.0.12
 click==8.1.2
 colorama==0.4.5
-cryptography==38.0.3
+cryptography==41.0.0
 dnspython==2.2.1
-Flask==2.1.1
+Flask==2.3.2
 Flask-JWT-Extended==4.4.0
 Flask-PyMongo==2.3.0
 Flask-RESTful==0.3.9
@@ -28,7 +28,7 @@ pymongo==4.1.1
 python-dotenv==0.20.0
 python-runit==0.0.4
 pytz==2022.1
-requests==2.27.1
+requests==2.31.0
 six==1.16.0
 urllib3==1.26.9
-Werkzeug==2.1.1
+Werkzeug==2.2.3
