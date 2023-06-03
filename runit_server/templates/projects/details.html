@@ -14,6 +14,7 @@
 
 {% block content %}
 {% include 'projects/modal.html' %}
+{% include 'projects/editor.html' %}
 <div class="container">
     {% for (category, message) in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -28,16 +29,19 @@
                 <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
-                <ul class="dropdown-menu rounded-0 shadow py-0">
+                <ul class="dropdown-menu rounded-0 shadow border-0">
                     {% for func in funcs %}
                     <li>
-                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
-                            <i class="fas fa-terminal fa-fw text-dark"></i> {{func.name}}
+                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom" target="_blank">
+                            <i class="fas fa-terminal fa-fw text-dark me-2"></i> {{func.name}}
                         </a>
                     </li>
                     {% endfor %}
                 </ul>
             </nav>
+            <a href="#editorModal" role="button" role="button" class="btn btn-sm btn-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
+                <i class="fas fa-code"></i>
+            </a>
             <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
                 <i class="fas fa-eye-slash"></i>
             </a>
@@ -169,5 +173,7 @@
 
 {% block scripts %} 
 {{super()}}
+<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
 <script src="{{url_for('static', filename='js/projects.js')}}"></script>
+<script src="{{url_for('static', filename='js/editor.js')}}"></script>
 {% endblock %}

@@ -41,6 +41,7 @@ MANIFEST
 # Project Folders
 runit_server/projects/
 projects/
+accounts/
 
 # Installer logs
 pip-log.txt
@@ -112,7 +113,7 @@ ipython_config.py
 #poetry.lock
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
+*__pypackages__/
 
 # Celery stuff
 celerybeat-schedule

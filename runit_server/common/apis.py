@@ -74,51 +74,52 @@ class ProjectRS(Resource):
         @param function Function Name
         @return Projects: dict Get all projects
         '''
-        try:
-            data = dict(request.form)
-            file = request.files['file']
-            
-            result = {'status': 'success'}
-            user = User.get(get_jwt_identity())
 
-            
-            if not '_id' in data.keys() or not len(data['_id']):
-                del data['_id']
-                project = Project(user.id, **data)
-                project_id = project.save().inserted_id
-                project_id = str(project_id)
-                project.id = project_id
-                homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
-                project.update({'homepage': homepage})
-                result['project_id'] = project_id
-            else:
-                project_id = data['_id']
-                project = Project.get(data['_id'])
-                del data['_id']
-                project.update(data, {'id': project.id})
+        data = dict(request.form)
+        file = request.files['file']
+        
+        result = {'status': 'success'}
+        user = User.get(get_jwt_identity())
 
-            if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
-                os.mkdir(os.path.join(PROJECTS_DIR, project_id))
-            filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
-            file.save(filepath)
+        
+        if not '_id' in data.keys() or not len(data['_id']):
+            del data['_id']
+            project = Project(user.id, **data)
+            project_id = project.save().inserted_id
+            project_id = str(project_id)
+            project.id = project_id
+            homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
+            project.update({'homepage': homepage})
+            result['project_id'] = project_id
+        else:
+            project_id = data['_id']
+            project = Project.get(data['_id'])
+            del data['_id']
+            project.update(data, {'id': project.id})
 
-            RunIt.extract_project(filepath)
-            os.chdir(os.path.join(PROJECTS_DIR, project_id))
-            #os.unlink(secure_filename(file.filename))
-            runit = RunIt(**RunIt.load_config())
+        if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
+            os.mkdir(os.path.join(PROJECTS_DIR, project_id))
             
-            runit._id = project_id
-            runit.update_config()
-            
-            funcs = []
-            for func in runit.get_functions():
-                funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
-            
-            result['functions'] = funcs
-            result['homepage'] = funcs[0]
-            return result
-        except Exception as e:
-            return {'status': 'error', 'msg': str(e)}
+        filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
+        file.save(filepath)
+
+        RunIt.extract_project(filepath)
+        os.chdir(os.path.join(PROJECTS_DIR, project_id))
+        #os.unlink(secure_filename(file.filename))
+        runit = RunIt(**RunIt.load_config())
+        runit.language_depending_packaging()
+        
+        runit._id = project_id
+        runit.update_config()
+        
+        funcs = []
+        for func in runit.get_functions():
+            funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
+        
+        result['functions'] = funcs
+        result['homepage'] = funcs[0]
+        return result
+
 
 class ProjectCloneRS(Resource):
     '''

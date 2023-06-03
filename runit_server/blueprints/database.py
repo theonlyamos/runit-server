@@ -45,7 +45,7 @@ def index():
     for db in databases:
         stats = DBMS.Database.db.command('collstats', db.collection_name)
         db.stats = {'size': int(stats['totalSize'])/1024, 'count': stats['count']}
-        print(db.json())
+        
     projects = Project.get_by_user(user_id)
     
     return render_template('databases/index.html', page='databases',\
