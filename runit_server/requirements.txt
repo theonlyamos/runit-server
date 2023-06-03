@@ -28,7 +28,7 @@ pymongo==4.1.1
 python-dotenv==0.20.0
 python-runit==0.0.4
 pytz==2022.1
-requests==2.27.1
+requests==2.31.0
 six==1.16.0
 urllib3==1.26.9
 Werkzeug==2.2.3
