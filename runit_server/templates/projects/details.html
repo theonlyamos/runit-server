@@ -85,13 +85,9 @@
                     <div class="card-body pb-0">
                         <div class="row">
                         {% for key, value in project.items() %}
-                            <div class="col-md-4">
-                                <div class="form-group mb-2">
-                                    <label for="">
-                                        <small>{{key}}</small>
-                                    </label>
-                                    <input type="text" value="{{value}}" placeholder="" class="form-control form-control-sm bg-gradient text-muted" readonly>
-                                </div>
+                            <div class="col-md-4 d-flex flex-column py-1 border-bottom">
+                                <small>{{key}}</small>
+                                <small class="m-0 fw-bolder">{{value}}</small>
                             </div>
                         {% endfor %}
                         </div>
@@ -100,21 +96,37 @@
             </div>
             <div class="tab-pane fade bg-light" id="nav-functions" role="tabpanel" aria-labelledby="nav-functions-tab" tabindex="0">
                 <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
-                    <div class="card-body pb-0">
-                        <div class="row">
-                            <div class="col-md-6 d-flex flex-column">
+                    <div class="card-body pb-0 w-100">
+                        <table class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Link</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {% for func in funcs %}
-                                    <div class="d-flex justify-content-between align-items-center p-2 bg-white border border-light mb-2 rounded-1">
+                                <tr>
+                                    <td>
+                                        <h4 class="small text-primary">{{func.name | title}}</h4>
+                                    </td>
+                                    <td>
                                         <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
-                                            <h4 class="small text-primary text-uppercase">{{func.name}}</h4>
+                                            <small>
+                                                {{url_for('public.run', project_id=project.id, function=func.name) }}
+                                            </small>
                                         </a>
-                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
+                                    </td>
+                                    <td>
+                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="bg-dark nav-link px-2 rounded" style="width: fit-content" target="_blank">
                                             <i class="fas fa-terminal fa-fw text-bg-dark p-1 rounded-1"></i>
                                         </a>
-                                    </div>
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                            </div>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

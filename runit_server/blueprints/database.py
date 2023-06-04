@@ -77,7 +77,11 @@ def details(database_id):
     
     if database:
         Collection.TABLE_NAME = database.collection_name
-        collection = Collection.find({})
+        collections = Collection.find({})
+        
+        result = []
+        for col in collections:
+            result.append(col.json())
         
         schema_names_to_input_types = {
             'str': 'text',
@@ -90,7 +94,7 @@ def details(database_id):
         return render_template('databases/details.html', 
                 page='databases',\
                 database=database.json(), 
-                collection=collection,
+                collections=result,
                 inputTypes=schema_names_to_input_types)
     else:
         flash('Database does not exist', 'danger')

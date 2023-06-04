@@ -14,6 +14,25 @@
 
 {% block content %}
 {% include 'databases/modal.html' %}
+<style>
+    #database,
+    #initialization { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        font-size: 1rem;
+    }
+
+    #database {
+        height: 390px !important;
+    }
+
+    #initialization {
+        height: 150px !important;
+    }
+</style>
 <div class="container">
     {% for (category, message) in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -58,12 +77,9 @@
                             </button>
                         </div>
                     </div>
-                    <div class="card-body pb-0">
-						<div class='w-100' style='white-space: pre-line;'>
-							<code id="database">
-								
-							</code>
-						</div>
+                    <div class="card-body pb-0 position-relative">
+						<pre id="database">
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -120,18 +136,8 @@
                         <small class="fw-bold"></small>
                     </div>
                     <div class="card-body pb-0">
-						<div class='w-100'>
-							<code>
-								<pre style="white-space: pre-line">
-									from runit-database import Document
-									Document.initialize(
-										'{{request.root_url}}api',
-										'{{session["access_token"]}}',
-										'{{database.project_id}}'
-									)
-								</pre>
-							</code>
-						</div>
+						<pre id="initialization">
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -147,4 +153,25 @@ document.getElementById("database").textContent = JSON.stringify(db, null, 4);
 </script> -->
 {{super()}}
 <script src="{{url_for('static', filename='js/databases.js')}}"></script>
+<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
+<script>
+    const editor = ace.edit("database");
+    editor.setTheme("ace/theme/chaos")
+    editor.setReadOnly(true)
+    editor.session.setMode(`ace/mode/javascript`)
+    let db = {{ collections | tojson }}
+    editor.session.setValue(JSON.stringify(db, null, 4))
+
+    const editor1 = ace.edit("initialization");
+    editor1.setTheme("ace/theme/monokai")
+    editor1.setReadOnly(true)
+    editor1.session.setMode(`ace/mode/python`)
+    editor1.session.setValue(`from runit-database import Document
+Document.initialize(
+    '{{request.root_url}}api',
+    '{{session["access_token"]}}',
+    '{{database.project_id}}'
+)
+    `)
+</script>
 {% endblock %}
