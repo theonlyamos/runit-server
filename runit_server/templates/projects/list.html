@@ -18,7 +18,10 @@
                                 {{ project['name'] }}
                             </a>
                         </td>
-                        <td>{{project['language']}}</td>
+                        <td>
+                            <i class="{{ icons[project.language]}} fa-fw"></i>
+                            <span>{{project['language']}}</span>
+                        </td>
                         <td>{{ project['updated_at'] }}</td>
                         <td class="text-center">
                             <nav class="dropdown">

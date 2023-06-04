@@ -19,8 +19,10 @@ load_dotenv()
 
 EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}
 
-LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
-                  'javascript': 'node-js'}
+LANGUAGE_ICONS = {'python': 'fab fa-python', 
+                  'php': 'fab fa-php',
+                  'javascript': 'fab fa-node-js',
+                  'multi': 'fas fa-project-diagram'}
 LANGUAGE_TO_RUNTIME = {'python': 'python', 'php': 'php',
                   'javascript': 'node'}
 

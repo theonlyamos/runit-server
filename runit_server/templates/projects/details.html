@@ -26,7 +26,7 @@
     <div class="tools d-flex justify-content-end">
         <div class="btn-group" role="group" aria-label="tool buttons">
             <nav class="nav-item dropdown">
-                <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
+                <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
                 <ul class="dropdown-menu rounded-0 shadow border-0">
@@ -39,6 +39,9 @@
                     {% endfor %}
                 </ul>
             </nav>
+            <a href="#editorModal" role="button" role="button" class="btn btn-sm btn-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
+                <i class="fas fa-sync"></i>
+            </a>
             <a href="#editorModal" role="button" role="button" class="btn btn-sm btn-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
                 <i class="fas fa-code"></i>
             </a>

@@ -1,10 +1,20 @@
 "use strict";
 
 class FileBrowser {
+    static EXTENSION_TO_LANGUAGE = {
+        'py': 'python', 'pyw': 'python','php': 'php',
+        'js': 'javascript', 'jsx': 'javascript',
+        'ts': 'javascript', 'tsx': 'javascript',
+        'cjs': 'javascript', 'mjs': 'javascript',
+        'json': 'javascript', 'html': 'html',
+        'css': 'css', 'scss': 'css', 'less': 'css'
+    }
+
     static #container = document.querySelector('#directory');
     static #project = {};
-    static #saveBtn = document.querySelector("#saveBtn")
-    static #closeBtn = document.querySelector("#closeBtn")
+    static #saveBtn = document.querySelector("#saveBtn");
+    static #closeBtn = document.querySelector("#closeBtn");
+    static #themeSelector = document.querySelector("#themes");
     static editoropened = false;
     static editor = {};
     static files = [];
@@ -14,6 +24,12 @@ class FileBrowser {
     constructor(){ }
 
     static async openFile(filename){
+        
+        const fileParts = filename.split('.')
+        const extension = fileParts[fileParts.length-1]
+        const language = FileBrowser.EXTENSION_TO_LANGUAGE[extension] || 'text'
+        FileBrowser.editor.session.setMode(`ace/mode/${language}`);
+        
         FileBrowser.selected = filename
 
         let url = `${location.origin}/projects/editor/${FileBrowser.#project.id}/`
@@ -55,8 +71,8 @@ class FileBrowser {
 
     static loadEditor(editor){
         FileBrowser.editor = editor
-        FileBrowser.editor.setTheme("ace/theme/twilight");
-        FileBrowser.editor.session.setMode(`ace/mode/${FileBrowser.#project?.language}`);
+        FileBrowser.editor.setTheme("ace/theme/monokai");
+        
         FileBrowser.editor.commands.addCommand({
             name: 'Save',
             bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
@@ -69,6 +85,9 @@ class FileBrowser {
         })
         FileBrowser.#closeBtn.onclick = (e =>{
             FileBrowser.editoropened = false;
+        })
+        FileBrowser.#themeSelector.onchange = (e => {
+            FileBrowser.editor.setTheme(`ace/theme/${e.target.value}`);
         })
     }
 
