@@ -1,7 +1,7 @@
 "use strict";
 
 class FileBrowser {
-    static EXTENSION_TO_LANGUAGE = {
+    static #EXTENSION_TO_LANGUAGE = {
         'py': 'python', 'pyw': 'python','php': 'php',
         'js': 'javascript', 'jsx': 'javascript',
         'ts': 'javascript', 'tsx': 'javascript',
@@ -27,7 +27,7 @@ class FileBrowser {
         
         const fileParts = filename.split('.')
         const extension = fileParts[fileParts.length-1]
-        const language = FileBrowser.EXTENSION_TO_LANGUAGE[extension] || 'text'
+        const language = FileBrowser.#EXTENSION_TO_LANGUAGE[extension] || 'text'
         FileBrowser.editor.session.setMode(`ace/mode/${language}`);
         
         FileBrowser.selected = filename
@@ -58,9 +58,8 @@ class FileBrowser {
                 FileBrowser.openFile(file['name'])
             })
             fileNode.classList.add('files-container')
-            if (!file['isfile'])
-                fileNode.innerHTML += `<i class="fas fa-caret-right fa-fw ps-1"></i>`
-            fileNode.innerHTML += `<span class="fw-lighter ps-1">${file['name']}</span>`
+            fileNode.innerHTML += file['isfile'] ? `-` : `+`
+            fileNode.innerHTML += `<span class="ps-1">${file['name']}</span>`
             FileBrowser.#container.appendChild(fileNode)
         }
     }
