@@ -13,6 +13,7 @@ setup(
     author_email='theonlyamos@gmail.com',
     description='Backend for python-runit',
     long_description=description,
+    long_description_content_type = "text/markdown",
     packages=find_packages(),
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 

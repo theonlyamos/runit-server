@@ -100,10 +100,7 @@ def get_parameters():
         return jsonify(REQUESTS.pop())
     return jsonify({'GET': {}, 'POST': {}})
 
-@app.before_first_request
-def init():
-    global app
-    
+with app.app_context():
     if not os.path.exists(WORKDIR):
         os.mkdir(WORKDIR)
     

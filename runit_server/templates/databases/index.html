@@ -6,7 +6,7 @@
 
 {% block content %}
 {% include 'modals/confirm.html' %}
-
+{% include 'databases/modal.html' %}
 <div class="container">
     {% for (category, message) in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">

@@ -1,4 +1,4 @@
-FROM ubuntu:22.10
+FROM ubuntu:latest
 
 LABEL maintainer="Amos Amissah"
 
@@ -39,11 +39,7 @@ RUN apt-get update \
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
-COPY . /app/
-
-RUN mv .env.development .env
-
-RUN python3 -m pip install .
+RUN pip install runit-server
 
 EXPOSE 9000
 
