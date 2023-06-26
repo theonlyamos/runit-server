@@ -4,10 +4,12 @@
 {% endblock %}
 
 {% block pagetitle %}
-<div class="d-flex align-items center">
+<div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
     <a href="{{url_for('project.index')}}" class="nav-link p-0 text-black-50 hover:text-dark">
-        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
-    / 
+        <i class="fas fa-arrow-left fa-fw"></i> 
+        <span class="d-none d-sm-inline">{{ super() }}</span>
+    </a>
+    <span class="d-none d-sm-inline">/</span>
     <span>{{ project.name | upper}}</span>
 </div>
 {% endblock %}
@@ -24,9 +26,9 @@
     {% endfor %}
 
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group" role="group" aria-label="tool buttons">
+        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
             <nav class="nav-item dropdown">
-                <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
+                <a href="#" class="btn btn-outline-dark mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
                 <ul class="dropdown-menu rounded-0 shadow border-0">
@@ -39,16 +41,16 @@
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="#editorModal" role="button" role="button" class="btn btn-sm btn-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
+            <a href="#editorModal" role="button" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
                 <i class="fas fa-wrench"></i>
             </a>
-            <a href="#editorModal" role="button" role="button" class="btn btn-sm btn-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
+            <a href="#editorModal" role="button" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
                 <i class="fas fa-code"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-danger hover:shadow-sm mb-2" title="Delete Project">
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -57,20 +59,20 @@
     <div class="card rounded-0 border-0">
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <small>Config</small>
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <span>Config</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <small>Functions</small>
+                <button class="nav-link" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <span>Functions</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
-                    <small>Settings</small>
+                <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <span>Settings</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
-                    <small>Logs</small>
+                <button class="nav-link" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
+                    <span>Logs</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
-                    <small>Console</small>
+                <button class="nav-link" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
+                    <span>Console</span>
                 </button>
             </div>
         </nav>
@@ -80,27 +82,25 @@
                     <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
                         <small class="fw-bold"></small>
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                            <button type="submit" class="btn btn-primary bg-gradient shadow-sm border-0" onclick="updateEnvs()">
                                 <i class="fas fa-save fa-fw"></i> Update
                             </button>
                         </div>
                     </div>
-                    <div class="card-body pb-0">
-                        <div class="row">
+                    <div class="card-body pb-0 d-flex gap-3 custom-flex-wrap">
                         {% for key, value in project.items() %}
-                            <div class="col-md-4 d-flex flex-column py-1 border-bottom">
-                                <small>{{key}}</small>
-                                <small class="m-0 fw-bolder">{{value}}</small>
+                            <div class="border hover:shadow-sm d-flex flex-column" style="border-radius: 25px;">
+                                <small class="border-bottom p-2 text-bg-secondary"  style="border-top-left-radius: 25px; border-top-right-radius: 25px;">{{key | upper}}</small>
+                                <small class="m-0 p-2 text-center">{{value}}</small>
                             </div>
                         {% endfor %}
-                        </div>
                     </div>
                 </div>
             </div>
             <div class="tab-pane fade bg-light" id="nav-functions" role="tabpanel" aria-labelledby="nav-functions-tab" tabindex="0">
                 <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
                     <div class="card-body pb-0 w-100">
-                        <table class="table table-hover table-striped">
+                        <table class="table table-hover table-striped fs-5">
                             <thead>
                                 <tr>
                                     <th>Name</th>

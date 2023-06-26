@@ -17,17 +17,19 @@
     {% if databases %}
 
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group" role="group" aria-label="tool buttons">
-            <a href="{{url_for('database.index')}}" class="btn btn-sm btn-{{'' if view != 'list' else 'outline-'}}dark bg-gradient" role="button" title="Grid view">
+        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
+            <a href="{{url_for('database.index')}}" class="btn btn-{{'' if view != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
                 <small><i class="fas fa-th-large fa-fw"></i></small>
             </a>
-            <a href="{{url_for('database.index')}}?view=list" class="btn btn-sm btn-{{'' if view == 'list' else 'outline-'}}dark bg-gradient" role="button" title="Table view">
+            <a href="{{url_for('database.index')}}?view=list" class="btn btn-{{'' if view == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">
                 <small><i class="fas fa-th-list fa-fw"></i></small>
             </a>
-            <a href="#confirmModal" role="button" class="btn btn-sm btn-danger bg-gradient" data-bs-toggle="modal">
+        </div>
+        <div class="btn-group shadow-sm ms-3" role="group" aria-label="tool buttons">
+            <a href="#confirmModal" role="button" class="btn btn-outline-danger bg-gradient" data-bs-toggle="modal">
                 <small><i class="fas fa-trash-alt fa-fw"></i></small>
             </a>
-            <a href="#databaseModal" role="button" class="btn btn-sm btn-primary bg-gradient" data-bs-toggle="modal">
+            <a href="#databaseModal" role="button" class="btn btn-outline-primary bg-gradient" data-bs-toggle="modal">
                <small>
                 <i class="fas fa-plus fa-fw"></i>
                 New Database
