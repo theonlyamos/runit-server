@@ -27,7 +27,7 @@ LANGUAGE_TO_RUNTIME = {'python': 'python', 'php': 'php',
                   'javascript': 'node'}
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
+HOMEDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 project = Blueprint('project', __name__, url_prefix='/projects', template_folder=os.path.join('..','..','templates'), static_folder=os.path.join('..','static'))

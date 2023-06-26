@@ -43,8 +43,11 @@ def index():
     view = view if view else 'grid'
     databases = Database.get_by_user(user_id)
     for db in databases:
-        stats = DBMS.Database.db.command('collstats', db.collection_name)
-        db.stats = {'size': int(stats['totalSize'])/1024, 'count': stats['count']}
+        Collection.TABLE_NAME = db.collection_name
+        if Collection.count():
+            stats = DBMS.Database.db.command('collstats', db.collection_name)
+            if stats:
+                db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
         
     projects = Project.get_by_user(user_id)
     
@@ -65,7 +68,7 @@ def create():
         
         new_db = Database(**data)
         results = new_db.save().inserted_id
-        
+                
         flash('Database Created Successfully.', category='success')
     else:
         flash('Missing required fields.', category='danger')

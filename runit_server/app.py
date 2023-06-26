@@ -12,10 +12,11 @@ from .models import Role
 
 import os
 import logging
+from sys import platform
 from datetime import timedelta
 from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
-WORKDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
+WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME', '')), 'RUNIT_WORKDIR')
 
 app = Flask(__name__)
 api = Api(app, prefix='/api')
