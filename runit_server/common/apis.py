@@ -242,7 +242,7 @@ class Document(Resource):
     @jwt_required()
     def post(self, project_id, collection):
         '''
-        Api for creating documents
+        Endpoint for CRUD actions on documents
 
         @param project_id Project ID
         @param collection Collection Name
@@ -251,9 +251,13 @@ class Document(Resource):
 
         try:
             data = request.get_json()
-            print(data)
+
             user_id = get_jwt_identity()
             db = Database.find_one({'user_id': user_id, 'name': collection})
+            
+            if not db:
+                raise NameError("Collection wasn't found")
+
             Collection.TABLE_NAME = db.collection_name
             
             if not 'function' in data.keys():
@@ -262,40 +266,34 @@ class Document(Resource):
             function = data['function']
 
             if function == 'all' or function == 'find' or function == 'find_many':
-                #projection = {collection: {'$elemMatch': data['_filter']}}
-                #data['_filter']['project_id'] = project_id
-                #results = Collection.find({'project_id': project_id}, projection)
-                results = Collection.find({})
-                #results = DBMS.Database.find(db, {}, data['projection'])
+                projection = {}
+                for item in data['projection']:
+                    projection[item] = 1
+                results = Collection.find(data['_filter'], projection)
 
             elif function == 'find_one':
-                data['_filter']['project_id'] = project_id
-                results = Collection.find_one(normalise(data['_filter']), data['projection'])
-                #results = DBMS.Database.find_one(db, normalise(data['_filter'], 'params'), data['projection'])
+                projection = {}
+                for item in data['projection']:
+                    projection[item] = 1
+                
+                results = Collection.find_one(data['_filter'], projection)
 
             elif function == 'insert':
-                #update_document = {collection: data['document']}
-                #results = Database.update({'project_id': project_id, 'user_id': get_jwt_identity()}, update_document)
-                #results = Collection.insert(db, normalise(main_data, 'params')).inserted_id
                 results = Collection(**data['document']).save()
+            
+            elif function == 'insert_many':
+                results = Collection.insert_many(data['documents'])
 
             elif function == 'update':
-                data['_filter']['name'] = collection
-                data['_filter']['user_id'] = user_id
-                document = data['update']
-                del document['id']
-                results = Collection.update(data['_filter'], document)
-                #results = DBMS.Database.update(db, normalise(data['_filter'], 'params'), normalise(data['update'], 'params'))
+                results = Collection.update(data['_filter'], data['update'])
             
             elif function == 'count':
-                data['_filter']['name'] = collection
                 results = Collection.count(data['_filter'])
-                #results = DBMS.Database.count(db, normalise(data['_filter'], 'params'))
             
             if function == 'find_many' or function == 'find' or function == 'all':
                 return jsonify([result.json() for result in results])
             elif function == 'find_one':
-                return jsonify(results.json()[collection])
+                return jsonify(results.json())
             elif function == 'insert':
                 return jsonify({'status': 'success', 'msg': str(results.inserted_id)})
             elif function == 'count':
