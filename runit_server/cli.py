@@ -14,7 +14,7 @@ load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
 WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 
 def setup_database():
     '''
@@ -193,11 +193,11 @@ def get_arguments():
     setup_parser.add_argument('--admin', action='store_true', help="Manage administrator account")
     setup_parser.set_defaults(func=setup_runit)
     
-    parser.add_argument('--docker', type=bool, choices=[True, False], default=True, help="Run program in docker container")
-    parser.add_argument('--kubernetes', type=bool, choices=[True, False], default=True, help="Run program using kubernetes")
+    parser.add_argument('--docker', action='store_true', help="Run program in docker container")
+    parser.add_argument('--kubernetes', action='store_true', help="Run program using kubernetes")
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Host address to run server on')
     parser.add_argument('--port', type=int, default=9000, help='Host port to run server on')
-    parser.add_argument('--debug', type=bool, choices=[True, False], default=True, help="Enable debug mode")
+    parser.add_argument('--debug', action='store_true', help="Enable debug mode")
     parser.add_argument('--production', action='store_true', help="Run in production mode")
     parser.add_argument('-v','--version', action='version', version=f'%(prog)s {VERSION}')
     parser.set_defaults(func=run_server)

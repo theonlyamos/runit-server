@@ -1,9 +1,10 @@
 from odbms import DBMS, normalise
-from flask import request, jsonify
+from flask import request, jsonify, send_from_directory
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_jwt
 
-from werkzeug.utils import secure_filename, send_from_directory
+from werkzeug.utils import secure_filename
+from werkzeug.security import safe_join
 
 from ..models import Function
 from ..models import Project
@@ -15,14 +16,15 @@ from .security import authenticate
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from threading import Thread
 
 from runit import RunIt
 
 load_dotenv()
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
+WORKDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
+PROJECTS_DIR = os.path.join(WORKDIR, 'projects')
 
 def stringifyObjectIds(model: object, properties: list)-> object:
     for property in properties:
@@ -107,7 +109,7 @@ class ProjectRS(Resource):
         os.chdir(os.path.join(PROJECTS_DIR, project_id))
         #os.unlink(secure_filename(file.filename))
         runit = RunIt(**RunIt.load_config())
-        runit.language_depending_packaging()
+        Thread(target=runit.install_dependency_packages, args=()).start()
         
         runit._id = project_id
         runit.update_config()
@@ -119,7 +121,6 @@ class ProjectRS(Resource):
         result['functions'] = funcs
         result['homepage'] = funcs[0]
         return result
-
 
 class ProjectCloneRS(Resource):
     '''
@@ -135,28 +136,29 @@ class ProjectCloneRS(Resource):
         @return Compressed file of files in project directory
         '''
         global PROJECTS_DIR
-        PROJECTS_DIR = os.path.realpath(os.path.join(CURRENT_PATH, '..', 'projects'))
         
-        project = Project.find({'name': project, 'user_id': get_jwt_identity()})
-        
-        if len(project):
-            if not os.path.exists(os.path.join(PROJECTS_DIR, project[0].id)):
-                raise Exception('Project not found!')
+        try:
+            project = Project.find_one({'name': project, 'user_id': get_jwt_identity()})
+            
+            if project:
+                if not os.path.exists(os.path.join(PROJECTS_DIR, project.id)):
+                    raise Exception('Project not found!')
+                    
+                os.chdir(os.path.join(PROJECTS_DIR, project.id))
+                config = RunIt.load_config()
                 
-            os.chdir(os.path.join(PROJECTS_DIR, project[0].id))
-            config = RunIt.load_config()
-            
-            if not config:
-                raise FileNotFoundError
-            
-            project = RunIt(**config)
-            filename = project.compress()
-            os.chdir(HOMEDIR)
-            print(filename)
-            
-            return send_from_directory(os.path.join(PROJECTS_DIR, project.id), filename, as_attachment=True)
-        else:
-            return jsonify({'status': 'error', 'msg': 'Project does not exist'})
+                if not config:
+                    raise FileNotFoundError
+                
+                project = RunIt(**config)
+                filename = project.compress()
+                # os.chdir(WORKDIR)
+                
+                return send_from_directory(safe_join(PROJECTS_DIR, project._id), filename, as_attachment=True)
+            else:
+                return jsonify({'status': 'error', 'msg': 'Project does not exist'})
+        except Exception as e:
+            return jsonify({'status': 'error', 'msg': str(e)})
 
 class ProjectById(Resource):
     '''
