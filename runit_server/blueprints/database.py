@@ -43,9 +43,12 @@ def index():
     view = view if view else 'grid'
     databases = Database.get_by_user(user_id)
     for db in databases:
-        stats = DBMS.Database.db.command('collstats', db.collection_name)
-        db.stats = {'size': int(stats['totalSize'])/1024, 'count': stats['count']}
-        print(db.json())
+        Collection.TABLE_NAME = db.collection_name
+        if Collection.count():
+            stats = DBMS.Database.db.command('collstats', db.collection_name)
+            if stats:
+                db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
+        
     projects = Project.get_by_user(user_id)
     
     return render_template('databases/index.html', page='databases',\
@@ -65,7 +68,7 @@ def create():
         
         new_db = Database(**data)
         results = new_db.save().inserted_id
-        
+                
         flash('Database Created Successfully.', category='success')
     else:
         flash('Missing required fields.', category='danger')
@@ -77,7 +80,11 @@ def details(database_id):
     
     if database:
         Collection.TABLE_NAME = database.collection_name
-        collection = Collection.find({})
+        collections = Collection.find({})
+        
+        result = []
+        for col in collections:
+            result.append(col.json())
         
         schema_names_to_input_types = {
             'str': 'text',
@@ -90,7 +97,7 @@ def details(database_id):
         return render_template('databases/details.html', 
                 page='databases',\
                 database=database.json(), 
-                collection=collection,
+                collections=result,
                 inputTypes=schema_names_to_input_types)
     else:
         flash('Database does not exist', 'danger')

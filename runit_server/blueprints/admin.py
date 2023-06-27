@@ -22,7 +22,7 @@ LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
                   'javascript': 'node-js', 'typescript': 'node-js'}
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
+HOMEDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))

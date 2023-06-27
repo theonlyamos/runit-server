@@ -4,10 +4,12 @@
 {% endblock %}
 
 {% block pagetitle %}
-<div class="d-flex align-items center">
+<div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
     <a href="{{url_for('admin.projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
-        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
-    / 
+        <i class="fas fa-arrow-left fa-fw"></i> 
+        <span class="d-none d-sm-inline">{{ super() }}</span>
+    </a>
+    <span class="d-none d-sm-inline">/</span>
     <span>{{ project.name | upper}}</span>
 </div>
 {% endblock %}

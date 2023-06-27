@@ -10,7 +10,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update \
     && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor \
-       sqlite3 libcap2-bin libpng-dev python3.10 python3-dev \
+       sqlite3 libcap2-bin libpng-dev python3.10 python3-dev python3.10-venv\
     && curl https://bootstrap.pypa.io/get-pip.py | python3.10 \
     && mkdir -p ~/.gnupg \
     && chmod 600 ~/.gnupg \
@@ -37,14 +37,22 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+SHELL ["/bin/bash", "-c"]
+
+RUN ln -s /usr/bin/python
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
 COPY . /app/
 
-RUN mv .env.development .env
+RUN mv .env.production .env
 
-RUN python3 -m pip install .
+RUN pip install -e .
 
 EXPOSE 9000
+
+RUN ln -sf /bin/bash /bin/sh
 
 ENTRYPOINT ["runit-server"]

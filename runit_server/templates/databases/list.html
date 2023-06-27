@@ -1,7 +1,7 @@
-<div class="card rounded-0 border-0 shadow-sm">
+<div class="card rounded-0 border-0 shadow-sm mt-3">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-light table-striped table-hover mb-0 small">
+            <table class="table table-light table-striped table-hover mb-0 fs-5">
                 <thead>
                     <th>#</th>
                     <th>Name</th>
@@ -11,32 +11,24 @@
                 <tbody>
                     {% for database in databases %}
                     <tr>
-                        <td><input type="checkbox" name="" id="" class="form-check custom"></td>
+                        <td>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="" id="">
+                            </div>
+                        </td>
                         <td>
                             <a href="{{url_for('database.details', database_id=database.id)}}" class="nav-link">
                                 {{ database['name'] }}
                             </a>
                         </td>
                         <td>{{ database['updated_at'] }}</td>
-                        <td class="text-center">
-                            <nav class="nav-item dropdown position-absolute top-0" style="right: 0">
-								<a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-									<i class="fas fa-ellipsis-v"></i>
-								</a>
-								<ul class="dropdown-menu rounded-0 shadow">
-									<li>
-										<a href="{{url_for('database.details', database_id=database.id)}}" class="dropdown-item small py-0">
-											Details
-										</a>
-									</li>
-									<li><hr class="dropdown-divider"></li>
-									<li>
-										<form method="post" action="{{ url_for('database.delete', database_id=database.id) }}">
-											<button type="submit" class="btn btn-link text-danger small py-0" style="text-decoration: none">Delete</button>
-										</form>
-									</li>
-								</ul>
-							</nav>
+                        <td class="d-flex justify-content-center gap-3">
+                            <a href="{{url_for('database.details', database_id=database.id)}}" class="nav-link">
+                                <i class="far fa-file-alt text-primary"></i>
+                            </a>
+                            <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal">
+                                <i class="fas fa-trash-alt text-danger"></i>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

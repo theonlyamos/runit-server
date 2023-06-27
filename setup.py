@@ -1,7 +1,7 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
-VERSION = '0.2.3'
+VERSION = '0.2.4'
 
 with open('README.md', 'rt') as file:
     description = file.read()
@@ -13,6 +13,7 @@ setup(
     author_email='theonlyamos@gmail.com',
     description='Backend for python-runit',
     long_description=description,
+    long_description_content_type = "text/markdown",
     packages=find_packages(),
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 

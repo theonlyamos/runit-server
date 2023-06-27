@@ -13,8 +13,8 @@ from .models import Role, Admin
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
-WORKDIR = os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
-VERSION = "0.2.3"
+WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
+VERSION = "0.2.4"
 
 def setup_database():
     '''
@@ -116,7 +116,7 @@ def setup_runit(args):
                'DATABASE_NAME', 'RUNTIME_PYTHON',
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
     default_settings = {
-        'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR'),
+        'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR'),
         'RUNIT_HOMEDIR': CURDIR,
         'RUNIT_SERVERNAME': '',
         'DBMS': 'mongodb',
@@ -168,6 +168,9 @@ def run_server(args = None):
         setup_runit(args)
         print('')
 
+    os.environ['RUNIT_DOCKER'] = str(args.docker)
+    os.environ['RUNIT_KUBERNETES'] = str(args.kubernetes)
+
     if args and args.production:
         serve(app, listen=f"*:{args.port}")
     else:
@@ -190,9 +193,11 @@ def get_arguments():
     setup_parser.add_argument('--admin', action='store_true', help="Manage administrator account")
     setup_parser.set_defaults(func=setup_runit)
     
+    parser.add_argument('--docker', action='store_true', help="Run program in docker container")
+    parser.add_argument('--kubernetes', action='store_true', help="Run program using kubernetes")
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Host address to run server on')
     parser.add_argument('--port', type=int, default=9000, help='Host port to run server on')
-    parser.add_argument('--debug', type=bool, choices=[True, False], default=True, help="Enable debug mode")
+    parser.add_argument('--debug', action='store_true', help="Enable debug mode")
     parser.add_argument('--production', action='store_true', help="Run in production mode")
     parser.add_argument('-v','--version', action='version', version=f'%(prog)s {VERSION}')
     parser.set_defaults(func=run_server)

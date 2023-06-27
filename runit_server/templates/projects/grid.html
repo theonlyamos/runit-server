@@ -1,15 +1,15 @@
-<div class="d-flex flex-wrap">
+<div class="d-flex flex-wrap mt-3">
 {% for project in projects %}
-<div class="position-relative m-2 text-black">
+<div class="position-relative m-2 p-3 border rounded shadow-sm">
     <a href="{{url_for('project.details', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
-        <i class="fab fa-{{ icons[project.language]}} fa-fw fa-2x"></i>
-        <small>{{ project['name'] }}</small>
+        <i class="{{ icons[project.language]}} fa-fw fa-3x mb-2"></i>
+        <span>{{ project['name'] }}</span>
     </a>
-    <nav class="nav-item dropdown position-absolute top-0" style="right: 0">
+    <nav class="nav-item dropdown position-absolute" style="right: 13px; top: 8px">
         <a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-            <i class="fas fa-ellipsis-v"></i>
+            <i class="fas fa-ellipsis-v text-secondary"></i>
         </a>
-        <ul class="dropdown-menu rounded-0 shadow">
+        <ul class="dropdown-menu rounded-0 shadow border-0">
             <li>
                 <a href="{{url_for('public.run', project_id=project.id, function='index')}}" class="dropdown-item small py-0" target="_blank">
                     Run

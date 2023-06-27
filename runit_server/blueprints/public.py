@@ -13,7 +13,7 @@ from runit import RunIt
 load_dotenv()
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
+HOMEDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 public = Blueprint('public', __name__)

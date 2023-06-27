@@ -1,9 +1,10 @@
 from odbms import DBMS, normalise
-from flask import request, jsonify
+from flask import request, jsonify, send_from_directory
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_jwt
 
-from werkzeug.utils import secure_filename, send_from_directory
+from werkzeug.utils import secure_filename
+from werkzeug.security import safe_join
 
 from ..models import Function
 from ..models import Project
@@ -15,14 +16,15 @@ from .security import authenticate
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from threading import Thread
 
 from runit import RunIt
 
 load_dotenv()
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE'), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
+WORKDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
+PROJECTS_DIR = os.path.join(WORKDIR, 'projects')
 
 def stringifyObjectIds(model: object, properties: list)-> object:
     for property in properties:
@@ -74,51 +76,51 @@ class ProjectRS(Resource):
         @param function Function Name
         @return Projects: dict Get all projects
         '''
-        try:
-            data = dict(request.form)
-            file = request.files['file']
-            
-            result = {'status': 'success'}
-            user = User.get(get_jwt_identity())
 
-            
-            if not '_id' in data.keys() or not len(data['_id']):
-                del data['_id']
-                project = Project(user.id, **data)
-                project_id = project.save().inserted_id
-                project_id = str(project_id)
-                project.id = project_id
-                homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
-                project.update({'homepage': homepage})
-                result['project_id'] = project_id
-            else:
-                project_id = data['_id']
-                project = Project.get(data['_id'])
-                del data['_id']
-                project.update(data, {'id': project.id})
+        data = dict(request.form)
+        file = request.files['file']
+        
+        result = {'status': 'success'}
+        user = User.get(get_jwt_identity())
 
-            if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
-                os.mkdir(os.path.join(PROJECTS_DIR, project_id))
-            filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
-            file.save(filepath)
+        
+        if not '_id' in data.keys() or not len(data['_id']):
+            del data['_id']
+            project = Project(user.id, **data)
+            project_id = project.save().inserted_id
+            project_id = str(project_id)
+            project.id = project_id
+            homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
+            project.update({'homepage': homepage})
+            result['project_id'] = project_id
+        else:
+            project_id = data['_id']
+            project = Project.get(data['_id'])
+            del data['_id']
+            project.update(data, {'id': project.id})
 
-            RunIt.extract_project(filepath)
-            os.chdir(os.path.join(PROJECTS_DIR, project_id))
-            #os.unlink(secure_filename(file.filename))
-            runit = RunIt(**RunIt.load_config())
+        if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
+            os.mkdir(os.path.join(PROJECTS_DIR, project_id))
             
-            runit._id = project_id
-            runit.update_config()
-            
-            funcs = []
-            for func in runit.get_functions():
-                funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
-            
-            result['functions'] = funcs
-            result['homepage'] = funcs[0]
-            return result
-        except Exception as e:
-            return {'status': 'error', 'msg': str(e)}
+        filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
+        file.save(filepath)
+
+        RunIt.extract_project(filepath)
+        os.chdir(os.path.join(PROJECTS_DIR, project_id))
+        #os.unlink(secure_filename(file.filename))
+        runit = RunIt(**RunIt.load_config())
+        Thread(target=runit.install_dependency_packages, args=()).start()
+        
+        runit._id = project_id
+        runit.update_config()
+        
+        funcs = []
+        for func in runit.get_functions():
+            funcs.append(f"{request.scheme}://{os.getenv('RUNIT_SERVERNAME')}/{project_id}/{func}/")
+        
+        result['functions'] = funcs
+        result['homepage'] = funcs[0]
+        return result
 
 class ProjectCloneRS(Resource):
     '''
@@ -134,28 +136,29 @@ class ProjectCloneRS(Resource):
         @return Compressed file of files in project directory
         '''
         global PROJECTS_DIR
-        PROJECTS_DIR = os.path.realpath(os.path.join(CURRENT_PATH, '..', 'projects'))
         
-        project = Project.find({'name': project, 'user_id': get_jwt_identity()})
-        
-        if len(project):
-            if not os.path.exists(os.path.join(PROJECTS_DIR, project[0].id)):
-                raise Exception('Project not found!')
+        try:
+            project = Project.find_one({'name': project, 'user_id': get_jwt_identity()})
+            
+            if project:
+                if not os.path.exists(os.path.join(PROJECTS_DIR, project.id)):
+                    raise Exception('Project not found!')
+                    
+                os.chdir(os.path.join(PROJECTS_DIR, project.id))
+                config = RunIt.load_config()
                 
-            os.chdir(os.path.join(PROJECTS_DIR, project[0].id))
-            config = RunIt.load_config()
-            
-            if not config:
-                raise FileNotFoundError
-            
-            project = RunIt(**config)
-            filename = project.compress()
-            os.chdir(HOMEDIR)
-            print(filename)
-            
-            return send_from_directory(os.path.join(PROJECTS_DIR, project.id), filename, as_attachment=True)
-        else:
-            return jsonify({'status': 'error', 'msg': 'Project does not exist'})
+                if not config:
+                    raise FileNotFoundError
+                
+                project = RunIt(**config)
+                filename = project.compress()
+                # os.chdir(WORKDIR)
+                
+                return send_from_directory(safe_join(PROJECTS_DIR, project._id), filename, as_attachment=True)
+            else:
+                return jsonify({'status': 'error', 'msg': 'Project does not exist'})
+        except Exception as e:
+            return jsonify({'status': 'error', 'msg': str(e)})
 
 class ProjectById(Resource):
     '''
@@ -241,7 +244,7 @@ class Document(Resource):
     @jwt_required()
     def post(self, project_id, collection):
         '''
-        Api for retrieving documents
+        Endpoint for CRUD actions on documents
 
         @param project_id Project ID
         @param collection Collection Name
@@ -250,8 +253,13 @@ class Document(Resource):
 
         try:
             data = request.get_json()
+
+            user_id = get_jwt_identity()
+            db = Database.find_one({'user_id': user_id, 'name': collection})
             
-            db = Database.find_one({'user_id': get_jwt_identity(), 'name': collection})
+            if not db:
+                raise NameError("Collection wasn't found")
+
             Collection.TABLE_NAME = db.collection_name
             
             if not 'function' in data.keys():
@@ -259,39 +267,35 @@ class Document(Resource):
             
             function = data['function']
 
-            if function == 'all' or function == 'all' or function == 'find_many':
-                #projection = {collection: {'$elemMatch': data['_filter']}}
-                #data['_filter']['project_id'] = project_id
-                #results = Collection.find({'project_id': project_id}, projection)
-                results = Collection.find({})
-                #results = DBMS.Database.find(db, {}, data['projection'])
+            if function == 'all' or function == 'find' or function == 'find_many':
+                projection = {}
+                for item in data['projection']:
+                    projection[item] = 1
+                results = Collection.find(data['_filter'], projection)
 
             elif function == 'find_one':
-                data['_filter']['project_id'] = project_id
-                results = Database.find_one(data['_filter'], data['projection'])
-                #results = DBMS.Database.find_one(db, normalise(data['_filter'], 'params'), data['projection'])
+                projection = {}
+                for item in data['projection']:
+                    projection[item] = 1
+                
+                results = Collection.find_one(data['_filter'], projection)
 
             elif function == 'insert':
-                #update_document = {collection: data['document']}
-                #results = Database.update({'project_id': project_id, 'user_id': get_jwt_identity()}, update_document)
-                #results = Collection.insert(db, normalise(main_data, 'params')).inserted_id
                 results = Collection(**data['document']).save()
+            
+            elif function == 'insert_many':
+                results = Collection.insert_many(data['documents'])
 
             elif function == 'update':
-                data['_filter']['name'] = collection
-                data['_filter']['user_id'] = get_jwt_identity()
-                results = Database.update(data['_filter'], data['update'])
-                #results = DBMS.Database.update(db, normalise(data['_filter'], 'params'), normalise(data['update'], 'params'))
+                results = Collection.update(data['_filter'], data['update'])
             
             elif function == 'count':
-                data['_filter']['name'] = collection
-                results = Database.count(data['_filter'])
-                #results = DBMS.Database.count(db, normalise(data['_filter'], 'params'))
+                results = Collection.count(data['_filter'])
             
             if function == 'find_many' or function == 'find' or function == 'all':
                 return jsonify([result.json() for result in results])
             elif function == 'find_one':
-                return jsonify(results.json()[collection])
+                return jsonify(results.json())
             elif function == 'insert':
                 return jsonify({'status': 'success', 'msg': str(results.inserted_id)})
             elif function == 'count':

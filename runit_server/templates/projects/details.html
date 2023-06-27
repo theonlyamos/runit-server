@@ -4,16 +4,19 @@
 {% endblock %}
 
 {% block pagetitle %}
-<div class="d-flex align-items center">
+<div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
     <a href="{{url_for('project.index')}}" class="nav-link p-0 text-black-50 hover:text-dark">
-        <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
-    / 
+        <i class="fas fa-arrow-left fa-fw"></i> 
+        <span class="d-none d-sm-inline">{{ super() }}</span>
+    </a>
+    <span class="d-none d-sm-inline">/</span>
     <span>{{ project.name | upper}}</span>
 </div>
 {% endblock %}
 
 {% block content %}
 {% include 'projects/modal.html' %}
+{% include 'projects/editor.html' %}
 <div class="container">
     {% for (category, message) in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -23,25 +26,31 @@
     {% endfor %}
 
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group" role="group" aria-label="tool buttons">
+        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
             <nav class="nav-item dropdown">
-                <a href="#" class="btn btn-sm btn-dark hover:shadow-sm mb-2" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
+                <a href="#" class="btn btn-outline-dark mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
-                <ul class="dropdown-menu rounded-0 shadow py-0">
+                <ul class="dropdown-menu rounded-0 shadow border-0">
                     {% for func in funcs %}
                     <li>
-                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
-                            <i class="fas fa-terminal fa-fw text-dark"></i> {{func.name}}
+                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom" target="_blank">
+                            <i class="fas fa-terminal fa-fw text-dark me-2"></i> {{func.name}}
                         </a>
                     </li>
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
+            <a href="#editorModal" role="button" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
+                <i class="fas fa-wrench"></i>
+            </a>
+            <a href="#editorModal" role="button" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
+                <i class="fas fa-code"></i>
+            </a>
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-danger hover:shadow-sm mb-2" title="Delete Project">
+            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -50,20 +59,20 @@
     <div class="card rounded-0 border-0">
         <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active rounded-0" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <small>Config</small>
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <span>Config</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <small>Functions</small>
+                <button class="nav-link" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <span>Functions</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
-                    <small>Settings</small>
+                <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <span>Settings</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
-                    <small>Logs</small>
+                <button class="nav-link" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
+                    <span>Logs</span>
                 </button>
-                <button class="nav-link rounded-0" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
-                    <small>Console</small>
+                <button class="nav-link" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
+                    <span>Console</span>
                 </button>
             </div>
         </nav>
@@ -73,44 +82,54 @@
                     <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
                         <small class="fw-bold"></small>
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
+                            <button type="submit" class="btn btn-primary bg-gradient shadow-sm border-0" onclick="updateEnvs()">
                                 <i class="fas fa-save fa-fw"></i> Update
                             </button>
                         </div>
                     </div>
-                    <div class="card-body pb-0">
-                        <div class="row">
+                    <div class="card-body pb-0 d-flex gap-3 custom-flex-wrap">
                         {% for key, value in project.items() %}
-                            <div class="col-md-4">
-                                <div class="form-group mb-2">
-                                    <label for="">
-                                        <small>{{key}}</small>
-                                    </label>
-                                    <input type="text" value="{{value}}" placeholder="" class="form-control form-control-sm bg-gradient text-muted" readonly>
-                                </div>
+                            <div class="border hover:shadow-sm d-flex flex-column" style="border-radius: 25px;">
+                                <small class="border-bottom p-2 text-bg-secondary"  style="border-top-left-radius: 25px; border-top-right-radius: 25px;">{{key | upper}}</small>
+                                <small class="m-0 p-2 text-center">{{value}}</small>
                             </div>
                         {% endfor %}
-                        </div>
                     </div>
                 </div>
             </div>
             <div class="tab-pane fade bg-light" id="nav-functions" role="tabpanel" aria-labelledby="nav-functions-tab" tabindex="0">
                 <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
-                    <div class="card-body pb-0">
-                        <div class="row">
-                            <div class="col-md-6 d-flex flex-column">
+                    <div class="card-body pb-0 w-100">
+                        <table class="table table-hover table-striped fs-5">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Link</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {% for func in funcs %}
-                                    <div class="d-flex justify-content-between align-items-center p-2 bg-white border border-light mb-2 rounded-1">
+                                <tr>
+                                    <td>
+                                        <h4 class="small text-primary">{{func.name | title}}</h4>
+                                    </td>
+                                    <td>
                                         <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
-                                            <h4 class="small text-primary text-uppercase">{{func.name}}</h4>
+                                            <small>
+                                                {{url_for('public.run', project_id=project.id, function=func.name) }}
+                                            </small>
                                         </a>
-                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
+                                    </td>
+                                    <td>
+                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="bg-dark nav-link px-2 rounded" style="width: fit-content" target="_blank">
                                             <i class="fas fa-terminal fa-fw text-bg-dark p-1 rounded-1"></i>
                                         </a>
-                                    </div>
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                            </div>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -169,5 +188,7 @@
 
 {% block scripts %} 
 {{super()}}
+<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
 <script src="{{url_for('static', filename='js/projects.js')}}"></script>
+<script src="{{url_for('static', filename='js/editor.js')}}"></script>
 {% endblock %}
