@@ -14,9 +14,8 @@ def authenticate(email: str, password: str):
     @return User Instance or None
     '''
     user = User.get_by_email(email)
-    if user:
-        if Utils.check_hashed_password(password, user.password):
-            return user
+    if user and Utils.check_hashed_password(password, user.password):
+        return user
     return None
 
 

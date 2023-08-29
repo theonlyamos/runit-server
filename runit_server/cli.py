@@ -9,6 +9,7 @@ from .app import app
 
 from odbms import DBMS
 from .models import Role, Admin
+from runit import RunIt
 
 load_dotenv()
 
@@ -115,6 +116,7 @@ def setup_runit(args):
                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
                'DATABASE_NAME', 'RUNTIME_PYTHON',
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
+    
     default_settings = {
         'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR'),
         'RUNIT_HOMEDIR': CURDIR,
@@ -168,8 +170,8 @@ def run_server(args = None):
         setup_runit(args)
         print('')
 
-    os.environ['RUNIT_DOCKER'] = str(args.docker)
-    os.environ['RUNIT_KUBERNETES'] = str(args.kubernetes)
+    RunIt.DOCKER = args.docker
+    RunIt.KUBERNETES = args.kubernetes
 
     if args and args.production:
         serve(app, listen=f"*:{args.port}")

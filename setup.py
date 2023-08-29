@@ -18,7 +18,7 @@ setup(
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 
                       'odbms', 'flask','flask-jwt-extended', 
-                      'flask-restful', 'waitress', 'passlib'],
+                      'flask-restful', 'waitress', 'passlib', 'docker'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={
         'Source': 'https://github.com/theonlyamos/runit-server/',
