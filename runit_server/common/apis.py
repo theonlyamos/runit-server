@@ -15,14 +15,15 @@ from .security import authenticate
 
 import os
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
-from threading import Thread
+from datetime import datetime
 
 from runit import RunIt
 
 load_dotenv()
 
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+CURRENT_PATH = os.path.realpath(__file__)
+TEMPLATES_PATH = os.path.realpath(os.path.join(CURRENT_PATH, '..', '..', 'templates'))
+DOCKER_TEMPLATES = os.path.join(TEMPLATES_PATH, 'docker')
 WORKDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
 PROJECTS_DIR = os.path.join(WORKDIR, 'projects')
 
@@ -84,7 +85,7 @@ class ProjectRS(Resource):
         user = User.get(get_jwt_identity())
 
         
-        if not '_id' in data.keys() or not len(data['_id']):
+        if '_id' not in data.keys() or not len(data['_id']):
             del data['_id']
             project = Project(user.id, **data)
             project_id = project.save().inserted_id
@@ -99,17 +100,33 @@ class ProjectRS(Resource):
             del data['_id']
             project.update(data, {'id': project.id})
 
-        if not os.path.exists(os.path.join(PROJECTS_DIR, project_id)):
-            os.mkdir(os.path.join(PROJECTS_DIR, project_id))
+        PROJECT_PATH = os.path.join(PROJECTS_DIR, project_id)
+        if not os.path.exists(PROJECT_PATH):
+            os.mkdir(PROJECT_PATH)
             
-        filepath = os.path.join(PROJECTS_DIR, project_id, secure_filename(file.filename))
+        filepath = os.path.join(PROJECT_PATH, secure_filename(file.filename))
         file.save(filepath)
 
         RunIt.extract_project(filepath)
-        os.chdir(os.path.join(PROJECTS_DIR, project_id))
+        os.chdir(PROJECT_PATH)
         #os.unlink(secure_filename(file.filename))
         runit = RunIt(**RunIt.load_config())
-        Thread(target=runit.install_dependency_packages, args=()).start()
+
+        if RunIt.DOCKER:
+            docker_file = f"{runit.runtime}.dockerfile"
+            full_docker_filepath = f"{os.path.join(DOCKER_TEMPLATES, docker_file)}"
+            print(f'[~] {full_docker_filepath}')
+            project_docker_file = os.path.join(PROJECT_PATH, 'Dockerfile')
+            
+            if not os.path.exists(project_docker_file):
+                with open(full_docker_filepath, 'rt') as nf:
+                    with open(project_docker_file, 'wt') as pf:
+                        content = nf.read()
+                        pf.write(content)
+
+            RunIt.run_background_task(RunIt.dockerize, PROJECT_PATH)
+        else:
+            RunIt.run_background_task(runit.install_all_language_packages)
         
         runit._id = project_id
         runit.update_config()
