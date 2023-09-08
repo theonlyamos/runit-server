@@ -15,7 +15,7 @@ load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
 WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-VERSION = "0.2.4"
+VERSION = "0.2.5"
 
 def setup_database():
     '''
