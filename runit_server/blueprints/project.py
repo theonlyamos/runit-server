@@ -22,6 +22,7 @@ from ..constants import (
 )
 
 PROJECT_INDEX_URL_NAME = 'project.index'
+PROJECT_404_ERROR = 'Project does not exist'
 
 load_dotenv()
 
@@ -102,7 +103,10 @@ def create():
 @project.get('/<project_id>/')
 def details(project_id):
     old_curdir = os.curdir
-    user_id = session['user_id']
+    
+    if not os.path.exists(os.path.realpath(os.path.join(PROJECTS_DIR, project_id))):
+        flash(PROJECT_404_ERROR, 'danger')
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
     
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     if not os.path.isfile('.env'):
@@ -126,7 +130,7 @@ def details(project_id):
         return render_template('projects/details.html', page='projects',\
             project=project, environs=environs, funcs=funcs)
     else:
-        flash('Project does not exist', 'danger')
+        flash(PROJECT_404_ERROR, 'danger')
         return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
 @project.post('/<project_id>/')
@@ -180,7 +184,7 @@ def files(project_id):
     project = Project.get(project_id)
     project = project.json()
     if not project:
-        return jsonify({'status': 'error', 'message': 'Project does not exist'})
+        return jsonify({'status': 'error', 'message': PROJECT_404_ERROR})
     
     return jsonify({'status': 'success', 'files': files, 'project': project})
 
