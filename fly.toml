@@ -16,7 +16,8 @@ primary_region = "hkg"
 
 [env]
   PORT = "9000"
-  RUNIT_SERVERNAME='runit.fly.dev'
+  RUNIT_SERVERNAME = 'runit.fly.dev'
+  RUNIT_WORKDIR = '/data/RUNIT_WORKDIR'
 
 [http_service]
   internal_port = 9000
