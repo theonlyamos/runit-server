@@ -18,18 +18,18 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 from runit import RunIt
+from ..constants import (
+    PROJECTS_DIR,
+    DOCKER_TEMPLATES
+)
 
 load_dotenv()
 
-CURRENT_PATH = os.path.realpath(__file__)
-TEMPLATES_PATH = os.path.realpath(os.path.join(CURRENT_PATH, '..', '..', 'templates'))
-DOCKER_TEMPLATES = os.path.join(TEMPLATES_PATH, 'docker')
-WORKDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(WORKDIR, 'projects')
 
-def stringifyObjectIds(model: object, properties: list)-> object:
-    for property in properties:
-        property._id = str(property._id)
+
+# def stringifObjectIds(model: object, properties: list)-> object:
+#     for property in properties:
+#         property._id = str(property._id)
 
 class Login(Resource):
     '''
@@ -159,7 +159,7 @@ class ProjectCloneRS(Resource):
             
             if project:
                 if not os.path.exists(os.path.join(PROJECTS_DIR, project.id)):
-                    raise Exception('Project not found!')
+                    raise FileNotFoundError('Project not found!')
                     
                 os.chdir(os.path.join(PROJECTS_DIR, project.id))
                 config = RunIt.load_config()
@@ -194,7 +194,7 @@ class ProjectById(Resource):
         
         project = Project.get(project_id)
         if project:
-            result =  Project.update(data)
+            Project.update(data)
             return {'status': 'success', 'message': 'Operation Successful!'}
 
         return {'status': 'error', 'message': 'Operation unsuccessful'}
@@ -224,13 +224,13 @@ class FunctionById(Resource):
 
     @jwt_required()
     def get(self, function_id):
-        function = Function.get(function_id)
+        runnable = Function.get(function_id)
 
-        if function:
-            function = function.json()
-            project = Project.get(function['project_id'])
-            function['project'] = project.json() if project else project
-        return function
+        if runnable:
+            runnable = runnable.json()
+            project = Project.get(runnable['project_id'])
+            runnable['project'] = project.json() if project else project
+        return runnable
 
 class RunFunction(Resource):
     '''
@@ -245,13 +245,13 @@ class RunFunction(Resource):
         @param function Name of the function
         @return Function Details
         '''
-        function = Function.get(function)
+        runnable = Function.get(function)
 
-        if function:
-            function = function.json()
-            project = Project.get(function['project_id'])
-            function['project'] = project.json() if project else project
-        return function
+        if runnable:
+            runnable = runnable.json()
+            project = Project.get(runnable['project_id'])
+            runnable['project'] = project.json() if project else project
+        return runnable
 
 class Document(Resource):
     '''
@@ -279,43 +279,43 @@ class Document(Resource):
 
             Collection.TABLE_NAME = db.collection_name
             
-            if not 'function' in data.keys():
+            if 'function' not in data.keys():
                 raise SyntaxError('No database function to run')
             
-            function = data['function']
+            operation = data['function']
 
-            if function == 'all' or function == 'find' or function == 'find_many':
+            if operation == 'all' or operation == 'find' or operation == 'find_many':
                 projection = {}
                 for item in data['projection']:
                     projection[item] = 1
                 results = Collection.find(data['_filter'], projection)
 
-            elif function == 'find_one':
+            elif operation == 'find_one':
                 projection = {}
                 for item in data['projection']:
                     projection[item] = 1
                 
                 results = Collection.find_one(data['_filter'], projection)
 
-            elif function == 'insert':
+            elif operation == 'insert':
                 results = Collection(**data['document']).save()
             
-            elif function == 'insert_many':
+            elif operation == 'insert_many':
                 results = Collection.insert_many(data['documents'])
 
-            elif function == 'update':
+            elif operation == 'update':
                 results = Collection.update(data['_filter'], data['update'])
             
-            elif function == 'count':
+            elif operation == 'count':
                 results = Collection.count(data['_filter'])
             
-            if function == 'find_many' or function == 'find' or function == 'all':
+            if operation == 'find_many' or operation == 'find' or operation == 'all':
                 return jsonify([result.json() for result in results])
-            elif function == 'find_one':
+            elif operation == 'find_one':
                 return jsonify(results.json())
-            elif function == 'insert':
+            elif operation == 'insert':
                 return jsonify({'status': 'success', 'msg': str(results.inserted_id)})
-            elif function == 'count':
+            elif operation == 'count':
                 return jsonify({'count': results})
             else:
                 return jsonify({'status': 'success', 'msg': 'Operation successful'})

@@ -7,14 +7,19 @@ app = "runit"
 primary_region = "hkg"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
+  # builder = "paketobuildpacks/builder:full"
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "runit_data"
+  destination = "/data"
 
 [env]
-  PORT = "5000"
+  PORT = "9000"
   RUNIT_SERVERNAME='runit.fly.dev'
 
 [http_service]
-  internal_port = 8080
+  internal_port = 9000
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true

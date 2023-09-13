@@ -1,22 +1,20 @@
 #! python
+import os
+import logging
+from sys import platform
+from datetime import timedelta
 
 from flask import Flask, jsonify, redirect, url_for, session, request
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
 from odbms import DBMS
 from .common import  Login, Account, ProjectById, ProjectRS, ProjectCloneRS, Document
 
 from .models import Admin
 from .models import Role
-
-import os
-import logging
-from sys import platform
-from datetime import timedelta
-from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
-
-WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME', '')), 'RUNIT_WORKDIR')
+from .constants import RUNIT_WORKDIR
 
 app = Flask(__name__)
 api = Api(app, prefix='/api')
@@ -102,14 +100,14 @@ def get_parameters():
     return jsonify({'GET': {}, 'POST': {}})
 
 with app.app_context():
-    if not os.path.exists(WORKDIR):
-        os.mkdir(WORKDIR)
+    if not os.path.exists(RUNIT_WORKDIR):
+        os.mkdir(RUNIT_WORKDIR)
     
-    if not (os.path.exists(os.path.join(WORKDIR, 'accounts'))):
-        os.mkdir(os.path.join(WORKDIR, 'accounts'))
+    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'accounts'))):
+        os.mkdir(os.path.join(RUNIT_WORKDIR, 'accounts'))
         
-    if not (os.path.exists(os.path.join(WORKDIR, 'projects'))):
-        os.mkdir(os.path.join(WORKDIR, 'projects'))
+    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'projects'))):
+        os.mkdir(os.path.join(RUNIT_WORKDIR, 'projects'))
 
     settings = dotenv_values(find_dotenv())
 

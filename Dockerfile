@@ -1,4 +1,4 @@
-FROM ubuntu:22.10
+FROM ubuntu:22.04
 
 LABEL maintainer="Amos Amissah"
 
@@ -53,4 +53,4 @@ EXPOSE 9000
 
 # RUN ln -sf /bin/bash /bin/sh
 
-ENTRYPOINT ["runit-server"]
+ENTRYPOINT ["runit-server", "--production"]
