@@ -17,7 +17,7 @@ from .constants import RUNIT_WORKDIR, VERSION
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
-RUNIT_WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
+RunIt.RUNTIME_ENV = 'server'
 
 def setup_database():
     '''
@@ -120,7 +120,7 @@ def setup_runit(args):
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
     
     default_settings = {
-        'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR'),
+        'RUNIT_WORKDIR': os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR'),
         'RUNIT_HOMEDIR': CURDIR,
         'RUNIT_SERVERNAME': '',
         'DBMS': 'mongodb',

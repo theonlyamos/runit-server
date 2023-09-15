@@ -11,6 +11,7 @@ CONFIG_FILE = 'runit.json'
 STARTER_CONFIG_FILE = 'runit.json'
 IS_RUNNING = False
 CURRENT_PROJECT_DIR = os.path.realpath(os.curdir)
+
 RUNIT_HOMEDIR = os.getenv(
     'RUNIT_HOMEDIR',
     os.path.dirname(os.path.realpath(__file__))

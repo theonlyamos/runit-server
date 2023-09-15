@@ -20,6 +20,7 @@ app = Flask(__name__)
 api = Api(app, prefix='/api')
 
 load_dotenv()
+
 app.secret_key =  "dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf"
 app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
 app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
@@ -28,9 +29,9 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 jwt = JWTManager(app)
 
 if __name__ != '__main__':
-   gunicorn_logger = logging.getLogger('gunicorn.error')
-   app.logger.handlers = gunicorn_logger.handlers
-   app.logger.setLevel(gunicorn_logger.level)
+   uvicorn_logger = logging.getLogger('uvicorn.error')
+   app.logger.handlers = uvicorn_logger.handlers
+   app.logger.setLevel(uvicorn_logger.level)
 
 REQUESTS = []
 

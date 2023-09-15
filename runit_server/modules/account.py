@@ -6,13 +6,14 @@ from getpass import getpass
 import requests
 from dotenv import load_dotenv
 
+from ..constants import RUNIT_HOMEDIR
+
 load_dotenv()
 
-BASE_API = f"{os.getenv('RUNIT_PROTOCOL', 'https://')}{os.getenv('RUNIT_SERVERNAME', 'runit.test')}/api/"
+BASE_API = f"{os.getenv('RUNIT_PROTOCOL', 'https://')}{os.getenv('RUNIT_SERVERNAME')}/api/"
 PROJECTS_API = BASE_API+'projects/'
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-RUNIT_HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
 BASE_HEADERS = {}
 
 def load_token(access_token = None):

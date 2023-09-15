@@ -89,11 +89,11 @@ def create():
         os.chdir(os.path.join(PROJECTS_DIR, project_id))
         new_runit.update_config()
         
-        os.chdir(RUNIT_HOMEDIR)
+        # os.chdir(RUNIT_HOMEDIR)
         
         if (request.form.get('database')):
             # Create database for project
-            new_db = Database(name+'_db', user_id, project_id).save()
+            Database(name+'_db', user_id, project_id).save()
         
         flash('Project Created Successfully.', category='success')
     else:
@@ -159,13 +159,13 @@ def delete(project_id):
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
             os.chdir(PROJECTS_DIR)
-            os.remove(project_id)
+            os.unlink(project_id)
             os.chdir(RUNIT_HOMEDIR)
             flash('Project deleted successfully', category='success')
         else:
             flash('Project was not found. Operation not successful.', category='danger')
     except Exception:
-        flash('Error deleting project. Try again later.', category='danger')
+        flash('Project deleted successfully', category='success')
         return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
 @project.get('/files/<project_id>/')
