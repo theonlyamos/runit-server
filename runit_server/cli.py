@@ -10,11 +10,14 @@ from .app import app
 from odbms import DBMS
 from .models import Role, Admin
 
+from runit import RunIt
+
+from .constants import RUNIT_WORKDIR, VERSION
+
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
-WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-VERSION = "0.2.4"
+RUNIT_WORKDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
 
 def setup_database():
     '''
@@ -41,14 +44,14 @@ def setup_database():
     
 
 def create_folders():
-    if not os.path.exists(WORKDIR):
-        os.mkdir(WORKDIR)
+    if not os.path.exists(RUNIT_WORKDIR):
+        os.mkdir(RUNIT_WORKDIR)
     
-    if not (os.path.exists(os.path.join(WORKDIR, 'accounts'))):
-        os.mkdir(os.path.join(WORKDIR, 'accounts'))
+    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'accounts'))):
+        os.mkdir(os.path.join(RUNIT_WORKDIR, 'accounts'))
         
-    if not (os.path.exists(os.path.join(WORKDIR, 'projects'))):
-        os.mkdir(os.path.join(WORKDIR, 'projects'))
+    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'projects'))):
+        os.mkdir(os.path.join(RUNIT_WORKDIR, 'projects'))
 
 def create_dot_env(settings: dict):
     '''
@@ -115,6 +118,7 @@ def setup_runit(args):
                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
                'DATABASE_NAME', 'RUNTIME_PYTHON',
                'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
+    
     default_settings = {
         'RUNIT_WORKDIR': os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR'),
         'RUNIT_HOMEDIR': CURDIR,
@@ -168,8 +172,8 @@ def run_server(args = None):
         setup_runit(args)
         print('')
 
-    os.environ['RUNIT_DOCKER'] = str(args.docker)
-    os.environ['RUNIT_KUBERNETES'] = str(args.kubernetes)
+    RunIt.DOCKER = args.docker
+    RunIt.KUBERNETES = args.kubernetes
 
     if args and args.production:
         serve(app, listen=f"*:{args.port}")
@@ -195,7 +199,7 @@ def get_arguments():
     
     parser.add_argument('--docker', action='store_true', help="Run program in docker container")
     parser.add_argument('--kubernetes', action='store_true', help="Run program using kubernetes")
-    parser.add_argument('--host', type=str, default='127.0.0.1', help='Host address to run server on')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='Host address to run server on')
     parser.add_argument('--port', type=int, default=9000, help='Host port to run server on')
     parser.add_argument('--debug', action='store_true', help="Enable debug mode")
     parser.add_argument('--production', action='store_true', help="Run in production mode")

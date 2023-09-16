@@ -1,0 +1,28 @@
+# fly.toml app configuration file generated for runit on 2023-09-08T10:10:06Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "runit"
+primary_region = "hkg"
+
+[build]
+  # builder = "paketobuildpacks/builder:full"
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "runit_data"
+  destination = "/data"
+
+[env]
+  PORT = "9000"
+  RUNIT_SERVERNAME = 'runit.fly.dev'
+  RUNIT_WORKDIR = '/data/RUNIT_WORKDIR'
+
+[http_service]
+  internal_port = 9000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]

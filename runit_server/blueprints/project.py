@@ -13,28 +13,24 @@ from ..models import Database
 from ..models import Project
 from ..models import User
 
-from runit import RunIt, TEMPLATES_FOLDER
+from runit import RunIt
+from ..constants import (
+    RUNIT_HOMEDIR,
+    PROJECTS_DIR,
+    LANGUAGE_TO_ICONS,
+    LANGUAGE_TO_RUNTIME
+)
+
+PROJECT_INDEX_URL_NAME = 'project.index'
+PROJECT_404_ERROR = 'Project does not exist'
 
 load_dotenv()
-
-EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}
-
-LANGUAGE_ICONS = {'python': 'fab fa-python', 
-                  'php': 'fab fa-php',
-                  'javascript': 'fab fa-node-js',
-                  'multi': 'fas fa-project-diagram'}
-LANGUAGE_TO_RUNTIME = {'python': 'python', 'php': 'php',
-                  'javascript': 'node'}
-
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 project = Blueprint('project', __name__, url_prefix='/projects', template_folder=os.path.join('..','..','templates'), static_folder=os.path.join('..','static'))
 
 @project.before_request
 def authorize():
-    if not 'user_id' in session:
+    if 'user_id' not in session:
         return redirect(url_for('public.index'))
 
 @project.get('/')
@@ -45,7 +41,7 @@ def index():
     projects = Project.get_by_user(user_id)
     
     return render_template('projects/index.html', page='projects',\
-            projects=projects, view=view, icons=LANGUAGE_ICONS)
+            projects=projects, view=view, icons=LANGUAGE_TO_ICONS)
 
 @project.post('/')
 def create():
@@ -93,7 +89,7 @@ def create():
         os.chdir(os.path.join(PROJECTS_DIR, project_id))
         new_runit.update_config()
         
-        os.chdir(HOMEDIR)
+        os.chdir(RUNIT_HOMEDIR)
         
         if (request.form.get('database')):
             # Create database for project
@@ -102,12 +98,15 @@ def create():
         flash('Project Created Successfully.', category='success')
     else:
         flash('Missing required fields.', category='danger')
-    return redirect(url_for('project.index'))
+    return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
 @project.get('/<project_id>/')
 def details(project_id):
     old_curdir = os.curdir
-    user_id = session['user_id']
+    
+    if not os.path.exists(os.path.realpath(os.path.join(PROJECTS_DIR, project_id))):
+        flash(PROJECT_404_ERROR, 'danger')
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
     
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     if not os.path.isfile('.env'):
@@ -131,8 +130,8 @@ def details(project_id):
         return render_template('projects/details.html', page='projects',\
             project=project, environs=environs, funcs=funcs)
     else:
-        flash('Project does not exist', 'danger')
-        return redirect(url_for('project.index'))
+        flash(PROJECT_404_ERROR, 'danger')
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
 @project.post('/<project_id>/')
 def environ(project_id):
@@ -143,13 +142,13 @@ def environ(project_id):
     for key, value in request.form.items():
         set_key(env_file, key, value)
 
-    project = Project.get(project_id)
+    # project = Project.get(project_id)
     flash('Environment variables updated successfully', category='success')
     return redirect(url_for('project.details', project_id=project_id))
 
 @project.patch('/')
 def update_project():
-    user_id = session['user_id']
+    # user_id = session['user_id']
     return render_template('projects/index.html', page='projects', projects=[])
 
 @project.post('/delete/<project_id>/')
@@ -158,16 +157,16 @@ def delete(project_id):
         user_id = session['user_id']
         project = Project.get(project_id)
         if project:
-            result = Project.remove({'_id': project_id, 'user_id': user_id})
+            Project.remove({'_id': project_id, 'user_id': user_id})
             os.chdir(PROJECTS_DIR)
             os.remove(project_id)
-            os.chdir(HOMEDIR)
+            os.chdir(RUNIT_HOMEDIR)
             flash('Project deleted successfully', category='success')
         else:
             flash('Project was not found. Operation not successful.', category='danger')
-    except:
+    except Exception:
         flash('Error deleting project. Try again later.', category='danger')
-        return redirect(url_for('project.index'))
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
 @project.get('/files/<project_id>/')
 def files(project_id):
@@ -185,7 +184,7 @@ def files(project_id):
     project = Project.get(project_id)
     project = project.json()
     if not project:
-        return jsonify({'status': 'error', 'message': 'Project does not exist'})
+        return jsonify({'status': 'error', 'message': PROJECT_404_ERROR})
     
     return jsonify({'status': 'success', 'files': files, 'project': project})
 
