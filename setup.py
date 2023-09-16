@@ -1,6 +1,7 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
-from runit_server.constants import VERSION
+
+VERSION = "0.2.7"
 
 with open('README.md', 'rt') as file:
     description = file.read()
