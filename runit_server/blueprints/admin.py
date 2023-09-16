@@ -5,7 +5,7 @@ from flask import Blueprint, flash, render_template, redirect, \
     url_for, request, session
     
 from bson.objectid import ObjectId
-from dotenv import load_dotenv, dotenv_values, set_key, find_dotenv
+from dotenv import dotenv_values
 
 from odbms import DBMS
 from ..models import User
@@ -14,16 +14,15 @@ from ..models import Admin
 from ..models import Function
 from ..common import Utils
 
+from ..constants import (
+    PROJECTS_DIR,
+    EXTENSIONS,
+    LANGUAGE_TO_ICONS
+)
+
+ADMIN_LOGIN_PAGE = 'admin.loginpage'
 
 from runit import RunIt
-
-EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
-LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
-                  'javascript': 'node-js', 'typescript': 'node-js'}
-
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
 
 admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))
 
@@ -31,7 +30,7 @@ admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.jo
 def authorize():
     pass
     #if not 'admin_id' in session:
-    #     return redirect(url_for('admin.loginpage'))
+    #     return redirect(url_for(ADMIN_LOGIN_PAGE))
 
 @admin.get('/login/')
 def loginpage():
@@ -39,8 +38,8 @@ def loginpage():
 
 @admin.route('/')
 def index():
-    if not 'admin_id' in session:
-        return redirect(url_for('admin.loginpage'))
+    if 'admin_id' not in session:
+        return redirect(url_for(ADMIN_LOGIN_PAGE))
     
     admin = Admin.get(session['admin_id'])
     return render_template('admin/index.html', page='home', admin=admin)
@@ -59,7 +58,7 @@ def login():
             session['admin_username'] = admin.username
             return redirect(url_for('admin.index'))
     flash('Invalid Login Credentials', 'danger')
-    return redirect(url_for('admin.loginpage'))
+    return redirect(url_for(ADMIN_LOGIN_PAGE))
 
 @admin.get('/users/')
 def users():
@@ -68,7 +67,7 @@ def users():
     view = view if view else 'grid'
 
     return render_template('admin/users/index.html', page='users',\
-            users=users, view=view, icons=LANGUAGE_ICONS)
+            users=users, view=view, icons=LANGUAGE_TO_ICONS)
 
 @admin.get('/users/<string:user_id>')
 @admin.get('/users/<string:user_id>/')
@@ -81,7 +80,7 @@ def user(user_id):
         view = view if view else 'grid'
         
         return render_template('admin/users/details.html', page='users',\
-            user=user.json(), projects=projects, view=view, icons=LANGUAGE_ICONS)
+            user=user.json(), projects=projects, view=view, icons=LANGUAGE_TO_ICONS)
     except Exception as e:
         flash(str(e), 'danger')
         return redirect(url_for('admin.users'))
@@ -91,7 +90,7 @@ def user(user_id):
 def projects():
     projects = Project.all()
     return render_template('admin/projects/index.html', page='projects',\
-            projects=projects, icons=LANGUAGE_ICONS)
+            projects=projects, icons=LANGUAGE_TO_ICONS)
 
 @admin.get('/projects/<project_id>')
 @admin.get('/projects/<project_id>/')
@@ -124,27 +123,27 @@ def project(project_id):
 @admin.get('/functions/')
 def functions():
     global EXTENSIONS
-    global LANGUAGE_ICONS
+    global LANGUAGE_TO_ICONS
     
     functions = Function.get_by_admin(session['admin_id'])
     projects = Project.get_by_admin(session['admin_id'])
     
     return render_template('functions/index.html', page='functions',\
             functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
+            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
 
 @admin.get('/databases')
 @admin.get('/databases/')
 def databases():
     global EXTENSIONS
-    global LANGUAGE_ICONS
+    global LANGUAGE_TO_ICONS
     
     functions = Function.get_by_admin(session['admin_id'])
     projects = Project.get_by_admin(session['admin_id'])
     
     return render_template('functions/index.html', page='functions',\
             functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
+            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
         
 @admin.route('/profile/')
 def profile():
@@ -153,7 +152,7 @@ def profile():
 @admin.route('/logout/')
 def logout():
     del session['admin_id']
-    return redirect(url_for('admin.loginpage'))
+    return redirect(url_for(ADMIN_LOGIN_PAGE))
 
 @admin.route('/<page>')
 def main(page):

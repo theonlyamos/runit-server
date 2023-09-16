@@ -13,22 +13,21 @@ from ..models import User
 from ..models import Function
 
 from runit import RunIt
+from ..constants import (
+    PROJECTS_DIR,
+    EXTENSIONS,
+    LANGUAGE_TO_ICONS
+)
+
+PROJECTS_INDEX_TEMPLATE = 'projects/index.html'
 
 load_dotenv()
-
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
-
-EXTENSIONS = {'python': '.py', 'python3': '.py', 'php': '.php', 'javascript': '.js'}
-LANGUAGE_ICONS = {'python': 'python', 'python3': 'python', 'php': 'php',
-                  'javascript': 'node-js', 'typescript': 'node-js'}
 
 account = Blueprint('account', __name__, url_prefix='/account', static_folder=os.path.join('..','static'))
 
 @account.before_request
 def authorize():
-    if not 'user_id' in session:
+    if 'user_id' not in session:
         return redirect(url_for('public.index'))
 
 @account.route('/')
@@ -41,7 +40,7 @@ def projects():
     user_id = session['user_id']
     if request.method == 'GET':
         projects = [project for project in Project.get_by_user(user_id) if project in os.listdir(PROJECTS_DIR)]
-        return render_template('projects/index.html', page='projects',\
+        return render_template(PROJECTS_INDEX_TEMPLATE, page='projects',\
              projects=projects)
 
     elif request.method == 'POST':
@@ -55,35 +54,29 @@ def projects():
         return redirect(url_for('account.projects'))
     
     elif request.method == 'PATCH':
-        return render_template('projects/index.html', page='projects', projects=[])
+        return render_template(PROJECTS_INDEX_TEMPLATE, page='projects', projects=[])
     elif request.method == 'DELETE':
-        return render_template('projects/index.html', page='projects', projects=[])
+        return render_template(PROJECTS_INDEX_TEMPLATE, page='projects', projects=[])
 
 @account.get('/functions')
 @account.get('/functions/')
 def functions():
-    global EXTENSIONS
-    global LANGUAGE_ICONS
-
     functions = Function.get_by_user(session['user_id'])
     projects = Project.get_by_user(session['user_id'])
     
     return render_template('functions/index.html', page='functions',\
             functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
+            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
 
 @account.get('/databases')
 @account.get('/databases/')
 def databases():
-    global EXTENSIONS
-    global LANGUAGE_ICONS
-
     functions = Function.get_by_user(session['user_id'])
     projects = Project.get_by_user(session['user_id'])
     
     return render_template('functions/index.html', page='functions',\
             functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_ICONS)
+            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
  
 @account.get('/profile')
 @account.get('/profile/')

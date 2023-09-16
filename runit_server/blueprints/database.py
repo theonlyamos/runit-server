@@ -17,23 +17,20 @@ from ..models import User
 
 from odbms import DBMS
 
-from runit import RunIt
+from ..constants import (
+    RUNIT_HOMEDIR,
+    LANGUAGE_TO_ICONS
+)
 
 load_dotenv()
 
-EXTENSIONS = {'python': '.py', 'php': '.php', 'javascript': '.js'}
-LANGUAGE_ICONS = {'python': 'python', 'php': 'php',
-                  'javascript': 'node-js', 'typescript': 'node-js'}
+DATABASE_INDEX = 'database.index'
 
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR = os.getenv('RUNIT_HOMEDIR', os.path.realpath(os.path.join(CURRENT_PATH, '..')))
-PROJECTS_DIR = os.path.join(HOMEDIR, 'databases')
-
-database = Blueprint('database', __name__, url_prefix='/databases', template_folder=os.path.join(HOMEDIR,'templates'), static_folder=os.path.join('..','static'))
+database = Blueprint('database', __name__, url_prefix='/databases', template_folder=os.path.join(RUNIT_HOMEDIR,'templates'), static_folder=os.path.join('..','static'))
 
 @database.before_request
 def authorize():
-    if not 'user_id' in session:
+    if 'user_id' not in session:
         return redirect(url_for('public.index'))
 
 @database.get('/')
@@ -52,7 +49,7 @@ def index():
     projects = Project.get_by_user(user_id)
     
     return render_template('databases/index.html', page='databases',\
-            databases=databases, projects=projects, view=view, icons=LANGUAGE_ICONS)
+            databases=databases, projects=projects, view=view, icons=LANGUAGE_TO_ICONS)
 
 @database.post('/')
 def create():
@@ -72,7 +69,7 @@ def create():
         flash('Database Created Successfully.', category='success')
     else:
         flash('Missing required fields.', category='danger')
-    return redirect(url_for('database.index'))
+    return redirect(url_for(DATABASE_INDEX))
 
 @database.get('/<database_id>/')
 def details(database_id):
@@ -101,7 +98,7 @@ def details(database_id):
                 inputTypes=schema_names_to_input_types)
     else:
         flash('Database does not exist', 'danger')
-        return redirect(url_for('database.index'))
+        return redirect(url_for(DATABASE_INDEX))
 
 @database.post('/schema/<database_id>/')
 def schema(database_id):
@@ -128,4 +125,4 @@ def delete(database_id):
         flash('Database deleted successfully', category='success')
     else:
         flash('Database was not found. Operation not successful.', category='danger')
-    return redirect(url_for('database.index'))
+    return redirect(url_for(DATABASE_INDEX))

@@ -10,11 +10,14 @@ from dotenv import load_dotenv, find_dotenv, dotenv_values
 
 from runit import RunIt
 
+from ..constants import (
+    RUNIT_HOMEDIR,
+    PROJECTS_DIR
+)
+
 load_dotenv()
 
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-HOMEDIR =  os.path.join(os.getenv('USERPROFILE', os.getenv('HOME')), 'RUNIT_WORKDIR')
-PROJECTS_DIR = os.path.join(HOMEDIR, 'projects')
+REGISTER_HTML_TEMPLATE = 'register.html'
 
 public = Blueprint('public', __name__)
 
@@ -34,13 +37,14 @@ def index():
         return redirect(url_for('account.index'))
     return render_template('login.html')
 
+@public.get('/<string:project_id>')
 @public.get('/<string:project_id>/')
 def project(project_id):
     current_project_dir = os.path.join(PROJECTS_DIR, project_id)
     if os.path.isdir(current_project_dir):
         if not RunIt.is_private(project_id, current_project_dir):
             result = RunIt.start(project_id, 'index', current_project_dir)
-            os.chdir(HOMEDIR)
+            os.chdir(RUNIT_HOMEDIR)
             
             return result
 
@@ -53,32 +57,36 @@ def run(project_id, function):
     if os.path.isdir(current_project_dir):
         if not RunIt.is_private(project_id, current_project_dir):
             result = RunIt.start(project_id, function, current_project_dir)
-            os.chdir(HOMEDIR)
+            os.chdir(RUNIT_HOMEDIR)
             return result
 
     return RunIt.notfound()
 
 @public.route('/register/', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        c_password = request.form.get('cpassword')
-        if password != c_password:
-            flash('Passwords do not match!', 'danger')
-            return render_template('register.html')
-        user = User.get_by_email(email)
-        if user:
-            flash('User is already Registered!', 'danger')
-            return render_template('register.html')
-        
-        user = User(email, name, password).save()
-        #print(user.inserted_id)
-        flash('Registration Successful!', 'success')
-        return redirect(url_for('public.index'))
+    try:
+        if request.method == 'POST':
+            name = request.form.get('name')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            c_password = request.form.get('cpassword')
+            if password != c_password:
+                flash('Passwords do not match!', 'danger')
+                return render_template(REGISTER_HTML_TEMPLATE)
+            user = User.get_by_email(email)
+            if user:
+                flash('User is already Registered!', 'danger')
+                return render_template(REGISTER_HTML_TEMPLATE)
+            
+            User(email, name, password).save()
+            #print(user.inserted_id)
+            flash('Registration Successful!', 'success')
+            return redirect(url_for('public.index'))
 
-    return render_template('register.html')
+        return render_template(REGISTER_HTML_TEMPLATE)
+    except Exception as e:
+        flash('Error during registration', 'danger')
+        return render_template(REGISTER_HTML_TEMPLATE)
 
 @public.post('/login/')
 def login():
