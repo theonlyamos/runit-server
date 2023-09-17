@@ -1,8 +1,10 @@
 
 import os
 import sys
+import shutil
 from time import sleep
 from datetime import datetime
+from pathlib import Path
 
 from flask import Blueprint, flash, render_template, redirect, \
     url_for, request, session, jsonify
@@ -72,7 +74,7 @@ def create():
         project_id = str(project_id)
         project.id = project_id
         
-        homepage = f"{request.base_url}/{project_id}/"
+        homepage = f"{request.base_url}{project_id}/"
         project.update({'homepage': homepage})
 
         config['_id'] = project_id
@@ -151,6 +153,7 @@ def update_project():
     # user_id = session['user_id']
     return render_template('projects/index.html', page='projects', projects=[])
 
+@project.post('/delete/<project_id>')
 @project.post('/delete/<project_id>/')
 def delete(project_id):
     try:
@@ -158,12 +161,11 @@ def delete(project_id):
         project = Project.get(project_id)
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
-            os.chdir(PROJECTS_DIR)
-            os.unlink(project_id)
-            os.chdir(RUNIT_HOMEDIR)
+            shutil.rmtree(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
             flash('Project deleted successfully', category='success')
         else:
             flash('Project was not found. Operation not successful.', category='danger')
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
     except Exception:
         flash('Project deleted successfully', category='success')
         return redirect(url_for(PROJECT_INDEX_URL_NAME))
@@ -171,8 +173,6 @@ def delete(project_id):
 @project.get('/files/<project_id>/')
 def files(project_id):
     old_curdir = os.curdir
-    user_id = session['user_id']
-    
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     files = []
     for file in os.listdir(os.curdir):
