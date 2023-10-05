@@ -32,7 +32,7 @@ class FileBrowser {
         
         FileBrowser.selected = filename
 
-        let url = `${location.origin}/projects/editor/${FileBrowser.#project.id}/`
+        let url = `${location.origin}/projects/file/${FileBrowser.#project.id}/`
         url += `?file=${FileBrowser.selected}`
 
         const request = await fetch(url)
@@ -94,7 +94,7 @@ class FileBrowser {
         let data = FileBrowser.editor.getValue()
 
         try {
-            let url = `${location.origin}/projects/editor/${FileBrowser.#project.id}/`
+            let url = `${location.origin}/projects/file/${FileBrowser.#project.id}/`
             url += `?file=${FileBrowser.selected}`
 
             const response = await fetch(url, {
@@ -123,7 +123,7 @@ const getProject = async()=>{
     return new Promise(async(resolve, reject)=>{
         try {
             const urlParts = location.href.split("/")
-            const projectID = urlParts[4]
+            const projectID = urlParts[urlParts.length-2]
             const url = `${location.origin}/projects/files/${projectID}/`
     
             const request = await fetch(url)

@@ -16,7 +16,6 @@
 
 {% block content %}
 {% include 'projects/modal.html' %}
-{% include 'projects/editor.html' %}
 <div class="container">
     {% for (category, message) in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -27,7 +26,7 @@
 
     <div class="tools d-flex justify-content-end">
         <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <nav class="nav-item dropdown">
+            <nav class="nav-item dropdown" aria-label="Functions">
                 <a href="#" class="btn btn-outline-dark mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
@@ -44,7 +43,7 @@
             <a href="#editorModal" role="button" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
                 <i class="fas fa-wrench"></i>
             </a>
-            <a href="#editorModal" role="button" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" data-bs-toggle="modal" title="Open in editor">
+            <a href="{{ url_for('project.editor', project_id=project.id)}}" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" title="Open in editor">
                 <i class="fas fa-code"></i>
             </a>
             <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
@@ -190,5 +189,4 @@
 {{super()}}
 <script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
 <script src="{{url_for('static', filename='js/projects.js')}}"></script>
-<script src="{{url_for('static', filename='js/editor.js')}}"></script>
 {% endblock %}

@@ -170,6 +170,22 @@ def delete(project_id):
         flash('Project deleted successfully', category='success')
         return redirect(url_for(PROJECT_INDEX_URL_NAME))
 
+@project.get('/editor/<project_id>/')
+def editor(project_id):
+    # Define the route for the editor page
+    project = Project.get(project_id)
+    project = project.json()
+    if project:
+        return render_template(
+            'projects/editor.html',
+            page='projects',
+            project=project,
+            fullscreen=True)
+    else:
+        flash(PROJECT_404_ERROR, 'danger')
+        return redirect(url_for(PROJECT_INDEX_URL_NAME))
+    
+
 @project.get('/files/<project_id>/')
 def files(project_id):
     old_curdir = os.curdir
@@ -188,7 +204,7 @@ def files(project_id):
     
     return jsonify({'status': 'success', 'files': files, 'project': project})
 
-@project.get('/editor/<project_id>/')
+@project.get('/file/<project_id>/')
 def get_file(project_id):
     old_curdir = os.curdir
     user_id = session['user_id']
@@ -208,7 +224,7 @@ def get_file(project_id):
 
     return jsonify({'status': 'success', 'content': content})
 
-@project.put('/editor/<project_id>/')
+@project.put('/file/<project_id>/')
 def update_file(project_id):
     old_curdir = os.curdir
     user_id = session['user_id']

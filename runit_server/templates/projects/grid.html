@@ -11,14 +11,14 @@
         </a>
         <ul class="dropdown-menu rounded-0 shadow border-0">
             <li>
-                <a href="{{url_for('public.run', project_id=project.id, function='index')}}" class="dropdown-item small py-0" target="_blank">
-                    Run
+                <a href="{{url_for('project.details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
+                    Details
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-                <a href="{{url_for('project.details', project_id=project.id)}}" class="dropdown-item small py-0">
-                    Details
+                <a href="{{url_for('project.editor', project_id=project.id)}}" class="dropdown-item small py-0">
+                    Open in Editor
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>

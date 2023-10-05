@@ -32,10 +32,16 @@ RUN mkdir -p ~/.gnupg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 RUN curl https://bun.sh/install | bash 
 
 RUN echo 'export BUN_PATH="$HOME/.bun"' >> $HOME/.bashrc \
     && echo 'export PATH="$PATH:$BUN_PATH"' >> $HOME/.bashrc
+
+RUN python3 -m pip install python-dotenv
+
+RUN bun add -g dotenv 
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 

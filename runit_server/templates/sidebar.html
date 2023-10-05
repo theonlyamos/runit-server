@@ -1,4 +1,4 @@
-<div class="sidebar position-relative d-none d-sm-flex flex-column text-bg-dark rounded-start">
+<div class="sidebar position-relative d-none d-sm-flex flex-column text-bg-dark vh-100">
     {% for item in menu %}
     <a href="{{ url_for(item['url']) }}" 
         class="nav-link p-2 py-3 opacity-75 {% if item['name'] == page %}opacity-100{% endif %}"
