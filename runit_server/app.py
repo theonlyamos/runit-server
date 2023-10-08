@@ -1,12 +1,17 @@
 #! python
 import os
 import logging
+import asyncio
 from sys import platform
 from datetime import timedelta
 
-from flask import Flask, jsonify, redirect, url_for, session, request
+from flask import (
+    Flask, jsonify, redirect, render_template,
+    url_for, session, request
+)
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+import socketio
 from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
 from odbms import DBMS
@@ -16,22 +21,16 @@ from .models import Admin
 from .models import Role
 from .constants import RUNIT_WORKDIR
 
-app = Flask(__name__)
-api = Api(app, prefix='/api')
-
 load_dotenv()
-
+app = Flask(__name__)
 app.secret_key =  "dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf"
 app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
 app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
-
+api = Api(app, prefix='/api')
 jwt = JWTManager(app)
-
-if __name__ != '__main__':
-   uvicorn_logger = logging.getLogger('uvicorn.error')
-   app.logger.handlers = uvicorn_logger.handlers
-   app.logger.setLevel(uvicorn_logger.level)
+sio = socketio.Server(async_mode='threading')
+app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 
 REQUESTS = []
 
@@ -56,6 +55,50 @@ app.register_blueprint(account)
 app.register_blueprint(project)
 app.register_blueprint(database)
 app.register_blueprint(admin, subdomain='admin')
+
+WS_CONNECTIONS = {}
+WS_DATA = {}
+WS_IGNORED_PATHS = ['elementSelector.css.map']
+
+@sio.event
+def connect(sid, environ):
+    WS_CONNECTIONS[sid] = {}
+    sio.emit('handshake', sid, room=sid)
+    print('Connected to socketio ', sid)
+    
+@sio.event
+def disconnect(sid):
+    del WS_CONNECTIONS[sid]
+    print('Disconnected from socketio ', sid)
+
+@sio.event
+def message(sid, data):
+    print(data)
+
+@sio.event
+def handshake(sid, data):
+    WS_CONNECTIONS[sid] = data
+    
+@sio.on('expose')
+def expose(sid, payload):
+    for key, value in WS_CONNECTIONS.items():
+        if 'client' in value.keys() and value['client'] == sid:
+            sio.emit('forward', payload, room=key)
+
+@app.route('/e/<string:sid>')
+@app.route('/e/<string:sid>/')
+def expose(sid):
+    sio.emit('exposed', 'index', room=sid)
+    path = request.host
+    return render_template('exposed.html', path=path)
+
+@app.route('/e/<string:sid>/<string:func>')
+@app.route('/e/<string:sid>/<string:func>/')
+def expose_function(sid,func):
+    if func not in WS_IGNORED_PATHS:
+        sio.emit('exposed', func, room=sid)
+    path = request.host
+    return render_template('exposed.html', path=path)
 
 @app.route('/complete_setup/')
 def complete_setup():
@@ -128,3 +171,8 @@ def startup():
         REQUESTS.insert(0, 
                         {'GET': request.args.to_dict(),
                         'POST': request.form.to_dict()})
+
+if __name__ != '__main__':
+   uvicorn_logger = logging.getLogger('uvicorn.error')
+   app.logger.handlers = uvicorn_logger.handlers
+   app.logger.setLevel(uvicorn_logger.level)

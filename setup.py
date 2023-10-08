@@ -17,7 +17,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=['requests','python-dotenv', 'python-runit', 
-                      'odbms', 'flask','flask-jwt-extended', 
+                      'odbms', 'flask','flask-jwt-extended', 'eventlet',
                       'flask-restful', 'waitress', 'passlib', 'docker'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={

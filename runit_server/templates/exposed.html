@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runit</title>
+</head>
+<body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io.connect('{{path}}'); // Replace with your Socket.IO server URL
+
+        // Handle incoming messages
+        socket.on('connect', () => {
+            let info = {type: 'browser'}
+            info.client = location.pathname.split('/e/')[1].split('/')[0]
+            socket.emit('handshake', info)
+        });
+
+        // Handle incoming messages
+        socket.on('handshake', (data) => {
+            console.log(data)
+        });
+
+        // Handle incoming messages
+        socket.on('forward', (data) => {
+            document.body.innerHTML = data
+        });
+
+        
+
+    </script>
+</body>
+</html>
