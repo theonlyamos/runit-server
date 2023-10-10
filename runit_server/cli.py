@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-from waitress import serve
+import uvicorn
 from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
 
 from .app import app
@@ -176,7 +176,7 @@ def run_server(args = None):
     RunIt.KUBERNETES = args.kubernetes
 
     if args and args.production:
-        serve(app, listen=f"*:{args.port}")
+        uvicorn.run(app, host=args.host, port=args.port)
     else:
         app.run(host=args.host, port=args.port, debug=args.debug)
 
