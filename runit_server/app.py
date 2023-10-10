@@ -60,10 +60,10 @@ WS_CONNECTIONS = {}
 WS_DATA = {}
 WS_IGNORED_PATHS = ['elementSelector.css.map']
 
-async def get_request_parameters():
-        parameters = request.query_params._dict
+def get_request_parameters():
+        parameters = request.args.to_dict()
         if 'content-type' in request.headers.keys() and request.headers['content-type'] == "application/json":
-            data = await request.json()
+            data = request.get_json()
             parameters = {**parameters, **data}
         parameters.pop('output_format', None)
         return list(parameters.values())
@@ -107,7 +107,7 @@ def expose(sid):
 def expose_function(sid,func):
     if func not in WS_IGNORED_PATHS:
         parameters = get_request_parameters()
-        response = {'function': 'index', 'parameters': parameters}
+        response = {'function': func, 'parameters': parameters}
         sio.emit('exposed', response, room=sid)
     path = request.host
     return render_template('exposed.html', path=path)
