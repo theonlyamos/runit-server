@@ -12,7 +12,8 @@ from ..models import User
 from ..models import Project
 from ..models import Admin
 from ..models import Function
-from ..common import Utils
+from ..models import Database
+from ..models import Collection
 
 from ..constants import (
     PROJECTS_DIR,
@@ -20,45 +21,21 @@ from ..constants import (
     LANGUAGE_TO_ICONS
 )
 
-ADMIN_LOGIN_PAGE = 'admin.loginpage'
+ADMIN_LOGIN_PAGE = 'public.admin_loginpage'
 
 from runit import RunIt
 
-admin = Blueprint('admin', __name__, subdomain='admin', static_folder=os.path.join('..','static'))
+admin = Blueprint('admin', __name__, url_prefix='/admin', static_folder=os.path.join('..','static'))
 
 @admin.before_request
 def authorize():
-    pass
-    #if not 'admin_id' in session:
-    #     return redirect(url_for(ADMIN_LOGIN_PAGE))
-
-@admin.get('/login/')
-def loginpage():
-    return render_template('admin/login.html', title='Login')
+    if not 'admin_id' in session:
+        return redirect(url_for(ADMIN_LOGIN_PAGE))
 
 @admin.route('/')
 def index():
-    if 'admin_id' not in session:
-        return redirect(url_for(ADMIN_LOGIN_PAGE))
-    
     admin = Admin.get(session['admin_id'])
     return render_template('admin/index.html', page='home', admin=admin)
-
-@admin.post('/login/')
-def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-
-    admin = Admin.get_by_username(username)
-    #print(admin)
-    if admin:
-        if (Utils.check_hashed_password(password, admin.password)):
-            session['admin_id'] = admin.id
-            session['admin_name'] = admin.name
-            session['admin_username'] = admin.username
-            return redirect(url_for('admin.index'))
-    flash('Invalid Login Credentials', 'danger')
-    return redirect(url_for(ADMIN_LOGIN_PAGE))
 
 @admin.get('/users/')
 def users():
@@ -137,13 +114,21 @@ def functions():
 def databases():
     global EXTENSIONS
     global LANGUAGE_TO_ICONS
+
+    view = request.args.get('view')
+    view = view if view else 'grid'
+    databases = Database.all()
+    for db in databases:
+        Collection.TABLE_NAME = db.collection_name
+        if Collection.count():
+            stats = DBMS.Database.db.command('collstats', db.collection_name)
+            if stats:
+                db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
+        
+    projects = Project.all()
     
-    functions = Function.get_by_admin(session['admin_id'])
-    projects = Project.get_by_admin(session['admin_id'])
-    
-    return render_template('functions/index.html', page='functions',\
-            functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
+    return render_template('databases/index.html', page='databases',\
+            databases=databases, projects=projects, view=view, icons=LANGUAGE_TO_ICONS)
         
 @admin.route('/profile/')
 def profile():

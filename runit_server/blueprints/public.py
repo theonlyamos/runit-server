@@ -4,6 +4,8 @@ from flask_jwt_extended import create_access_token
 
 from ..common.security import authenticate
 from ..models import User
+from ..models import Admin
+from ..common import Utils
 
 import os
 from dotenv import load_dotenv, find_dotenv, dotenv_values
@@ -28,6 +30,8 @@ def initial():
 ''' 
 
 @public.route('/')
+@public.route('/login')
+@public.route('/login/')
 def index():
     settings = dotenv_values(find_dotenv())
 
@@ -104,3 +108,26 @@ def login():
         flash('Invalid Login Credentials', 'danger')
     return redirect(url_for('public.index'))
 
+@public.get('/login/admin')
+@public.get('/login/admin/')
+def admin_loginpage():
+    if 'admin_id' in session and session['admin_id']:
+        return redirect(url_for('admin.index'))
+    return render_template('admin/login.html', title='Admin Login')
+
+@public.post('/login/admin')
+@public.post('/login/admin/')
+def admin_login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    admin = Admin.get_by_username(username)
+    if admin:
+        if Utils.check_hashed_password(password, admin.password):
+            session['admin_id'] = admin.id
+            session['admin_name'] = admin.name
+            session['admin_username'] = admin.username
+
+            return redirect(url_for('admin.index'))
+    flash('Invalid Login Credentials', 'danger')
+    return redirect(url_for('public.admin_loginpage'))

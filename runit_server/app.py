@@ -54,7 +54,7 @@ app.register_blueprint(functions)
 app.register_blueprint(account)
 app.register_blueprint(project)
 app.register_blueprint(database)
-app.register_blueprint(admin, subdomain='admin')
+app.register_blueprint(admin)
 
 WS_CONNECTIONS = {}
 WS_DATA = {}

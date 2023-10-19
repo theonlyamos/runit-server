@@ -23,7 +23,7 @@ class Utils(object):
         """
         Hashes a password using pbkdf2_sha512
         
-        :param password: The sha512 password from the login/register form
+        :param password: The password from the login/register form
         
         :return: A sha512->pbkdf2_sha512 encrypted password
         """
@@ -35,7 +35,7 @@ class Utils(object):
         Checks that the password the user sent matches that of the database.
         The datase password is encrypted more than the user's password at this stage.
         
-        :param password: sha512-hashed password
+        :param password: password
         :param hashed_password: pbkdf2_sha512 encrytped password
         
         :return: True if passwords match, False otherwise

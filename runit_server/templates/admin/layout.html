@@ -99,34 +99,22 @@ ylesheet">
     </div>
 
     <main class="vh-100 vw-100 d-flex justify-content-center align-items-center">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12 col-lg-10 p-0">
-                    <div class="card shadow align-self-center">
-                        <div class="card-body p-0">
-                            <div class="d-flex">
-                                {% include 'admin/sidebar.html' %}
-                                <div class="main-content w-100 position-relative">
-                                    <nav class="d-flex justify-content-between p-4">
-                                        <a href="#offcanvasMenu" class="nav-link text-dark d-sm-none" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvasMenu">
-                                            <i class="fas fa-bars fa-2x fa-fw"></i>
-                                        </a>
-                                        <div class="h5">
-                                            <strong>
-                                                {% block pagetitle %}
-                                                {{ page | upper }}
-                                                {% endblock %}
-                                            </strong>
-                                        </div>
-                                    </nav>
-                                    {% block content %}
-                                    {% endblock %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        {% include 'admin/sidebar.html' %}
+        <div class="main-content w-100 vh-100 position-relative">
+            <nav class="d-flex justify-content-between p-4">
+                <a href="#offcanvasMenu" class="nav-link text-dark d-sm-none" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvasMenu">
+                    <i class="fas fa-bars fa-2x fa-fw"></i>
+                </a>
+                <div class="h5">
+                    <strong>
+                        {% block pagetitle %}
+                        {{ page | upper }}
+                        {% endblock %}
+                    </strong>
                 </div>
-            </div>
+            </nav>
+            {% block content %}
+            {% endblock %}
         </div>
     </main>
     {% block scripts %}

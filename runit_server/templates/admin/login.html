@@ -6,7 +6,7 @@
             <div class="col-sm-10 col-md-7 col-lg-5">
                 <div class="card shadow align-self-center border-0">
                     <div class="card-body">
-                        <form class="form-floating bg-gradient" action="{{ url_for('admin.login') }}" method="post">
+                        <form class="form-floating bg-gradient" action="{{ url_for('public.admin_login') }}" method="post">
                             <h5 class="text-center text-danger fs-4 font-lato">Administrator</h5>
                             <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-danger fs-4 font-lato">Login</h5>
                             {% for (category, message) in get_flashed_messages(with_categories=True) %}

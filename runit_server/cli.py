@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from getpass import getpass
 
 import uvicorn
 from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
@@ -94,7 +95,7 @@ def create_default_admin(args_is_true: bool = False):
         adminemail = input('Administrator Email Address: ')
         adminname = input('Administrator Full Name: ')
         adminusername = input('Administrator Username: ')
-        adminpassword = input('Administrator Password: ')
+        adminpassword = getpass('Administrator Password: ')
         adminrole = input('Administrator role: [superadmin] ')
         adminrole = adminrole if adminrole else 'superadmin'
         
