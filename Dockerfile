@@ -59,4 +59,4 @@ EXPOSE 9000
 
 # RUN ln -sf /bin/bash /bin/sh
 
-ENTRYPOINT ["runit-server", "--production"]
+ENTRYPOINT ["runit-server"]

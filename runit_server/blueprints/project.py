@@ -207,7 +207,6 @@ def files(project_id):
 @project.get('/file/<project_id>/')
 def get_file(project_id):
     old_curdir = os.curdir
-    user_id = session['user_id']
     filename = request.args.get('file')
     os.chdir(os.path.realpath(os.path.join(PROJECTS_DIR, project_id)))
     filepath = os.path.join(os.curdir, filename)
@@ -227,7 +226,6 @@ def get_file(project_id):
 @project.put('/file/<project_id>/')
 def update_file(project_id):
     old_curdir = os.curdir
-    user_id = session['user_id']
     filename = request.args.get('file')
     data = request.get_json()
 

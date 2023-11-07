@@ -25,11 +25,10 @@ from ..constants import (
 
 load_dotenv()
 
-
-
 # def stringifObjectIds(model: object, properties: list)-> object:
 #     for property in properties:
 #         property._id = str(property._id)
+
 
 class Login(Resource):
     '''

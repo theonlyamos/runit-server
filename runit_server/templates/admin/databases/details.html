@@ -1,0 +1,180 @@
+{% extends "account/layout.html" %}
+{% block title %} 
+{{super()}} | {{page | capitalize}} | {{database.name}}
+{% endblock %}
+
+{% block pagetitle %}
+<div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
+    <a href="{{url_for('admin.databases')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+        <i class="fas fa-arrow-left fa-fw"></i> 
+        <span class="d-none d-sm-inline">{{ super() }}</span>
+    </a>
+    <span class="d-none d-sm-inline">/</span>
+    <span>{{ database.name | upper}}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include 'databases/modal.html' %}
+<style>
+    #database,
+    #initialization { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        font-size: 1rem;
+    }
+
+    #database {
+        height: 390px !important;
+    }
+
+    #initialization {
+        height: 150px !important;
+    }
+</style>
+<div class="container">
+    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <div class="tools d-flex justify-content-end">
+        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
+            <a href="{{ url_for('admin.databases')}}" role="button" class="btn btn-outline-secondary bg-gradient hover:shadow-sm mb-2" title="Disable Database">
+                <i class="fas fa-eye-slash"></i>
+            </a>
+            <a href="{{ url_for('admin.databases')}}" role="button" class="btn btn-outline-danger bg-gradient hover:shadow-sm mb-2" title="Delete Database">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="card rounded-0 border-0">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <span>Documents</span>
+                </button>
+                <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                    <span>Schema</span>
+                </button>
+				<button class="nav-link" id="nav-initialization-tab" data-bs-toggle="tab" data-bs-target="#nav-initialization" type="button" role="tab" aria-controls="nav-initialization" aria-selected="false">
+                    <span>Initialization</span>
+                </button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold"></small>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-outline-dark bg-gradient border-0" data-bs-toggle="modal" data-bs-target="#databaseModal">
+                                <i class="fas fa-folder-plus fa-fw" style="font-size: 16px;"></i> Insert
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0 position-relative">
+						<pre id="database">
+                        </pre>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card rounded-0 border-0 shadow-sm my-2">
+                            <div class="card-header p-0 p-2 d-flex justify-content-end aling-items-center">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-dark" onclick="createSchema()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary border-primary" onclick="updateSchemas()">
+                                        <i class="fas fa-save fa-fw"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <form action="{{url_for('admin.database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
+                            {% for key, value in database.schema.items() %}
+                            {% set id = 'schema'+(loop.index | string) %}
+                            {% set schemaKey = 'schemaKey'+(loop.index | string) %}
+                                <div class="form-group row align-items-center mb-2" id="{{id}}">
+                                    <div class="col-5">
+                                        <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-lg key-input text-secondary rounded-0 shadow-sm" data-name="{{schemaKey}}" required onkeyup="setSchemaKey(this)">
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <span>=</span>
+                                    </div>
+                                    <div class="col-5">
+                                        <select name="{{key}}" id="{{schemaKey}}" class="form-select form-select-lg text-secondary rounded-0 shadow-sm" required>
+                                            <option disabled>Type</option>
+                                            <option value="str">String</option>
+                                            <option value="text" {{'selected' if value == 'text' else ''}}>Text</option>
+                                            <option value="int" {{'selected' if value == 'int' else ''}}>Integer</option>
+                                            <option value="float" {{'selected' if value == 'float' else ''}}>Float</option>
+                                            <option value="bool" {{'selected' if value == 'bool' else ''}}>Boolean</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-1">
+                                        <a href="javascript: deleteElem('{{id}}')" class="nav-link">
+                                            <i class="fas fa-trash-alt text-danger"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+			<div class="tab-pane fade" id="nav-initialization" role="tabpanel" aria-labelledby="nav-initialization-tab" tabindex="0">
+                <div class="card rounded-0 border-0 shadow-sm my-2">
+                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
+                        <small class="fw-bold text-secondary font-roboto fs-6">Python Initialization</small>
+                    </div>
+                    <div class="card-body pb-0">
+						<pre id="initialization">
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %} 
+<!-- <script>
+let db = JSON.parse({{ database | tojson }})
+document.getElementById("database").textContent = JSON.stringify(db, null, 4);
+</script> -->
+{{super()}}
+<script src="{{url_for('static', filename='js/databases.js')}}"></script>
+<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
+<script>
+    const editor = ace.edit("database");
+    editor.setTheme("ace/theme/chaos")
+    editor.setReadOnly(true)
+    editor.session.setMode(`ace/mode/javascript`)
+    let db = {{ collections | tojson }}
+    editor.session.setValue(JSON.stringify(db, null, 4))
+
+    const editor1 = ace.edit("initialization");
+    editor1.setTheme("ace/theme/monokai")
+    editor1.setReadOnly(true)
+    editor1.session.setMode(`ace/mode/python`)
+    editor1.session.setValue(`from runit_database import Document
+
+Document.initialize(
+    '{{request.root_url}}api',
+    '{{session["access_token"]}}',
+    '{{database.project_id}}'
+)
+    `)
+</script>
+{% endblock %}

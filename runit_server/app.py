@@ -11,7 +11,7 @@ from flask import (
 )
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
-import socketio
+from flask_socketio import SocketIO, emit, send
 from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
 from odbms import DBMS
@@ -29,8 +29,7 @@ app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 api = Api(app, prefix='/api')
 jwt = JWTManager(app)
-sio = socketio.Server(async_mode='threading')
-app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
+sio = SocketIO(app)
 
 REQUESTS = []
 
@@ -58,39 +57,38 @@ app.register_blueprint(admin)
 
 WS_CONNECTIONS = {}
 WS_DATA = {}
-WS_IGNORED_PATHS = ['elementSelector.css.map']
 
 def get_request_parameters():
-        parameters = request.args.to_dict()
-        if 'content-type' in request.headers.keys() and request.headers['content-type'] == "application/json":
-            data = request.get_json()
-            parameters = {**parameters, **data}
-        parameters.pop('output_format', None)
-        return list(parameters.values())
+    parameters = request.args.to_dict()
+    if 'content-type' in request.headers.keys() and request.headers['content-type'] == "application/json":
+        data = request.get_json()
+        parameters = {**parameters, **data}
+    parameters.pop('output_format', None)
+    return list(parameters.values())
 
 @sio.event
-def connect(sid, environ):
-    WS_CONNECTIONS[sid] = {}
-    sio.emit('handshake', sid, room=sid)
-    print('Connected to socketio ', sid)
+def connect(environ):
+    WS_CONNECTIONS[request.sid] = {}
+    sio.emit('handshake', request.sid, room=request.sid)
+    print('Connected to socketio ', request.sid)
     
 @sio.event
-def disconnect(sid):
-    del WS_CONNECTIONS[sid]
-    print('Disconnected from socketio ', sid)
+def disconnect():
+    del WS_CONNECTIONS[request.sid]
+    print('Disconnected from socketio ', request.sid)
 
 @sio.event
-def message(sid, data):
+def message(data):
     print(data)
 
 @sio.event
-def handshake(sid, data):
-    WS_CONNECTIONS[sid] = data
+def handshake(data):
+    WS_CONNECTIONS[request.sid] = data
     
 @sio.on('expose')
-def expose(sid, payload):
+def expose(payload):
     for key, value in WS_CONNECTIONS.items():
-        if 'client' in value.keys() and value['client'] == sid:
+        if 'client' in value.keys() and value['client'] == request.sid:
             sio.emit('forward', payload, room=key)
 
 @app.route('/e/<string:sid>')
@@ -105,10 +103,9 @@ def expose(sid):
 @app.route('/e/<string:sid>/<string:func>')
 @app.route('/e/<string:sid>/<string:func>/')
 def expose_function(sid,func):
-    if func not in WS_IGNORED_PATHS:
-        parameters = get_request_parameters()
-        response = {'function': func, 'parameters': parameters}
-        sio.emit('exposed', response, room=sid)
+    parameters = get_request_parameters()
+    response = {'function': func, 'parameters': parameters}
+    sio.emit('exposed', response, room=sid)
     path = request.host
     return render_template('exposed.html', path=path)
 

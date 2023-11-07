@@ -3,10 +3,9 @@ import sys
 import argparse
 from getpass import getpass
 
-import uvicorn
 from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
 
-from .app import app
+from .app import app, sio
 
 from odbms import DBMS
 from .models import Role, Admin
@@ -176,10 +175,7 @@ def run_server(args = None):
     RunIt.DOCKER = args.docker
     RunIt.KUBERNETES = args.kubernetes
 
-    if args and args.production:
-        uvicorn.run(app, host=args.host, port=args.port)
-    else:
-        app.run(host=args.host, port=args.port, debug=args.debug)
+    sio.run(app, host=args.host, port=args.port)
 
 def get_arguments():
     global parser

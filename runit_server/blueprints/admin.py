@@ -22,6 +22,7 @@ from ..constants import (
 )
 
 ADMIN_LOGIN_PAGE = 'public.admin_loginpage'
+ADMIN_DATABASE_INDEX = 'admin.databases'
 
 from runit import RunIt
 
@@ -96,19 +97,6 @@ def project(project_id):
         flash('Project does not exist', 'danger')
         return redirect(url_for('project.index'))
 
-@admin.get('/functions')
-@admin.get('/functions/')
-def functions():
-    global EXTENSIONS
-    global LANGUAGE_TO_ICONS
-    
-    functions = Function.get_by_admin(session['admin_id'])
-    projects = Project.get_by_admin(session['admin_id'])
-    
-    return render_template('functions/index.html', page='functions',\
-            functions=functions, projects=projects,\
-            languages=EXTENSIONS, icons=LANGUAGE_TO_ICONS)
-
 @admin.get('/databases')
 @admin.get('/databases/')
 def databases():
@@ -127,9 +115,85 @@ def databases():
         
     projects = Project.all()
     
-    return render_template('databases/index.html', page='databases',\
+    return render_template('admin/databases/index.html', page='databases',\
             databases=databases, projects=projects, view=view, icons=LANGUAGE_TO_ICONS)
+
+@admin.get('/databases/<database_id>')
+@admin.get('/databases/<database_id>/')
+def database(database_id):
+    database = Database.get(database_id)
+    
+    if database:
+        Collection.TABLE_NAME = database.collection_name
+        collections = Collection.find({})
         
+        result = []
+        for col in collections:
+            result.append(col.json())
+        
+        schema_names_to_input_types = {
+            'str': 'text',
+            'text': 'textarea',
+            'int': 'number',
+            'float': 'number',
+            'bool': 'checkbox'
+        }
+        
+        return render_template('databases/details.html', 
+                page='databases',\
+                database=database.json(), 
+                collections=result,
+                inputTypes=schema_names_to_input_types)
+    else:
+        flash('Database does not exist', 'danger')
+        return redirect(url_for(ADMIN_DATABASE_INDEX))
+    
+@admin.post('/databases')
+@admin.post('/databases/')
+def create_database():
+    name = request.form.get('name')
+    project_id = request.form.get('project_id')
+    project = Project.get(project_id)
+    
+    if name and project_id:
+        collection_name = f"{name}_{project.user_id}_{project_id}"
+        data = {'name': name, 'collection_name': collection_name,
+                'project_id': project_id,'user_id': project.user_id}
+        print(data)
+        new_db = Database(**data)
+        results = new_db.save().inserted_id
+                
+        flash('Database Created Successfully.', category='success')
+    else:
+        flash('Missing required fields.', category='danger')
+    return redirect(url_for(ADMIN_DATABASE_INDEX))
+
+@admin.post('/schema/<database_id>/')
+def database_schema(database_id):
+    try:
+        data = request.form.to_dict()
+        Database.update({'id': database_id}, {'schema': data})
+        
+        flash('Schema updated successfully', category='success')
+    except Exception as e:
+        flash(str(e), category='danger')
+    return redirect(url_for('admin.database', database_id=database_id))
+
+@admin.patch('/databases')
+@admin.patch('/databases/')
+def update_database():
+    return render_template('admin/databases/index.html', page='databases', databases=[])
+
+@admin.post('/delete/<database_id>/')
+def delete_database(database_id):
+    db = Database.get(database_id)
+    if db:
+        result = Database.remove({'_id': database_id})
+        flash('Database deleted successfully', category='success')
+    else:
+        flash('Database was not found. Operation not successful.', category='danger')
+    return redirect(url_for(ADMIN_DATABASE_INDEX))
+
 @admin.route('/profile/')
 def profile():
     return render_template('admin/profile.html', page='profile')
