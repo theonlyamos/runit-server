@@ -5,7 +5,7 @@
 
 {% block pagetitle %}
 <div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
-    <a href="{{url_for('project.index')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+    <a href="{{url_for('list_user_projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
         <i class="fas fa-arrow-left fa-fw"></i> 
         <span class="d-none d-sm-inline">{{ super() }}</span>
     </a>
@@ -17,7 +17,7 @@
 {% block content %}
 {% include 'projects/modal.html' %}
 <div class="container">
-    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
         <strong>{{message}}</strong>
         <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
@@ -33,23 +33,23 @@
                 <ul class="dropdown-menu rounded-0 shadow border-0">
                     {% for func in funcs %}
                     <li>
-                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom" target="_blank">
+                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom" target="_blank">
                             <i class="fas fa-terminal fa-fw text-dark me-2"></i> {{func.name}}
                         </a>
                     </li>
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="#editorModal" role="button" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" data-bs-toggle="modal" title="Redeploy project">
+            <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id)}}" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" title="Reinstall Dependencies">
                 <i class="fas fa-wrench"></i>
             </a>
-            <a href="{{ url_for('project.editor', project_id=project.id)}}" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" title="Open in editor">
+            <a href="{{ url_for('user_project_editor', project_id=project.id)}}" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" title="Open in editor">
                 <i class="fas fa-code"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -114,14 +114,14 @@
                                         <h4 class="small text-primary">{{func.name | title}}</h4>
                                     </td>
                                     <td>
-                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
+                                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
                                             <small>
-                                                {{url_for('public.run', project_id=project.id, function=func.name) }}
+                                                {{url_for('run_project', project_id=project.id, function=func.name) }}
                                             </small>
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="bg-dark nav-link px-2 rounded" style="width: fit-content" target="_blank">
+                                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="bg-dark nav-link px-2 rounded" style="width: fit-content" target="_blank">
                                             <i class="fas fa-terminal fa-fw text-bg-dark p-1 rounded-1"></i>
                                         </a>
                                     </td>
@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                             <div class="card-body pb-0">
-                                <form action="{{url_for('project.environ', project_id=project._id)}}" method="post" class="env-form">
+                                <form action="{{url_for('user_project_environ', project_id=project.id)}}" method="post" class="env-form">
                                     {% for key, value in environs.items() %}
                                     {% set id = 'env'+(loop.index | string) %}
                                     {% set envKey = 'envKey'+(loop.index | string) %}
@@ -187,6 +187,6 @@
 
 {% block scripts %} 
 {{super()}}
-<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
-<script src="{{url_for('static', filename='js/projects.js')}}"></script>
+<script src="{{url_for('static', path='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
+<script src="{{url_for('static', path='js/projects.js')}}"></script>
 {% endblock %}

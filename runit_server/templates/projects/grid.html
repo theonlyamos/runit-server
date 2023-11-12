@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap mt-3">
 {% for project in projects %}
 <div class="position-relative m-2 p-3 border rounded shadow-sm">
-    <a href="{{url_for('project.details', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
+    <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
         <i class="{{ icons[project.language]}} fa-fw fa-3x mb-2"></i>
         <span>{{ project['name'] }}</span>
     </a>
@@ -11,21 +11,21 @@
         </a>
         <ul class="dropdown-menu rounded-0 shadow border-0">
             <li>
-                <a href="{{url_for('project.details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
+                <a href="{{url_for('user_project_details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
                     Details
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-                <a href="{{url_for('project.editor', project_id=project.id)}}" class="dropdown-item small py-0">
+                <a href="{{url_for('user_project_editor', project_id=project.id)}}" class="dropdown-item small py-0">
                     Open in Editor
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-				<form method="post" action="{{ url_for('project.delete', project_id=project.id) }}">
-					<button type="submit" class="btn btn-link text-danger small py-0" style="text-decoration: none">Delete</button>
-				</form>
+                <a href="{{url_for('delete_user_project', project_id=project.id)}}" class="dropdown-item text-danger small py-0">
+                    Delete
+                </a>
 			</li>
         </ul>
     </nav>

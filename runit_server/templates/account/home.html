@@ -7,10 +7,10 @@
 </div>
 <div class="d-flex flex-wrap justify-content-center py-5 px-3">
     {% set menu = [
-        {'name': 'projects', 'icon': 'sitemap', 'url': 'project.index'},
-        {'name': 'functions', 'icon': 'terminal', 'url': 'account.functions'},
-        {'name': 'databases', 'icon': 'database', 'url': 'database.index'},
-		{'name': 'profile', 'icon': 'user', 'url': 'account.profile'}
+        {'name': 'projects', 'icon': 'sitemap', 'url': 'list_user_projects'},
+        {'name': 'functions', 'icon': 'terminal', 'url': 'list_user_functions'},
+        {'name': 'databases', 'icon': 'database', 'url': 'list_user_databases'},
+		{'name': 'profile', 'icon': 'user', 'url': 'user_profile'}
     ] %}
     {% for item in menu %}
     <a href="{{ url_for(item['url']) }}" 

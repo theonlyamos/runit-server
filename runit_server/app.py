@@ -1,187 +1,55 @@
-#! python
 import os
+import json
 import logging
-import asyncio
+from typing import Dict
+from pathlib import Path
 from sys import platform
 from datetime import timedelta
 
-from flask import (
-    Flask, jsonify, redirect, render_template,
-    url_for, session, request
-)
-from flask_jwt_extended import JWTManager
-from flask_restful import Api
-from flask_socketio import SocketIO, emit, send
-from dotenv import load_dotenv, dotenv_values, find_dotenv, set_key
 
-from odbms import DBMS
-from .common import  Login, Account, ProjectById, ProjectRS, ProjectCloneRS, Document
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
+
+from dotenv import load_dotenv
+
+from .common import  (
+    Login, Account, ProjectById, ProjectRS, 
+    ProjectCloneRS, Document
+)
 
 from .models import Admin
 from .models import Role
-from .constants import RUNIT_WORKDIR
+from .core import lifespan
+from .exceptions import UnauthorizedException
+from .constants import RUNIT_WORKDIR, SESSION_SECRET_KEY
+
+
+from .routers import public
+from .routers import account
+from .routers import project
+from .routers import database
 
 load_dotenv()
-app = Flask(__name__)
-app.secret_key =  "dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf"
-app.config['SERVER_NAME'] = os.getenv('RUNIT_SERVERNAME')
-app.config["JWT_SECRET_KEY"] = "972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6"
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
-api = Api(app, prefix='/api')
-jwt = JWTManager(app)
-sio = SocketIO(app)
 
-REQUESTS = []
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET_KEY,
+    max_age=3600,
+    https_only=True
+)
+static = Path(__file__).resolve().parent / "static"
+uploads = Path(RUNIT_WORKDIR).joinpath('accounts')
+app.mount('/static', StaticFiles(directory=static, html=True),  name='static')
+app.mount('/uploads', StaticFiles(directory=uploads, html=True),  name='uploads')
+app.include_router(account)
+app.include_router(project)
+app.include_router(database)
+app.include_router(public)
 
-#api.add_resource(RunFunction, '/<string:project_id>/<string:function>/')
-api.add_resource(Login, '/login/')
-api.add_resource(Account, '/account/')
-api.add_resource(ProjectRS, '/projects/')
-api.add_resource(ProjectById, '/projects/<string:project_id>/')
-api.add_resource(ProjectCloneRS, '/projects/clone/<string:project>/')
-api.add_resource(Document, '/document/<string:project_id>/<string:collection>/')
-#api.add_resource(RunFunction, '/<string:project_id>/<string:function>/')
-#api.add_resource(FunctionRS, '/functions/')
-#api.add_resource(FunctionById, '/functions/<string:function_id>/')
-
-
-from .blueprints import public, account, functions, project, database, admin, setup
-
-app.register_blueprint(setup)
-app.register_blueprint(public)
-app.register_blueprint(functions)
-app.register_blueprint(account)
-app.register_blueprint(project)
-app.register_blueprint(database)
-app.register_blueprint(admin)
-
-WS_CONNECTIONS = {}
-WS_DATA = {}
-
-def get_request_parameters():
-    parameters = request.args.to_dict()
-    if 'content-type' in request.headers.keys() and request.headers['content-type'] == "application/json":
-        data = request.get_json()
-        parameters = {**parameters, **data}
-    parameters.pop('output_format', None)
-    return list(parameters.values())
-
-@sio.event
-def connect(environ):
-    WS_CONNECTIONS[request.sid] = {}
-    sio.emit('handshake', request.sid, room=request.sid)
-    print('Connected to socketio ', request.sid)
-    
-@sio.event
-def disconnect():
-    del WS_CONNECTIONS[request.sid]
-    print('Disconnected from socketio ', request.sid)
-
-@sio.event
-def message(data):
-    print(data)
-
-@sio.event
-def handshake(data):
-    WS_CONNECTIONS[request.sid] = data
-    
-@sio.on('expose')
-def expose(payload):
-    for key, value in WS_CONNECTIONS.items():
-        if 'client' in value.keys() and value['client'] == request.sid:
-            sio.emit('forward', payload, room=key)
-
-@app.route('/e/<string:sid>')
-@app.route('/e/<string:sid>/')
-def expose(sid):
-    parameters = get_request_parameters()
-    response = {'function': 'index', 'parameters': parameters}
-    sio.emit('exposed', response, room=sid)
-    path = request.host
-    return render_template('exposed.html', path=path)
-
-@app.route('/e/<string:sid>/<string:func>')
-@app.route('/e/<string:sid>/<string:func>/')
-def expose_function(sid,func):
-    parameters = get_request_parameters()
-    response = {'function': func, 'parameters': parameters}
-    sio.emit('exposed', response, room=sid)
-    path = request.host
-    return render_template('exposed.html', path=path)
-
-@app.route('/complete_setup/')
-def complete_setup():
-    global app
-    settings = dotenv_values(find_dotenv())
-    
-    print('--Setting up database')
-    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
-                    settings['DATABASE_NAME'])
-
-    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        if settings['DBMS'] == 'mysql':
-            DBMS.Database.setup()
-    
-    print('[--] Database setup complete')
-    if not Role.count():
-        print('[#] Populating Roles')
-        Role('developer', []).save()
-        Role('superadmin', []).save()
-        Role('subadmin', []).save()
-    if not Admin.count():
-        print('[#] Creating default administrator')
-        Admin('Administrator', settings['adminusername'], settings['adminpassword'], 1).save()
-    
-    del settings['adminusername']
-    del settings['adminpassword']
-
-    env_file = find_dotenv()
-    file = open(find_dotenv(), 'w')
-    file.close()
-
-    for key, value in settings.items():
-        set_key(env_file, key, value)
-
-    return redirect(url_for('public.index'))
-
-@app.route('/get_app_requests/')
-def get_parameters():
-    global REQUESTS
-    if len(REQUESTS) > 0:
-        return jsonify(REQUESTS.pop())
-    return jsonify({'GET': {}, 'POST': {}})
-
-with app.app_context():
-    if not os.path.exists(RUNIT_WORKDIR):
-        os.mkdir(RUNIT_WORKDIR)
-    
-    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'accounts'))):
-        os.mkdir(os.path.join(RUNIT_WORKDIR, 'accounts'))
-        
-    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'projects'))):
-        os.mkdir(os.path.join(RUNIT_WORKDIR, 'projects'))
-
-    settings = dotenv_values(find_dotenv())
-
-    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
-                    settings['DATABASE_NAME'])
-    
-@app.before_request
-def startup():
-    # if not os.path.exists('.env'):
-    #     with open('.env', 'wt') as file:
-    #         file.close()
-    #     return redirect(url_for('setup.index'))
-    global REQUESTS
-    if request.path != '/get_app_requests/':
-        REQUESTS.insert(0, 
-                        {'GET': request.args.to_dict(),
-                        'POST': request.form.to_dict()})
-
-if __name__ != '__main__':
-   uvicorn_logger = logging.getLogger('uvicorn.error')
-   app.logger.handlers = uvicorn_logger.handlers
-   app.logger.setLevel(uvicorn_logger.level)
+@app.exception_handler(UnauthorizedException)
+async def redirect_to_login(request, Request):
+    return RedirectResponse(request.url_for('index'))

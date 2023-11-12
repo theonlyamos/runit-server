@@ -11,6 +11,9 @@ CONFIG_FILE = 'runit.json'
 STARTER_CONFIG_FILE = 'runit.json'
 IS_RUNNING = False
 CURRENT_PROJECT_DIR = os.path.realpath(os.curdir)
+SESSION_SECRET_KEY = 'dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskljdf'
+JWT_SECRET_KEY = '972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6'
+JWT_ALGORITHM = 'HS256'
 
 RUNIT_HOMEDIR = os.getenv(
     'RUNIT_HOMEDIR',

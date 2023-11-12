@@ -1,3 +1,4 @@
+from datetime import datetime
 from odbms import DBMS, Model
 
 from ..common.utils import Utils
@@ -6,11 +7,12 @@ class User(Model):
     '''A model class for user'''
     TABLE_NAME = 'users'
 
-    def __init__(self, email, name, password, created_at=None, updated_at=None, id=None):
+    def __init__(self, email, name, password, image: str = '', created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.email = email
         self.name = name
         self.password = password
+        self.image = image
         
 
     def save(self):
@@ -24,13 +26,19 @@ class User(Model):
         data = {
             "name": self.name,
             "email": self.email,
+            "image": self.image,
             "password": Utils.hash_password(self.password)
         }
 
         if DBMS.Database.dbms == 'mongodb':
             data["created_at"] = self.created_at
-            data["updated_at"] = self.updated_at
+            data["updated_at"] = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
 
+        if self.id:
+            # Update the existing record in database
+            del data['password']
+            return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), data)
+        
         return DBMS.Database.insert(User.TABLE_NAME, data)
     
     def reset_password(self, new_password: str):
@@ -40,8 +48,10 @@ class User(Model):
         @param new_password User's new password
         @return None
         '''
+        
+        new_password = Utils.hash_password(new_password)
 
-        DBMS.Database.update_one(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
+        DBMS.Database.update(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
     
     def projects(self):#-> List[Project]:
         '''
@@ -75,6 +85,7 @@ class User(Model):
             "id": str(self.id),
             "name": self.name,
             "email": self.email,
+            "image": self.image,
             "projects": self.count_projects(),
             "created_at": self.created_at,
             "updated_at": self.updated_at

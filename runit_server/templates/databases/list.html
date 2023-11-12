@@ -17,13 +17,13 @@
                             </div>
                         </td>
                         <td>
-                            <a href="{{url_for('database.details', database_id=database.id)}}" class="nav-link">
+                            <a href="{{url_for('user_database_details', database_id=database.id)}}" class="nav-link">
                                 {{ database['name'] }}
                             </a>
                         </td>
                         <td>{{ database['updated_at'] }}</td>
                         <td class="d-flex justify-content-center gap-3">
-                            <a href="{{url_for('database.details', database_id=database.id)}}" class="nav-link">
+                            <a href="{{url_for('user_database_details', database_id=database.id)}}" class="nav-link">
                                 <i class="far fa-file-alt text-primary"></i>
                             </a>
                             <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal">

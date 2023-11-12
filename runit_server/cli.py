@@ -5,7 +5,7 @@ from getpass import getpass
 
 from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
 
-from .app import app, sio
+from .app import app
 
 from odbms import DBMS
 from .models import Role, Admin
@@ -13,6 +13,7 @@ from .models import Role, Admin
 from runit import RunIt
 
 from .constants import RUNIT_WORKDIR, VERSION
+import uvicorn
 
 load_dotenv()
 
@@ -61,8 +62,7 @@ def create_dot_env(settings: dict):
     @return None
     '''
     
-    with open('.env', 'wt') as file:
-        pass
+    open('.env', 'wt').close()
     for key, value in settings.items():
         set_key(find_dotenv(), key, value)
 
@@ -175,7 +175,7 @@ def run_server(args = None):
     RunIt.DOCKER = args.docker
     RunIt.KUBERNETES = args.kubernetes
 
-    sio.run(app, host=args.host, port=args.port)
+    uvicorn.run(app, host=args.host, port=args.port, log_level='info')
 
 def get_arguments():
     global parser
