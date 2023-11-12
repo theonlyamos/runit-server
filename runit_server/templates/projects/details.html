@@ -46,9 +46,15 @@
             <a href="{{ url_for('user_project_editor', project_id=project.id)}}" role="button" class="btn btn-outline-primary hover:shadow-sm mb-2" title="Open in editor">
                 <i class="fas fa-code"></i>
             </a>
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Disable Project">
+            {% if project.private %}
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Make project public">
+                <i class="fas fa-eye"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Make project private">
                 <i class="fas fa-eye-slash"></i>
             </a>
+            {% endif %}
             <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
