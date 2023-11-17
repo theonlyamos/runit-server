@@ -2,15 +2,15 @@
 {% block content %}
 <div class="p-4 w-100">
     <div class="h5 text-center">
-        Welcome to your dashboard, <strong class="text-primary"><em>{{admin.name}}</em></strong>
+        Welcome to your dashboard, <strong class="text-primary"><em>{{admin_name}}</em></strong>
     </div>
 </div>
 <div class="d-flex flex-wrap justify-content-center py-5 px-3">
     {% set menu = [
-        {'name': 'users', 'icon': 'users', 'url': 'admin.users'},
-        {'name': 'projects', 'icon': 'sitemap', 'url': 'admin.projects'},
-        {'name': 'functions', 'icon': 'terminal', 'url': 'account.functions'},
-        {'name': 'databases', 'icon': 'database', 'url': 'admin.databases'}
+        {'name': 'users', 'icon': 'users', 'url': 'admin_list_users'},
+        {'name': 'projects', 'icon': 'sitemap', 'url': 'admin_list_projects'},
+        {'name': 'databases', 'icon': 'database', 'url': 'admin_list_databases'},
+        {'name': 'profile', 'icon': 'user', 'url': 'admin_profile'}
     ] %}
     {% for item in menu %}
     <a href="{{ url_for(item['url']) }}" 

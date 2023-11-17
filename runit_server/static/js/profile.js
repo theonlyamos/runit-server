@@ -1,0 +1,44 @@
+const fileInput = document.getElementById('profile-image');
+const previewImage = document.getElementById('image-preview');
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file.type.match(/image.*/)) {
+    const reader = new FileReader();
+    reader.addEventListener('load', (event) => {
+      previewImage.src = event.target.result;
+    });
+    reader.readAsDataURL(file);
+    uploadImage(file)
+  } else {
+    alert('Please select an image file.');
+  }
+});
+
+const uploadImage = (file)=>{
+
+    if (!file) {
+        alert('Please select a file to upload.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/account/image');
+    xhr.upload.addEventListener('progress', (event) => {
+        const progress = event.loaded / event.total * 100;
+        console.log(`Upload progress: ${progress}%`);
+    });
+
+    xhr.onload = () => {
+        if (xhr.status === 200) {
+        alert('File uploaded successfully.');
+        } else {
+        alert('Error uploading file.');
+        }
+    };
+
+    xhr.send(formData);
+}

@@ -1,5 +1,6 @@
 import os
 import time
+import base64
 from pathlib import Path
 from typing import Annotated, Optional, Dict
 import aiofiles
@@ -106,7 +107,9 @@ async def update_user_password(request: Request, password: Annotated[str, Form()
 @account.post('/image/')
 async def update_user_image(request: Request,  file: UploadFile):
     user_id = request.session['user_id']
-    filename = f"{user_id}_{int(time.time())}{Path(file.filename).suffix}"
+    encoded_filename = base64.urlsafe_b64encode(file.filename.encode('utf-8'))
+    encoded_filename = encoded_filename.decode('utf-8').replace('=','').replace('.', '')
+    filename = f"{user_id}_{encoded_filename}_{Path(file.filename).suffix}"
     upload_dir = Path(RUNIT_WORKDIR).joinpath('accounts', user_id)
     
     try:
@@ -133,17 +136,7 @@ async def update_user_image(request: Request,  file: UploadFile):
     return JSONResponse({'status': 'success', 'filepath': str(upload_path)})
     # return RedirectResponse(request.url_for('user_profile'), status_code=status.HTTP_303_SEE_OTHER)
 
-@account.route('/logout/')
+@account.get('/logout/')
 async def user_logout(request: Request):
     request.session.clear()
     return RedirectResponse(request.url_for('index'))
-
-# @account.route('/{page}')
-# async def main(page):
-#     if (os.path.isdir(os.path.join('accounts', page))):
-#         os.chdir(os.path.join('accounts', page))
-#         result = RunIt.start()
-#         #os.chdir(os.path.join('..', '..'))
-#         return result
-#     else:
-#         return RunIt.notfound()

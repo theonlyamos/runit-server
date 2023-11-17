@@ -1,4 +1,5 @@
 import os
+import logging
 from time import sleep
 from pathlib import Path
 from datetime import datetime
@@ -106,15 +107,16 @@ async def user_database_details(request: Request, database_id):
         return RedirectResponse(request.url_for(DATABASE_INDEX))
 
 @database.post('/schema/{database_id}/')
-async def user_database_schema(request: Request, database_id):
+async def user_database_schema(request: Request, database_id: str):
     try:
         data = await request.form()
         Database.update({'id': database_id}, {'schema': data})
         
         flash(request, 'Schema updated successfully', category='success')
     except Exception as e:
-        flash(request, str(e), category='danger')
-    return RedirectResponse(request.url_for('database.details', database_id=database_id))
+        logging.error(str(e))
+        flash(request, 'Error updating database schema', category='danger')
+    return RedirectResponse(request.url_for('user_database_details', database_id=database_id))
 
 @database.patch('/')
 async def update_user_database(request: Request):

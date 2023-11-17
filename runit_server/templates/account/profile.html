@@ -21,13 +21,16 @@
     <div class="row">
         <div class="col-md-5 my-4">
             <div class="card shadow rounded-0">
-                <a href="#functionModal" class="nav-link d-block mx-auto pt-4"  data-bs-toggle="modal" role="button" aria-controls="functionModal">
+                <a href="javascript:fileInput.click()" class="nav-link d-block mx-auto pt-4" >
                     {% if user.image %}
-                    <img src="{{url_for('uploads', path=user.id+'/'+user.image)}}" class="rounded-2" alt="" style="width: 150px;height: 150px;object-fit: cover;">
+                    <img src="{{url_for('uploads', path=user.id+'/'+user.image)}}" class="rounded-2" id="image-preview" alt="Profile Image" style="width: 150px;height: 150px;object-fit: cover;">
                     {% else %}
                     <i class="fas fa-image fa-7x p-3 text-black-50 hover:text-dark"></i>
                     {% endif %}
                 </a>
+                <form action="" id="image-form" enctype="multipart/form-data">
+                    <input type="file" class="d-none" id="profile-image" accept="image/*"/>
+                </form>
                 <div class="card-body">
                     <form action="{{url_for('update_user_profile')}}" method="post">
                         <div class="form-group mb-3">
@@ -93,5 +96,5 @@
 
 {% block scripts %} 
 {{super()}}
-<script src="{{url_for('static', path='js/users.js')}}"></script>
+<script src="{{url_for('static', path='js/profile.js')}}"></script>
 {% endblock %}

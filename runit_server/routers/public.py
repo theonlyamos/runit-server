@@ -88,31 +88,6 @@ async def index(request: Request):
         return RedirectResponse(request.url_for('user_home'))
     return templates.TemplateResponse('login.html', context={'request': request})
 
-# @public.get('/{project_id}')
-# @public.get('/{project_id}/')
-# def project(project_id: str):
-#     current_project_dir = os.path.join(PROJECTS_DIR, project_id)
-#     if os.path.isdir(current_project_dir):
-#         if not RunIt.is_private(project_id, current_project_dir):
-#             result = RunIt.start(project_id, 'index', current_project_dir)
-#             os.chdir(RUNIT_HOMEDIR)
-            
-#             return result
-
-#     return RunIt.notfound()
-
-@public.get('/{project_id}/{function}')
-@public.get('/{project_id}/{function}/')
-def run_project(request: Request, project_id, function: Optional[str] = None):
-    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
-    if os.path.isdir(current_project_dir):
-        if not RunIt.is_private(project_id, current_project_dir):
-            result = RunIt.start(project_id, function, current_project_dir, request.query_params)
-            os.chdir(RUNIT_HOMEDIR)
-            return result
-
-    return RunIt.notfound()
-
 @public.get('/register')
 @public.get('/register/')
 async def registration_page(request: Request):
@@ -159,25 +134,50 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 
     return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
 
-# @public.get('/login/admin')
-# @public.get('/login/admin/')
-# def admin_loginpage(request: Request):
-#     if 'admin_id' in request.session and request.session['admin_id']:
-#         return RedirectResponse(request.url_for('admin.index'))
-#     return templates.TemplateResponse('admin/login.html', context={'request': request, 'title':'Admin Login'})
+@public.get('/login/admin')
+@public.get('/login/admin/')
+def admin_login_page(request: Request):
+    if 'admin_id' in request.session and request.session['admin_id']:
+        return RedirectResponse(request.url_for('admin_dashboard'))
+    return templates.TemplateResponse('admin/login.html', context={'request': request, 'title':'Admin Login'})
 
-# @public.post('/login/admin')
-# @public.post('/login/admin/')
-# def admin_login(request: Request):
-#     username = request.form.get('username')
-#     password = request.form.get('password')
+@public.post('/login/admin')
+@public.post('/login/admin/')
+def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    admin = Admin.get_by_username(form_data.username)
+    if admin and Utils.check_hashed_password(form_data.password, admin.password):
+            
+            access_token = create_access_token(admin.json())
+            request.session['admin_id'] = admin.id
+            request.session['admin_name'] = admin.name
+            request.session['admin_username'] = admin.username
+            request.session['access_token'] = access_token
 
-#     admin = Admin.get_by_username(username)
-#     if admin and Utils.check_hashed_password(password, admin.password):
-#             request.session['admin_id'] = admin.id
-#             request.session['admin_name'] = admin.name
-#             request.session['admin_username'] = admin.username
+            return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
+    flash(request, 'Invalid Login Credentials', 'danger')
+    return RedirectResponse(request.url_for('admin_login_page'))
 
-#             return RedirectResponse(request.url_for('admin.index'))
-#     flash(request, 'Invalid Login Credentials', 'danger')
-#     return RedirectResponse(request.url_for('public.admin_loginpage'))
+@public.get('/{project_id}')
+@public.get('/{project_id}/')
+def project(project_id: str):
+    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
+    if os.path.isdir(current_project_dir):
+        if not RunIt.is_private(project_id, current_project_dir):
+            result = RunIt.start(project_id, 'index', current_project_dir)
+            os.chdir(RUNIT_HOMEDIR)
+            
+            return result
+
+    return RunIt.notfound()
+
+@public.get('/{project_id}/{function}')
+@public.get('/{project_id}/{function}/')
+def run_project(request: Request, project_id, function: Optional[str] = None):
+    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
+    if os.path.isdir(current_project_dir):
+        if not RunIt.is_private(project_id, current_project_dir):
+            result = RunIt.start(project_id, function, current_project_dir, request.query_params)
+            os.chdir(RUNIT_HOMEDIR)
+            return result
+
+    return RunIt.notfound()

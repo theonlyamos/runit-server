@@ -111,16 +111,14 @@ async def create_user_project(
         flash(request, 'Missing required fields.', category='danger')
     
     user_id = request.session['user_id']
-    view = request.get('view')
-    view = view if view else 'grid'
     projects = Project.get_by_user(user_id)
     
     return templates.TemplateResponse('projects/index.html', context={
         'request': request, 'page': 'projects', 'projects': projects, 
-        'view': view, 'icons': LANGUAGE_TO_ICONS})
+        'icons': LANGUAGE_TO_ICONS})
 
 @project.get('/{project_id}/')
-async def user_project_details(request: Request, project_id):
+async def user_project_details(request: Request, project_id: str):
     old_curdir = os.curdir
     
     if not Path(PROJECTS_DIR).joinpath(project_id).resolve().exists():

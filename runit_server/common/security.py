@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 
 from ..models import User
 from .utils import Utils
-from ..exceptions import UnauthorizedException
+from ..exceptions import UnauthorizedException, UnauthorizedAdminException
 from ..constants import JWT_SECRET_KEY, JWT_ALGORITHM
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -52,6 +52,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 async def get_session(request: Request):
     if 'user_id' not in request.session.keys():
         raise UnauthorizedException
+    return request.session
+
+async def get_admin_session(request: Request):
+    if 'admin_id' not in request.session.keys():
+        raise UnauthorizedAdminException
     return request.session
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):

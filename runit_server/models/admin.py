@@ -65,7 +65,7 @@ class Admin(Model):
             "id": str(self.id),
             "email": self.email,
             "name": self.name,
-            "role": self.get_role(),
+            "role": self.normalise(self.get_role()),
             "username": self.username,
             "created_at": self.created_at,
             "updated_at": self.updated_at

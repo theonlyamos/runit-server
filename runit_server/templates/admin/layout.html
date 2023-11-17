@@ -22,7 +22,7 @@ ylesheet">
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/all.min.css" rel="stylesheet">
 
-    <link rel='icon' href="{{url_for('static', filename='images/dark-terminal.svg')}}">
+    <link rel='icon' href="{{url_for('static', path='images/dark-terminal.svg')}}">
 
     <meta name="msapplication-TileColor" content="#ffff00">
     
@@ -77,11 +77,11 @@ ylesheet">
             <!--<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>-->
         </div>
         {% set menu = [
-            {'name': 'home', 'icon': 'home', 'url': 'admin.index'},
-            {'name': 'users', 'icon': 'users', 'url': 'admin.users'},
-            {'name': 'projects', 'icon': 'sitemap', 'url': 'admin.projects'},
-            {'name': 'databases', 'icon': 'database', 'url': 'admin.databases'},
-            {'name': 'profile', 'icon': 'user', 'url': 'admin.profile'}
+            {'name': 'home', 'icon': 'home', 'url': 'admin_dashboard'},
+            {'name': 'users', 'icon': 'users', 'url': 'admin_list_users'},
+            {'name': 'projects', 'icon': 'sitemap', 'url': 'admin_list_projects'},
+            {'name': 'databases', 'icon': 'database', 'url': 'admin_list_databases'},
+            {'name': 'profile', 'icon': 'user', 'url': 'admin_profile'}
         ] %}
         <div class="offcanvas-body d-flex flex-column text-bg-light">
             {% for item in menu %}
@@ -91,7 +91,7 @@ ylesheet">
                 <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
             </a>
             {% endfor %}
-            <a href="{{ url_for('account.logout') }}" class="nav-link p-2 py-3 text-danger position-absolute bottom-0">
+            <a href="{{ url_for('admin_logout') }}" class="nav-link p-2 py-3 text-danger position-absolute bottom-0">
                 <i class="fas fa-sign-out-alt fa-fw fa-2x"></i>
             </a>
         </div>
@@ -117,7 +117,7 @@ ylesheet">
         </div>
     </main>
     {% block scripts %}
-    <script src="{{url_for('static', filename='js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', path='js/bootstrap.bundle.min.js')}}"></script>
     {% endblock %}
 </body>
 </html>
