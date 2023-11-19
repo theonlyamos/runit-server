@@ -1,12 +1,13 @@
 import logging
 import os
+import shutil
 import time
 from pathlib import Path
 from typing import Annotated, Optional, Dict
 import aiofiles
 
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi import APIRouter, Form, HTTPException, Request, Depends,\
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, Depends,\
     status, UploadFile
     
 from dotenv import dotenv_values
@@ -26,11 +27,13 @@ from ..models import Collection
 from ..constants import (
     PROJECTS_DIR,
     EXTENSIONS,
-    LANGUAGE_TO_ICONS
+    LANGUAGE_TO_ICONS,
+    LANGUAGE_TO_RUNTIME
 )
 
 ADMIN_LOGIN_PAGE = 'admin_login_page'
 ADMIN_DATABASE_INDEX = 'admin_list_databases'
+ADMIN_PROJECTS_INDEX = 'admin_list_projects'
 
 from runit import RunIt
 
@@ -113,6 +116,90 @@ async def admin_get_project(request: Request, project_id):
     else:
         flash(request, 'Project does not exist', 'danger')
         return RedirectResponse(request.url_for('admin_list_projects'))
+
+@admin.post('/projects')
+@admin.post('/projects/')
+async def admin_create_project(
+    request: Request, name: Annotated[str, Form()], 
+    user_id: Annotated[str, Form()], 
+    language: Annotated[str, Form()], 
+    description: Annotated[Optional[str], Form()] = None,
+    database: Annotated[Optional[str], Form()] = None):
+    
+    user_id = request.session['user_id']
+    user = User.get(user_id)
+    
+    if name and language:
+        # name = RunIt.set_project_name(args.name)
+        # if RunIt.exists(name):
+        # flash(request, f'{name} project already Exists', category='danger')
+        
+        config = {}
+        config['name'] = name
+        config['language'] = language
+        config['runtime'] = LANGUAGE_TO_RUNTIME[language]
+        config['description'] = description
+        config['author'] = {}
+        config['author']['name'] = user.name
+        config['author']['email'] = user.email
+        
+        project = Project(user_id, **config)
+        project_id = project.save().inserted_id
+        project_id = str(project_id)
+        project.id = project_id
+        
+        homepage = f"{request.base_url}{project_id}/"
+        project.update({'homepage': homepage})
+
+        config['_id'] = project_id
+        config['homepage'] = homepage
+        
+        os.chdir(PROJECTS_DIR)
+        
+        config['name'] = project_id
+        new_runit = RunIt(**config)
+        
+        new_runit._id = project_id
+        new_runit.name = name
+        
+        os.chdir(Path(PROJECTS_DIR, project_id))
+        new_runit.update_config()
+        
+        # os.chdir(RUNIT_HOMEDIR)
+        
+        if (database):
+            # Create database for project
+            Database(name+'_db', user_id, project_id).save()
+        
+        flash(request, 'Project Created Successfully.', category='success')
+    else:
+        flash(request, 'Missing required fields.', category='danger')
+    
+    user_id = request.session['user_id']
+    projects = Project.get_by_user(user_id)
+    
+    return templates.TemplateResponse('projects/index.html', context={
+        'request': request, 'page': 'projects', 'projects': projects, 
+        'icons': LANGUAGE_TO_ICONS})
+
+@admin.get('/projects/delete/{project_id}')
+@admin.get('/projects/delete/{project_id}/')
+async def admin_delete_project(request: Request, project_id, background_task: BackgroundTasks):
+    try:
+        user_id = request.session['user_id']
+        project = Project.get(project_id)
+        
+        if project:
+            Project.remove({'_id': project_id, 'user_id': user_id})
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project_id))
+            flash(request, 'Project deleted successfully', category='success')
+        else:
+            flash(request, 'Project was not found. Operation not successful.', category='danger')
+        return RedirectResponse(request.url_for(ADMIN_PROJECTS_INDEX))
+    except Exception:
+        flash(request, 'Project deleted successfully', category='success')
+        return RedirectResponse(request.url_for(ADMIN_PROJECTS_INDEX))
+
 
 @admin.get('/databases')
 @admin.get('/databases/')

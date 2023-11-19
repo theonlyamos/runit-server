@@ -8,7 +8,7 @@
 {% include 'modals/confirm.html' %}
 {% include 'modals/create_database.html' %}
 <div class="container">
-    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
         <strong>{{message}}</strong>
         <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
@@ -18,10 +18,10 @@
 
     <div class="tools d-flex justify-content-end">
         <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{url_for('database.index')}}" class="btn btn-{{'' if view != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
+            <a href="{{url_for('database.index')}}" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
                 <small><i class="fas fa-th-large fa-fw"></i></small>
             </a>
-            <a href="{{url_for('database.index')}}?view=list" class="btn btn-{{'' if view == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">
+            <a href="{{url_for('database.index')}}?view=list" class="btn btn-{{'' if request.session['view'] == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">
                 <small><i class="fas fa-th-list fa-fw"></i></small>
             </a>
         </div>
@@ -37,7 +37,7 @@
             </a>
         </div>
     </div>
-    {% if view == 'list' %} 
+    {% if request.session['view'] == 'list' %} 
     {% include 'databases/list.html' %} 
     {% else %} 
     {% include 'databases/grid.html' %}

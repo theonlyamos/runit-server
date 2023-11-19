@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap">
 {% for user in users %}
 <div class="position-relative m-2 text-black">
-    <a href="{{url_for('admin.user', user_id=user.id)}}" class="nav-link card shadow-sm d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin_get_user', user_id=user.id)}}" class="nav-link card shadow-sm d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
         <i class="fas fa-user-circle fa-fw fa-3x"></i>
         <small>{{ user['name'] }}</small>
 

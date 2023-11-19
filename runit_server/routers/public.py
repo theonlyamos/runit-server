@@ -150,12 +150,12 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             access_token = create_access_token(admin.json())
             request.session['admin_id'] = admin.id
             request.session['admin_name'] = admin.name
-            request.session['admin_username'] = admin.username
+            request.session['admin_username'] = admin.email
             request.session['access_token'] = access_token
 
             return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
     flash(request, 'Invalid Login Credentials', 'danger')
-    return RedirectResponse(request.url_for('admin_login_page'))
+    return RedirectResponse(request.url_for('admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.get('/{project_id}')
 @public.get('/{project_id}/')

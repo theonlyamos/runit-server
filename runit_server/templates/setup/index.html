@@ -14,7 +14,7 @@
                     </div>
                     <div class="card-body">
                         <form class="form-floating bg-gradient" action="{{ url_for('setup.initsetup') }}" method="post" id="setupForm">
-                            {% for (category, message) in get_flashed_messages(with_categories=True) %}
+                            {% for (category, message) in get_flashed_messages(request) %}
                             <div
                                 class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
                                 <strong>{{message}}</strong>
@@ -108,5 +108,5 @@
 {% endblock %}
 {% block scripts %}
 {{super()}}
-<script src="{{url_for('static', filename='js/setup.js')}}"></script>
+<script src="{{url_for('static', path='js/setup.js')}}"></script>
 {% endblock %}

@@ -83,10 +83,10 @@ def create_default_admin(args_is_true: bool = False):
         result = Admin.find({})
         if len(result):
             admin = result[0]
-            print(f'[!] Default Administrator account already exists [{admin.username}]')
+            print(f'[!] Default Administrator account already exists [{admin_get_username}]')
         answer = input('[$] Would you like to reset the account? [yes|no]: ')
         if answer.lower() == 'yes':
-            Admin.remove({'username': admin.username})
+            Admin.remove({'username': admin_get_username})
             create_account = True
             
     if create_account:

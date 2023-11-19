@@ -117,6 +117,7 @@ async def create_user_project(
         'request': request, 'page': 'projects', 'projects': projects, 
         'icons': LANGUAGE_TO_ICONS})
 
+@project.get('/{project_id}')
 @project.get('/{project_id}/')
 async def user_project_details(request: Request, project_id: str):
     old_curdir = os.curdir
@@ -202,7 +203,7 @@ async def user_project_environ(request: Request, project_id):
 
     # project = Project.get(project_id)
     flash(request, 'Environment variables updated successfully', category='success')
-    return RedirectResponse(request.url_for('project.details', project_id=project_id))
+    return RedirectResponse(request.url_for('user_project_details', project_id=project_id))
 
 @project.patch('/')
 async def update_user_project(request: Request):

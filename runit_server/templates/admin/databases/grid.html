@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap mt-3">
 {% for database in databases %}
 <div class="position-relative m-2 p-3 border rounded shadow-sm">
-    <a href="{{url_for('admin.database', database_id=database.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin_get_database', database_id=database.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
         <i class="fas fa-database fa-fw fa-3x mb-2"></i>
         <span>{{ database['name'] }}</span>
     </a>
@@ -11,7 +11,7 @@
         </a>
         <ul class="dropdown-menu rounded-0 shadow border-0">
             <li>
-                <a href="{{url_for('admin.database', database_id=database.id)}}" class="dropdown-item small py-0">
+                <a href="{{url_for('admin_get_database', database_id=database.id)}}" class="dropdown-item small py-0">
                     Details
                 </a>
             </li>

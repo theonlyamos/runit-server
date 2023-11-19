@@ -1,5 +1,6 @@
 const fileInput = document.getElementById('profile-image');
-const previewImage = document.getElementById('image-preview');
+let previewImage = document.getElementById('image-preview');
+let imagePlaceholder = document.getElementById('image-placeholder');
 
 fileInput.addEventListener('change', (event) => {
   const file = event.target.files[0];
@@ -7,6 +8,8 @@ fileInput.addEventListener('change', (event) => {
     const reader = new FileReader();
     reader.addEventListener('load', (event) => {
       previewImage.src = event.target.result;
+      previewImage.classList.remove('d-none');
+      imagePlaceholder.classList.add('d-none')
     });
     reader.readAsDataURL(file);
     uploadImage(file)
@@ -39,6 +42,8 @@ const uploadImage = (file)=>{
         alert('Error uploading file.');
         }
     };
+
+    xhr.on
 
     xhr.send(formData);
 }

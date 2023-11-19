@@ -5,19 +5,19 @@
                 <thead>
                     <th>#</th>
                     <th>Name</th>
-                    <th>Updated At</th>
+                    <th>Registration Date</th>
                     <th class="text-center">Actions</th>
                 </thead>
                 <tbody>
-                    {% for project in projects %}
+                    {% for user in users %}
                     <tr>
                         <td><input type="checkbox" name="" id="" class="form-check custom"></td>
                         <td>
-                            <a href="{{url_for('project.details', project_id=project.id)}}" class="nav-link">
-                                {{ project['name'] }}
+                            <a href="{{url_for('admin_get_user', user_id=user.id)}}" class="nav-link">
+                                {{ user['name'] }}
                             </a>
                         </td>
-                        <td>{{ project['updated_at'] }}</td>
+                        <td>{{ user['created_at'] }}</td>
                         <td class="text-center">
                             <nav class="dropdown">
                                 <a class="nav-link p-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
@@ -25,7 +25,7 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-left position-fixed rounded-0 shadow border-0" role="menu">
                                     <li>
-                                        <a href="{{url_for('project.details', project_id=project['id'])}}" class="dropdown-item small py-0">
+                                        <a href="{{url_for('admin_get_user', user_id=user['id'])}}" class="dropdown-item small py-0">
                                             Open
                                         </a>
                                     </li>

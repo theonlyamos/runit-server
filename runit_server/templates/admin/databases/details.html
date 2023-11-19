@@ -5,7 +5,7 @@
 
 {% block pagetitle %}
 <div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
-    <a href="{{url_for('admin.databases')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin_list_databases')}}" class="nav-link p-0 text-black-50 hover:text-dark">
         <i class="fas fa-arrow-left fa-fw"></i> 
         <span class="d-none d-sm-inline">{{ super() }}</span>
     </a>
@@ -36,7 +36,7 @@
     }
 </style>
 <div class="container">
-    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
         <strong>{{message}}</strong>
         <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
@@ -45,10 +45,10 @@
 
     <div class="tools d-flex justify-content-end">
         <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{ url_for('admin.databases')}}" role="button" class="btn btn-outline-secondary bg-gradient hover:shadow-sm mb-2" title="Disable Database">
+            <a href="{{ url_for('admin_list_databases')}}" role="button" class="btn btn-outline-secondary bg-gradient hover:shadow-sm mb-2" title="Disable Database">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('admin.databases')}}" role="button" class="btn btn-outline-danger bg-gradient hover:shadow-sm mb-2" title="Delete Database">
+            <a href="{{ url_for('admin_list_databases')}}" role="button" class="btn btn-outline-danger bg-gradient hover:shadow-sm mb-2" title="Delete Database">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -100,7 +100,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="{{url_for('admin.database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
+                        <form action="{{url_for('admin_get_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
                             {% for key, value in database.schema.items() %}
                             {% set id = 'schema'+(loop.index | string) %}
                             {% set schemaKey = 'schemaKey'+(loop.index | string) %}
@@ -154,8 +154,8 @@ let db = JSON.parse({{ database | tojson }})
 document.getElementById("database").textContent = JSON.stringify(db, null, 4);
 </script> -->
 {{super()}}
-<script src="{{url_for('static', filename='js/databases.js')}}"></script>
-<script src="{{url_for('static', filename='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
+<script src="{{url_for('static', path='js/databases.js')}}"></script>
+<script src="{{url_for('static', path='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
 <script>
     const editor = ace.edit("database");
     editor.setTheme("ace/theme/chaos")

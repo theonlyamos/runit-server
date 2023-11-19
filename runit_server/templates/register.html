@@ -8,7 +8,7 @@
                     <div class="card-body">
                         <form class="form-floating bg-gradient" action="{{ url_for('public.register') }}" method="post">
                             <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-black-50 fs-4">REGISTER</h5>
-                            {% for (category, message) in get_flashed_messages(with_categories=True) %}
+                            {% for (category, message) in get_flashed_messages(request) %}
                             <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
                                 <strong>{{message}}</strong>
                                 <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>

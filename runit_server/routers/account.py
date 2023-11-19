@@ -133,7 +133,7 @@ async def update_user_image(request: Request,  file: UploadFile):
     user = User.get(user_id)  
     user.image = filename
     user.save()  
-    return JSONResponse({'status': 'success', 'filepath': str(upload_path)})
+    return JSONResponse({'status': 'success', 'filepath': str(request.url_for('uploads', path=user.id+'/'+user.image))})
     # return RedirectResponse(request.url_for('user_profile'), status_code=status.HTTP_303_SEE_OTHER)
 
 @account.get('/logout/')

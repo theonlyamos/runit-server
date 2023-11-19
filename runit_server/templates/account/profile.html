@@ -21,11 +21,13 @@
     <div class="row">
         <div class="col-md-5 my-4">
             <div class="card shadow rounded-0">
-                <a href="javascript:fileInput.click()" class="nav-link d-block mx-auto pt-4" >
+                <a href="javascript:fileInput.click()" class="nav-link d-block mx-auto pt-4" id="image-container">
                     {% if user.image %}
                     <img src="{{url_for('uploads', path=user.id+'/'+user.image)}}" class="rounded-2" id="image-preview" alt="Profile Image" style="width: 150px;height: 150px;object-fit: cover;">
+                    <i class="fas fa-image fa-7x p-3 text-black-50 hover:text-dark d-none" id="image-placeholder"></i>
                     {% else %}
-                    <i class="fas fa-image fa-7x p-3 text-black-50 hover:text-dark"></i>
+                    <img src="{{url_for('uploads', path=user.id+'/'+user.image)}}" class="rounded-2 d-none" id="image-preview" alt="Profile Image" style="width: 150px;height: 150px;object-fit: cover;">
+                    <i class="fas fa-image fa-7x p-3 text-black-50 hover:text-dark" id="image-placeholder"></i>
                     {% endif %}
                 </a>
                 <form action="" id="image-form" enctype="multipart/form-data">

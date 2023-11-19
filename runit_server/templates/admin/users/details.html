@@ -5,7 +5,7 @@
 
 {% block pagetitle %}
 <div class="d-flex align-items center">
-    <a href="{{url_for('admin.users')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin_list_users')}}" class="nav-link p-0 text-black-50 hover:text-dark">
         <i class="fas fa-arrow-left fa-fw"></i> {{ super() }}</a>
     / 
     <span>{{ user.name | upper}}</span>
@@ -15,7 +15,7 @@
 {% block content %}
 {% include 'admin/users/modal.html' %}
 <div class="container">
-    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
         <strong>{{message}}</strong>
         <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
@@ -47,10 +47,10 @@
                         <small class="fw-bold"></small>
                         <div class="tools d-flex justify-content-end">
                             <div class="btn-group" role="group" aria-label="tool buttons">
-                                <a href="{{url_for('admin.user', user_id=user.id)}}" class="btn btn-sm btn-{{'' if view != 'list' else 'outline-'}}dark" role="button" title="Grid view">
+                                <a href="{{url_for('admin_get_user', user_id=user.id)}}" class="btn btn-sm btn-{{'' if request.session['view'] != 'list' else 'outline-'}}dark" role="button" title="Grid view">
                                     <small><i class="fas fa-th-large fa-fw"></i></small>
                                 </a>
-                                <a href="{{url_for('admin.user', user_id=user.id)}}?view=list" class="btn btn-sm btn-{{'' if view == 'list' else 'outline-'}}dark" role="button" title="Table view">
+                                <a href="{{url_for('admin_get_user', user_id=user.id)}}?view=list" class="btn btn-sm btn-{{'' if request.session['view'] == 'list' else 'outline-'}}dark" role="button" title="Table view">
                                     <small><i class="fas fa-th-list fa-fw"></i></small>
                                 </a>
                                 <a href="#confirmModal" role="button" class="btn btn-sm btn-danger" data-bs-toggle="modal">
@@ -67,7 +67,7 @@
                     </div>
                     <div class="card-body pb-0">
                         <div class="row">
-                            {% if view == 'list' %} 
+                            {% if request.session['view'] == 'list' %} 
                             {% include 'admin/projects/list.html' %} 
                             {% else %} 
                             {% include 'admin/projects/grid.html' %}
@@ -155,5 +155,5 @@
 
 {% block scripts %} 
 {{super()}}
-<script src="{{url_for('static', filename='js/users.js')}}"></script>
+<script src="{{url_for('static', path='js/users.js')}}"></script>
 {% endblock %}

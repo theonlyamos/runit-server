@@ -5,7 +5,7 @@
 
 {% block pagetitle %}
 <div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
-    <a href="{{url_for('admin.projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
+    <a href="{{url_for('admin_list_projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
         <i class="fas fa-arrow-left fa-fw"></i> 
         <span class="d-none d-sm-inline">{{ super() }}</span>
     </a>
@@ -17,7 +17,7 @@
 {% block content %}
 {% include 'admin/projects/modal.html' %}
 <div class="container">
-    {% for (category, message) in get_flashed_messages(with_categories=True) %}
+    {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
         <strong>{{message}}</strong>
         <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
@@ -33,17 +33,17 @@
                 <ul class="dropdown-menu rounded-0 shadow py-0">
                     {% for func in funcs %}
                     <li>
-                        <a href="{{url_for('public.run', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
+                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom text-bg-danger bg-gradient" target="_blank">
                             <i class="fas fa-terminal fa-fw text-dark"></i> {{func.name}}
                         </a>
                     </li>
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
+            <a href="{{ url_for('admin_list_projects')}}" role="button" class="btn btn-sm btn-secondary hover:shadow-sm mb-2" title="Disable Project">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('project.index')}}" role="button" class="btn btn-sm btn-danger hover:shadow-sm mb-2" title="Delete Project">
+            <a href="{{ url_for('admin_get_project', project_id=project.id)}}" role="button" class="btn btn-sm btn-danger hover:shadow-sm mb-2" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -171,5 +171,5 @@
 
 {% block scripts %} 
 {{super()}}
-<script src="{{url_for('static', filename='js/projects.js')}}"></script>
+<script src="{{url_for('static', path='js/projects.js')}}"></script>
 {% endblock %}
