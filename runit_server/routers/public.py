@@ -1,13 +1,14 @@
 import os
 import json
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Annotated, Optional
 
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, status
+from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect, Depends, status
 
-from ..core import WSConnectionManager, flash, templates
+from ..core import WSConnectionManager, flash, templates, jsonify
 from ..common.security import authenticate, create_access_token, get_session_user
 from ..models import User
 from ..models import Admin
@@ -66,7 +67,7 @@ async def expose(request: Request, client_id: str):
 
 @public.get('/e/{client_id}/{func}')
 @public.get('/expose/{client_id}/{func}')
-async def expose(request: Request, client_id: str, func: str):
+async def expose_with_func(request: Request, client_id: str, func: str):
     if client_id in list(wsmanager.clients.keys()):
         websocket = wsmanager.clients[client_id]
         parameters = dict(request.query_params)
@@ -95,28 +96,32 @@ async def registration_page(request: Request):
 
 @public.post('/register')
 @public.post('/register/')
-async def register(request: Request):
+async def register(
+    request: Request,
+    name: Annotated[str, Form()],
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    cpassword: Annotated[str, Form()],
+):
     try:
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        c_password = request.form.get('cpassword')
-        if password != c_password:
+        if password != cpassword:
             flash(request, 'Passwords do not match!', 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+        
         user = User.get_by_email(email)
         if user:
-            flash(request, 'User is already Registered!', 'danger')
+            flash(request, 'User is already registered!', 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
         User(email, name, password).save()
         #print(user.inserted_id)
         flash(request, 'Registration Successful!', 'success')
-        return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_201_CREATED)
+        return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_303_SEE_OTHER)
 
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         flash(request, 'Error during registration', 'danger')
-        return RedirectResponse(request.url_for('registration_page'), status_code=status.HTTP_304_NOT_MODIFIED)
+        return RedirectResponse(request.url_for('registration_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.post('/login')
 @public.post('/login/')
@@ -158,26 +163,15 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     return RedirectResponse(request.url_for('admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.get('/{project_id}')
-@public.get('/{project_id}/')
-def project(project_id: str):
-    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
-    if os.path.isdir(current_project_dir):
-        if not RunIt.is_private(project_id, current_project_dir):
-            result = RunIt.start(project_id, 'index', current_project_dir)
-            os.chdir(RUNIT_HOMEDIR)
-            
-            return result
-
-    return RunIt.notfound()
-
 @public.get('/{project_id}/{function}')
-@public.get('/{project_id}/{function}/')
-def run_project(request: Request, project_id, function: Optional[str] = None):
-    current_project_dir = os.path.join(PROJECTS_DIR, project_id)
-    if os.path.isdir(current_project_dir):
-        if not RunIt.is_private(project_id, current_project_dir):
-            result = RunIt.start(project_id, function, current_project_dir, request.query_params)
+async def run_project(request: Request, project_id: str, function: Optional[str] = None):
+    current_project_dir = Path(PROJECTS_DIR, project_id).resolve()
+    function = function if function else 'index'
+    if current_project_dir.is_dir():
+        if not RunIt.is_private(project_id, str(current_project_dir)):
+            result = RunIt.start(project_id, function, str(current_project_dir), request.query_params._dict)
             os.chdir(RUNIT_HOMEDIR)
-            return result
+            response = await jsonify(result)
+            return JSONResponse(response) if type(response) is dict else response
 
     return RunIt.notfound()

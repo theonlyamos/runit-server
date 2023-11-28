@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Dict
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -15,6 +16,7 @@ def flash(request: Request, message: str, category: str = "primary") -> None:
    if "_messages" not in request.session:
        request.session["_messages"] = []
        request.session["_messages"].append((category, message))
+       
 def get_flashed_messages(request: Request):
    return request.session.pop("_messages") if "_messages" in request.session else []
 
@@ -24,14 +26,14 @@ templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not os.path.exists(RUNIT_WORKDIR):
-        os.mkdir(RUNIT_WORKDIR)
+    if not Path(RUNIT_WORKDIR).resolve().exists():
+        Path(RUNIT_WORKDIR).resolve().mkdir()
     
-    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'accounts'))):
-        os.mkdir(os.path.join(RUNIT_WORKDIR, 'accounts'))
+    if not Path(RUNIT_WORKDIR, 'accounts').resolve().exists():
+        Path(RUNIT_WORKDIR, 'account').resolve().mkdir()
         
-    if not (os.path.exists(os.path.join(RUNIT_WORKDIR, 'projects'))):
-        os.mkdir(os.path.join(RUNIT_WORKDIR, 'projects'))
+    if not Path(RUNIT_WORKDIR, 'projects').resolve().exists():
+        Path(RUNIT_WORKDIR, 'projects').resolve().mkdir()
 
     settings = dotenv_values(find_dotenv())
 
@@ -40,6 +42,34 @@ async def lifespan(app: FastAPI):
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
                     settings['DATABASE_NAME'])
     yield
+
+async def jsonify(data):
+    """
+    Converts a string containing a dictionary to a Python dictionary.
+
+    Args:
+        data: The string containing a dictionary.
+
+    Returns:
+        A Python dictionary or the original string if no dictionary is found.
+    """
+
+    # Check for the existence of '{' and '}'
+    if '{' not in data or '}' not in data:
+        return data
+
+    # Extract the dictionary part
+    dictionary_str = data[data.find('{'): data.rfind('}')+1]
+
+    # Replace single quotes with double quotes
+    dictionary_str = dictionary_str.replace("'", '"')
+
+    # Convert string to dictionary
+    try:
+        return json.loads(dictionary_str)
+    except Exception:
+        return data
+
 
 class WSConnectionManager:
     def __init__(self) -> None:

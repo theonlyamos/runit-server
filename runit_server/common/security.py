@@ -10,16 +10,16 @@ from jose import JWTError, jwt
 from ..models import User
 from .utils import Utils
 from ..exceptions import UnauthorizedException, UnauthorizedAdminException
-from ..constants import JWT_SECRET_KEY, JWT_ALGORITHM
+from ..constants import JWT_SECRET_KEY, JWT_ALGORITHM, API_VERSION
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"api/{API_VERSION}/token")
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    username: str
 
 class UserData(BaseModel):
     email: str
@@ -67,7 +67,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        username: str = payload.get("email")
+        username: Optional[str] = payload.get("email")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)

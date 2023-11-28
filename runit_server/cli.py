@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import argparse
 from getpass import getpass
 
@@ -77,17 +78,19 @@ def create_default_admin(args_is_true: bool = False):
         setup_database()
         
     create_account = True
+
     if Admin.count():
         create_account = False
         
         result = Admin.find({})
         if len(result):
             admin = result[0]
-            print(f'[!] Default Administrator account already exists [{admin_get_username}]')
-        answer = input('[$] Would you like to reset the account? [yes|no]: ')
-        if answer.lower() == 'yes':
-            Admin.remove({'username': admin_get_username})
-            create_account = True
+            print(f'[!] Default Administrator account already exists [{admin.username}]')
+            
+            answer = input('[?] Would you like to reset the account? [yes|no]: ')
+            if answer.lower() == 'yes':
+                Admin.remove({'username': admin.username})
+                create_account = True
             
     if create_account:
         print('[#] Create default administrator account')

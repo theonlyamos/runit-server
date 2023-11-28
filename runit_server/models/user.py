@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 from odbms import DBMS, Model
 
 from ..common.utils import Utils
@@ -34,12 +35,14 @@ class User(Model):
             data["created_at"] = self.created_at
             data["updated_at"] = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
 
-        if self.id:
-            # Update the existing record in database
-            del data['password']
-            return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), data)
+        if isinstance(self.id, uuid.UUID):
+            return DBMS.Database.insert(User.TABLE_NAME, data)
         
-        return DBMS.Database.insert(User.TABLE_NAME, data)
+        # Update the existing record in database
+        del data['password']
+        return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), data)
+        
+        
     
     def reset_password(self, new_password: str):
         '''
