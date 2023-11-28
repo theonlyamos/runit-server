@@ -1,50 +1,58 @@
 import os
 import json
 import logging
+from hashlib import sha256
 from typing import Annotated, Optional
 
-from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect, Depends, status
-
-from ...core import WSConnectionManager, flash, templates
-from ...common.security import authenticate, create_access_token, get_session_user
-from ...models import User
-from ...models import Admin
-from ...common import Utils
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
+from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
 
 from runit import RunIt
 
-from dotenv import load_dotenv, find_dotenv, dotenv_values
-
+from ...common.security import authenticate, create_access_token, Token
+from ...models import User
+from ...models import Admin
+from ...common import Utils
 from ...constants import (
     RUNIT_HOMEDIR,
-    PROJECTS_DIR
+    PROJECTS_DIR,
+    API_VERSION
 )
+
+from ...routers.api.project import projects_api
+
+from dotenv import load_dotenv, find_dotenv, dotenv_values
+
 
 load_dotenv()
 
 REGISTER_HTML_TEMPLATE = 'register.html'
 HOME_PAGE = 'index'
 
-wsmanager = WSConnectionManager()
-
 public_api = APIRouter(
-    tags=["public"]
+    tags=["public api"]
 )
 
-@public_api.post('/token')
-@public_api.post('/token/')
-async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+
+
+# Login endpoint
+@public_api.post("/token", response_model=Token)
+async def api_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = authenticate(form_data.username, form_data.password)
-
     if not user:
-        flash(request, 'Invalid Login Credentials', 'danger')
-        return templates.TemplateResponse('login.html', context={'request': request})
-    access_token = create_access_token(user.json())
-    request.session['user_id'] = user.id
-    request.session['user_name'] = user.name
-    request.session['user_email'] = user.email
-    request.session['access_token'] = access_token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"email": user.email}, expires_delta=access_token_expires
+    )
 
-    return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
+    return JSONResponse({"access_token": access_token, "token_type": "bearer"})

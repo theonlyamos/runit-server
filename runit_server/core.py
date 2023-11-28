@@ -38,9 +38,9 @@ async def lifespan(app: FastAPI):
     settings = dotenv_values(find_dotenv())
 
     if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
-                    settings['DATABASE_NAME'])
+        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
+                    settings['DATABASE_NAME']) # type: ignore
     yield
 
 async def jsonify(data):

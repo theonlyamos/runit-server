@@ -1,21 +1,18 @@
 
-import json
 import logging
 import os
 import shutil
-from time import sleep
 from pathlib import Path
 from datetime import datetime
 from typing import Annotated, Optional
 import aiofiles
 
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
-    Depends, status, UploadFile
-from dotenv import load_dotenv, dotenv_values, set_key
+from fastapi.responses import JSONResponse
+from fastapi import APIRouter, BackgroundTasks,  Request, \
+    Depends, status
+from dotenv import load_dotenv, dotenv_values
 from pydantic import BaseModel
 
-from ...core import flash, templates
 from ...common import get_current_user
 from ...models import Database
 from ...models import Project
@@ -23,14 +20,11 @@ from ...models import User
 
 from runit import RunIt
 from ...constants import (
-    RUNIT_HOMEDIR,
     PROJECTS_DIR,
-    LANGUAGE_TO_ICONS,
     LANGUAGE_TO_RUNTIME,
     Language
 )
 
-PROJECT_INDEX_URL_NAME = 'list_user_projects'
 PROJECT_404_ERROR = 'Project does not exist'
     
 class ProjectData(BaseModel):
@@ -43,19 +37,19 @@ load_dotenv()
 
 projects_api = APIRouter(
     prefix="/projects",
-    tags=["projects"],
+    tags=["projects api"],
     dependencies=[Depends(get_current_user)],
 )
 
 @projects_api.get('/')
 async def api_list_user_projects(user: Annotated[User, Depends(get_current_user)]):
     
-    projects = Project.get_by_user(user.id)
+    projects = Project.get_by_user(user.id) # type: ignore
     json_projects = []
     for project in projects:
         json_projects.append(project.json())
     
-    return JSONResponse({'projects': json_projects})
+    return JSONResponse(json_projects)
 
 @projects_api.post('/')
 async def api_create_user_project(
@@ -64,7 +58,7 @@ async def api_create_user_project(
     project_data: ProjectData
 ):
     
-    user = User.get(user.id)
+    user = User.get(user.id) # type: ignore
     
     response = {
         'status': 'success', 
@@ -86,7 +80,7 @@ async def api_create_user_project(
         config['author']['email'] = user.email
         
         project = Project(user.id, **config)
-        project_id = project.save().inserted_id
+        project_id = project.save().inserted_id # type: ignore
         project_id = str(project_id)
         project.id = project_id
         
@@ -116,7 +110,7 @@ async def api_create_user_project(
                 user.id,
                 project_id
             ).save()
-        response['project'] = Project.get(project_id).json()
+        response['project'] = Project.get(project_id).json() # type: ignore
     except Exception as e:
         logging.info(str(e))
         response['status'] = 'error'
@@ -128,7 +122,6 @@ async def api_create_user_project(
     )
 
 @projects_api.get('/{project_id}')
-@projects_api.get('/{project_id}/')
 async def api_get_project_details(
     user: Annotated[User, Depends(get_current_user)],
     project_id: str
@@ -170,7 +163,6 @@ async def api_get_project_details(
     return JSONResponse(response)
 
 @projects_api.get('/delete/{project_id}')
-@projects_api.get('/delete/{project_id}/')
 async def api_delete_user_project(
     user: Annotated[User, Depends(get_current_user)],
     project_id, 
