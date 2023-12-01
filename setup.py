@@ -19,7 +19,7 @@ setup(
     install_requires=['requests','python-dotenv', 'python-runit', 
                       'odbms', 'fastapi', 'python-multipart',
                       'python-jose[cryptography]', 'passlib', 'docker',
-                      'aiofiles'],
+                      'aiofiles', 'pydantic', 'pydantic[email]'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={
         'Source': 'https://github.com/theonlyamos/runit-server/',

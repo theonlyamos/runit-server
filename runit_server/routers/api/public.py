@@ -7,7 +7,7 @@ from typing import Annotated, Optional
 from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
@@ -24,9 +24,7 @@ from ...constants import (
     API_VERSION
 )
 
-from ...routers.api.project import projects_api
-
-from dotenv import load_dotenv, find_dotenv, dotenv_values
+from dotenv import load_dotenv
 
 
 load_dotenv()
@@ -38,12 +36,22 @@ public_api = APIRouter(
     tags=["public api"]
 )
 
+class LoginData(BaseModel):
+    email: EmailStr
+    password: str
+    
+class UserData(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    cpassword: str
+
 
 
 # Login endpoint
-@public_api.post("/token", response_model=Token)
-async def api_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user = authenticate(form_data.username, form_data.password)
+@public_api.post("/login", response_model=Token)
+async def api_login(form_data: LoginData):
+    user = authenticate(form_data.email, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -53,6 +61,34 @@ async def api_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"email": user.email}, expires_delta=access_token_expires
+    )
+
+    return JSONResponse({"access_token": access_token, "token_type": "bearer"})
+
+@public_api.post('/register', response_model=Token)
+async def register(
+    data: UserData
+):
+    if data.password != data.cpassword:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Passwords do not match",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user = User.get_by_email(data.email)
+    if user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User already exists",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    User(data.email, data.name, data.password).save()
+    
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"email": data.email}, expires_delta=access_token_expires
     )
 
     return JSONResponse({"access_token": access_token, "token_type": "bearer"})

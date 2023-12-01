@@ -18,7 +18,7 @@
 
     <div class="tools d-flex justify-content-end">
         <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{url_for('list_user_databases')}}" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
+            <a href="{{url_for('list_user_databases')}}?view=grid" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
                 <small><i class="fas fa-th-large fa-fw"></i></small>
             </a>
             <a href="{{url_for('list_user_databases')}}?view=list" class="btn btn-{{'' if request.session['view'] == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">

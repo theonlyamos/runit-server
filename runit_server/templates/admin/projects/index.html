@@ -15,9 +15,9 @@
     </div>
     {% endfor %}
     {% if projects %}
-    <div class="tools d-flex justify-content-end">
+    <div class="tools d-flex justify-content-end mb-3">
         <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{url_for('admin_list_projects')}}" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
+            <a href="{{url_for('admin_list_projects')}}?view=grid" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
                 <small><i class="fas fa-th-large fa-fw"></i></small>
             </a>
             <a href="{{url_for('admin_list_projects')}}?view=list" class="btn btn-{{'' if request.session['view'] == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">

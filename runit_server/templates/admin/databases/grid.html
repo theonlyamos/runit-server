@@ -1,4 +1,4 @@
-<div class="d-flex flex-wrap mt-3">
+<div class="d-flex flex-wrap">
 {% for database in databases %}
 <div class="position-relative m-2 p-3 border rounded shadow-sm">
     <a href="{{url_for('admin_get_database', database_id=database.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
@@ -17,7 +17,7 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-				<form method="post" action="{{ url_for('admin.delete_database', database_id=database.id) }}">
+				<form method="post" action="{{ url_for('admin_delete_database', database_id=database.id) }}">
 					<button type="submit" class="btn btn-link text-danger small py-0" style="text-decoration: none">Delete</button>
 				</form>
 			</li>

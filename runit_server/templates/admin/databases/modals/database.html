@@ -1,0 +1,35 @@
+<div class="modal fade" id="databaseModal" tabindex="-1" aria-labelledby="databaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="dialog">
+        <div class="modal-content rounded-0">
+            <form action="{{ url_for('admin_create_database') }}" method="post">
+                <div class="modal-header text-bg-dark rounded-0">
+                    <h5 class="modal-title fw-bolder" id="databaseModalLabel">New Database</h5>
+                    <button type="button" class="btn-close bg-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+		    		<div class="form-group">
+						<label class="form-label">Database Name</label>
+						<input type="text" name="name" class="form-control form-control-sm border-0 border-bottom border-dark rounded-0"/>
+					</div>
+					<div class="form-group mt-2">
+						<label class="form-label">Project</label>
+						<select name="project_id" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0">
+							<option selected>Select Project</option>
+							{% for project in projects %}
+							<option value={{project.id}}>{{project.name | title}}</option>
+							{% endfor %}
+						</select>
+					</div>
+                </div>
+                <div class="modal-footer p-0">
+                    <button type="button" class="btn btn-danger rounded-0 m-0" data-bs-dismiss="modal">
+                        <small>Close</small>
+                    </button>
+                    <button type="submit" class="btn btn-dark rounded-0 m-0">
+                        <small>Create Database</small>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

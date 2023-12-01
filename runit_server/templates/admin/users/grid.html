@@ -2,14 +2,18 @@
 {% for user in users %}
 <div class="position-relative m-2 text-black">
     <a href="{{url_for('admin_get_user', user_id=user.id)}}" class="nav-link card shadow-sm d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
-        <i class="fas fa-user-circle fa-fw fa-3x"></i>
+        {% if user.image %}
+        <img src="{{url_for('uploads', path=user.id+'/'+user.image)}}" class="rounded-circle" id="image-preview" alt="Profile Image" style="width: 80px;height: 80px;object-fit: cover;">
+        {% else %}
+        <i class="fas fa-user-circle fa-fw fa-3x" id="image-placeholder"></i>
+        {% endif %}
         <small>{{ user['name'] }}</small>
 
         <hr class="dropdown-divider">
         <div class="card-body p-0 w-100">
-            <div class="mt-2 d-flex justify-content-between text-white border border-dark">
+            <div class="mt-2 d-flex justify-content-between text-white">
                 <small class="text-dark px-1">Projects</small>
-                <small class="bg-gradient bg-dark px-1">{{user.count_projects()}}</small>
+                <small class="bg-gradient bg-dark px-1 rounded-2">{{user.count_projects()}}</small>
             </div>
         </div>
         

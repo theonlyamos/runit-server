@@ -66,7 +66,10 @@ async def admin_list_users(request: Request, view: Optional[str] = None):
 @admin.get('/users/{user_id}/')
 async def admin_get_user(request: Request, user_id: str):
     try:
-        user = User.get(user_id)
+        user: User = User.get(user_id) # type: ignore
+        if not User:
+            raise Exception('User not found')
+        
         projects = Project.get_by_user(user.id)
         
         return templates.TemplateResponse('admin/users/details.html', context={
@@ -127,7 +130,7 @@ async def admin_create_project(
     database: Annotated[Optional[str], Form()] = None):
     
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user: User= User.get(user_id) # type: ignore
     
     if name and language:
         # name = RunIt.set_project_name(args.name)
@@ -144,7 +147,7 @@ async def admin_create_project(
         config['author']['email'] = user.email
         
         project = Project(user_id, **config)
-        project_id = project.save().inserted_id
+        project_id = project.save().inserted_id # type: ignore
         project_id = str(project_id)
         project.id = project_id
         
@@ -207,13 +210,12 @@ async def admin_list_databases(request: Request, view: Optional[str] = None):
     global EXTENSIONS
     global LANGUAGE_TO_ICONS
 
-    view = request.args.get('view')
     view = view if view else 'grid'
     databases = Database.all()
     for db in databases:
         Collection.TABLE_NAME = db.collection_name
         if Collection.count():
-            stats = DBMS.Database.db.command('collstats', db.collection_name)
+            stats = DBMS.Database.db.command('collstats', db.collection_name) # type: ignore
             if stats:
                 db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
         
@@ -244,7 +246,7 @@ async def admin_get_database(request: Request, database_id: str):
             'bool': 'checkbox'
         }
         
-        return templates.TemplateResponse('databases/details.html', context={
+        return templates.TemplateResponse('admin/databases/details.html', context={
                 'request': request, 'page':'databases',
                 'database': database.json(), 'collections': result,
                 'inputTypes': schema_names_to_input_types})
@@ -253,8 +255,7 @@ async def admin_get_database(request: Request, database_id: str):
         return RedirectResponse(request.url_for(ADMIN_DATABASE_INDEX))
     
 @admin.post('/databases')
-@admin.post('/databases/')
-async def create_database(
+async def admin_create_database(
     request: Request,
     name: Annotated[str, Form()],
     project_id: Annotated[str, Form()]
@@ -263,20 +264,20 @@ async def create_database(
     project = Project.get(project_id)
     
     if name and project_id:
-        collection_name = f"{name}_{project.user_id}_{project_id}"
+        collection_name = f"{name}_{project.user_id}_{project_id}" # type: ignore
         data = {'name': name, 'collection_name': collection_name,
-                'project_id': project_id,'user_id': project.user_id}
+                'project_id': project_id,'user_id': project.user_id} # type: ignore
 
         new_db = Database(**data)
-        results = new_db.save().inserted_id
+        results = new_db.save().inserted_id # type: ignore
                 
         flash(request, 'Database Created Successfully.', category='success')
     else:
         flash(request, 'Missing required fields.', category='danger')
-    return RedirectResponse(request.url_for(ADMIN_DATABASE_INDEX))
+    return RedirectResponse(request.url_for(ADMIN_DATABASE_INDEX), status_code=status.HTTP_303_SEE_OTHER)
 
 @admin.post('/schema/{database_id}/')
-async def admnin_database_schema(request: Request, database_id: str):
+async def admin_database_schema(request: Request, database_id: str):
     try:
         data = await request.form()
         Database.update({'id': database_id}, {'schema': data})
@@ -285,12 +286,14 @@ async def admnin_database_schema(request: Request, database_id: str):
     except Exception as e:
         logging.error(str(e))
         flash(request, 'Error updating database schema', category='danger')
-    return RedirectResponse(request.url_for('admin_get_database', database_id=database_id))
+    return RedirectResponse(request.url_for('admin_get_database', database_id=database_id), status_code=status.HTTP_303_SEE_OTHER)
 
 @admin.patch('/databases/{database_id}')
 @admin.patch('/databases/{database_id}/')
 async def admin_update_database(request: Request, database_id: str):
-    return templates.TemplateResponse('admin/databases/index.html', page='databases', databases=[])
+    return templates.TemplateResponse('admin/databases/index.html', {
+        'request': request, 'page': 'databases', 'databases': []
+    })
 
 @admin.get('/databases/delete/{database_id}/')
 async def admin_delete_database(request: Request, database_id: str):
@@ -300,7 +303,7 @@ async def admin_delete_database(request: Request, database_id: str):
         flash(request, 'Database deleted successfully', category='success')
     else:
         flash(request, 'Database was not found. Operation not successful.', category='danger')
-    return RedirectResponse(request.url_for(ADMIN_DATABASE_INDEX))
+    return RedirectResponse(request.url_for(ADMIN_DATABASE_INDEX), status_code=status.HTTP_303_SEE_OTHER)
 
 @admin.get('/profile/')
 async def admin_profile(request: Request):
@@ -310,5 +313,5 @@ async def admin_profile(request: Request):
 @admin.get('/logout/')
 async def admin_logout(request: Request):
     request.session.clear()
-    return RedirectResponse(request.url_for(ADMIN_LOGIN_PAGE))
+    return RedirectResponse(request.url_for(ADMIN_LOGIN_PAGE), status_code=status.HTTP_303_SEE_OTHER)
 

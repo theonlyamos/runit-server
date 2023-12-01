@@ -1,4 +1,4 @@
-{% extends "account/layout.html" %}
+{% extends "admin/layout.html" %}
 {% block title %} 
 {{super()}} | {{page | capitalize}} | {{database.name}}
 {% endblock %}
@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-{% include 'databases/modal.html' %}
+{% include 'admin/databases/modals/document.html' %}
 <style>
     #database,
     #initialization { 
@@ -100,7 +100,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="{{url_for('admin_get_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
+                        <form action="{{url_for('admin_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
                             {% for key, value in database.schema.items() %}
                             {% set id = 'schema'+(loop.index | string) %}
                             {% set schemaKey = 'schemaKey'+(loop.index | string) %}
@@ -172,7 +172,7 @@ document.getElementById("database").textContent = JSON.stringify(db, null, 4);
 
 Document.initialize(
     '{{request.root_url}}api',
-    '{{session["access_token"]}}',
+    '{{request.session["access_token"]}}',
     '{{database.project_id}}'
 )
     `)

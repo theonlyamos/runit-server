@@ -6,6 +6,7 @@ import aiofiles
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Form, HTTPException, Request, Depends,\
     status, UploadFile
+from pydantic import BaseModel, EmailStr
 
 from ...common import get_current_user
 from ...common import Utils
@@ -20,6 +21,16 @@ account_api = APIRouter(
     tags=["account api"],
     dependencies=[Depends(get_current_user)],
 )
+
+class AccountData(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+
+class PasswordData(BaseModel):
+    password: str
+    new_password: str
+    confirm_password: str
 
 @account_api.get('/')
 async def api_user_account(user: Annotated[User, Depends(get_current_user)]):
@@ -45,8 +56,7 @@ async def api_user_profile(user: Annotated[User, Depends(get_current_user)]):
 @account_api.post('/profile')
 async def api_update_user_profile(
     user: Annotated[User, Depends(get_current_user)],
-    email: Annotated[str, Form()], name: Annotated[str, Form()],
-    password: Annotated[str, Form()]
+    account: AccountData
 ):
     user = User.get(str(user.id)) # type: ignore
     
@@ -55,9 +65,9 @@ async def api_update_user_profile(
         'message': 'Profile updated successfully'
     }
 
-    if Utils.check_hashed_password(password, user.password):
-        user.email = email
-        user.name = name
+    if Utils.check_hashed_password(account.password, user.password):
+        user.email = account.email
+        user.name = account.name
         user.save()
         response['user'] = user.json() # type: ignore
     else:
@@ -69,9 +79,7 @@ async def api_update_user_profile(
 @account_api.post('/password')
 async def api_update_user_password(
     user: Annotated[User, Depends(get_current_user)],
-    password: Annotated[str, Form()],
-    new_password: Annotated[str, Form()],
-    confirm_password: Annotated[str, Form()]
+    data: PasswordData
 ):
     user = User.get(str(user.id)) # type: ignore
 
@@ -80,14 +88,14 @@ async def api_update_user_password(
         'message': 'Password changed successfully'
     }
 
-    if not Utils.check_hashed_password(password, user.password):
+    if not Utils.check_hashed_password(data.password, user.password):
         response['status'] = 'error'
         response['message'] = 'Unauthorized Action'
-    elif new_password != confirm_password:
+    elif data.new_password != data.confirm_password:
         response['status'] = 'error'
         response['message'] = 'Passwords do not watch'
     else:
-        user.reset_password(new_password)
+        user.reset_password(data.new_password)
         
     return JSONResponse(response)
     

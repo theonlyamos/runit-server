@@ -64,7 +64,7 @@ class User(Model):
         @return List of Project Instances
         '''
 
-        return DBMS.Database.find('projects', {'user_id': self.id}, 'params')
+        return DBMS.Database.find('projects', {'user_id': self.id})
     
     def count_projects(self)-> int:
         '''
