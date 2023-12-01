@@ -1,6 +1,8 @@
-from flask import Blueprint, redirect, render_template, \
-     request, session, url_for, flash, jsonify
-
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
+    Depends, status, UploadFile
+    
+from ..core import flash, templates
 from ..common.security import authenticate
 from ..models import User
 
@@ -11,7 +13,10 @@ from runit import RunIt
 
 load_dotenv()
 
-setup = Blueprint('setup', __name__, url_prefix='/setup', static_folder=os.path.join('..','static'))
+setup = APIRouter(
+    prefix="/projects",
+    tags=["projects"]
+)
 
 '''
 Page for setting up runit-server
@@ -24,26 +29,28 @@ def initial():
 ''' 
 
 @setup.get('/')
-def index():
+def index(request: Request):
     env_file = find_dotenv()
     
     if env_file:
         settings = dotenv_values(env_file)
         if settings['SETUP'] == 'completed':
-            return redirect(url_for('public.index'))
+            return RedirectResponse(request.url_for('public.index'))
         
-    return render_template('setup/index.html')
+    return templates.TemplateResponse('setup/index.html', {
+        'request': request
+    })
 
 @setup.post('/')
-def initsetup():
+def initsetup(request: Request):
     env_file = find_dotenv()
     settings = dotenv_values(env_file)
 
-    settings.update(request.form)
+    settings.update(request.form().__dict__)
 
     for key, value in settings.items():
-         set_key(env_file, key, value)
+         set_key(env_file, key, value) # type: ignore
     set_key(env_file, 'SETUP', 'completed')
     
-    flash('Setup completed', category='success')
-    return redirect(url_for('complete_setup'))
+    flash(request,'Setup completed', category='success')
+    return RedirectResponse(request.url_for('complete_setup'))
