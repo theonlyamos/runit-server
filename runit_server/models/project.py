@@ -4,7 +4,8 @@ class Project(Model):
     TABLE_NAME = 'projects'
 
     def __init__(self, user_id, name, version="0.0.1", description="", homepage="",
-    language="", runtime="", start_file="", private=False, author={}, created_at=None, updated_at=None, id=None):
+        language="", runtime="", start_file="", private=False, author={}, 
+        github_repo: str = '', github_repo_branch: str = '', created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.name = name
         self.user_id = user_id
@@ -16,6 +17,8 @@ class Project(Model):
         self.private = private
         self.start_file = start_file
         self.author = author
+        self.github_repo = github_repo
+        self.github_repo_branch = github_repo_branch
 
     def save(self):
         '''
@@ -34,6 +37,8 @@ class Project(Model):
             "language": self.language,
             "runtime": self.runtime,
             "private": self.private,
+            "github_repo": self.github_repo,
+            "github_repo_branch": self.github_repo_branch,
             "start_file": self.start_file,
             "author": self.author
         }
@@ -94,6 +99,8 @@ class Project(Model):
             "start_file": self.start_file,
             "author": self.author,
             "functions": self.count_functions(),
+            "github_repo": self.github_repo,
+            "github_repo_branch": self.github_repo_branch,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }

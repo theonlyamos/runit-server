@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-{% include 'projects/modal.html' %}
+
 <div class="container">
     {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">

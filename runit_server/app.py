@@ -20,6 +20,7 @@ from .constants import RUNIT_WORKDIR, SESSION_SECRET_KEY
 from .routers import account
 from .routers import project
 from .routers import database
+from .routers import github_router
 from .routers import admin
 from .routers import public
 
@@ -49,6 +50,7 @@ app.include_router(admin)
 app.include_router(account)
 app.include_router(project)
 app.include_router(database)
+app.include_router(github_router)
 app.include_router(public)
 
 @app.exception_handler(UnauthorizedException)

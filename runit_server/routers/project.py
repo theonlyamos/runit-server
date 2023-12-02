@@ -7,7 +7,9 @@ from time import sleep
 from pathlib import Path
 from datetime import datetime
 from typing import Annotated, Optional, Dict
+
 import aiofiles
+from github import Github, Auth
 
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
@@ -25,7 +27,8 @@ from ..constants import (
     RUNIT_HOMEDIR,
     PROJECTS_DIR,
     LANGUAGE_TO_ICONS,
-    LANGUAGE_TO_RUNTIME
+    LANGUAGE_TO_RUNTIME,
+    GITHUB_APP_CLIENT_ID
 )
 
 PROJECT_INDEX_URL_NAME = 'list_user_projects'
@@ -42,6 +45,8 @@ project = APIRouter(
 @project.get('/')
 async def list_user_projects(request: Request, view: Optional[str] = None):
     user_id = request.session['user_id']
+    user = User.get(user_id)
+    user = user.json() if user else None
     
     if view:
         request.session['view'] = view
@@ -52,13 +57,18 @@ async def list_user_projects(request: Request, view: Optional[str] = None):
     
     return templates.TemplateResponse('projects/index.html', context={
         'request': request, 'page': 'projects', 'projects': projects, 
-        'icons': LANGUAGE_TO_ICONS})
+        'user': user, 'git_client_id': GITHUB_APP_CLIENT_ID, 
+        'repos': {}, 'icons': LANGUAGE_TO_ICONS})
 
 @project.post('/')
 async def create_user_project(
-    request: Request, name: Annotated[str, Form()], 
+    request: Request, 
+    name: Annotated[str, Form()], 
     language: Annotated[str, Form()], 
+    background_task: BackgroundTasks,
     description: Annotated[Optional[str], Form()] = None,
+    github_repo: Annotated[Optional[str], Form()] = None,
+    github_repo_branch: Annotated[Optional[str], Form()] = None,
     database: Annotated[Optional[str], Form()] = None):
     
     user_id = request.session['user_id']
@@ -77,6 +87,9 @@ async def create_user_project(
         config['author'] = {}
         config['author']['name'] = user.name
         config['author']['email'] = user.email
+        if github_repo and github_repo_branch:
+            config['github_repo'] = github_repo
+            config['github_repo_branch'] = github_repo_branch
         
         project = Project(user_id, **config)
         project_id = project.save().inserted_id
@@ -91,14 +104,43 @@ async def create_user_project(
         
         os.chdir(PROJECTS_DIR)
         
-        config['name'] = project_id
-        new_runit = RunIt(**config)
+        if github_repo and github_repo_branch:
+            Path(PROJECTS_DIR, project_id).resolve().mkdir()
+            os.chdir(Path(PROJECTS_DIR, project_id).resolve())
+            
+            EVENTS = ["push", "pull_request"]
+
+            config = {
+                "url": "http://localhost:9000/github/webhook",
+                "content_type": "json"
+            }
+            auth = Auth.Token(user.gat) 
+            g = Github(auth=auth)
+            repo = g.get_user().get_repo(f"{github_repo}")
+
+            # repo.create_hook("web", config, EVENTS, active=True)
+            
+            contents = repo.get_contents("")
+            while contents:
+                file_content = contents.pop(0)
+                
+                if file_content.type == "dir":
+                    Path(PROJECTS_DIR, project_id, file_content.path).resolve().mkdir()
+                else:
+                    async with aiofiles.open(Path(PROJECTS_DIR, project_id, file_content.path).resolve(), 'wb') as file:
+                        await file.write(file_content.decoded_content)
+            
+            runit = RunIt(**RunIt.load_config())
+            background_task.add_task(runit.install_dependency_packages)
+        else:
+            config['name'] = project_id
+            new_runit = RunIt(**config)
+            
+            new_runit._id = project_id
+            new_runit.name = name
         
-        new_runit._id = project_id
-        new_runit.name = name
-        
-        os.chdir(Path(PROJECTS_DIR, project_id))
-        new_runit.update_config()
+            os.chdir(Path(PROJECTS_DIR, project_id))
+            new_runit.update_config()
         
         # os.chdir(RUNIT_HOMEDIR)
         
@@ -110,12 +152,7 @@ async def create_user_project(
     else:
         flash(request, 'Missing required fields.', category='danger')
     
-    user_id = request.session['user_id']
-    projects = Project.get_by_user(user_id)
-    
-    return templates.TemplateResponse('projects/index.html', context={
-        'request': request, 'page': 'projects', 'projects': projects, 
-        'icons': LANGUAGE_TO_ICONS})
+    return RedirectResponse(request.url_for('list_user_projects'), status_code=status.HTTP_303_SEE_OTHER)
 
 @project.get('/{project_id}')
 @project.get('/{project_id}/')

@@ -29,11 +29,11 @@ def setup_database():
     @return None
     '''
     settings = dotenv_values(find_dotenv())
-    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'],
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'], 
-                    settings['DATABASE_NAME'])
+    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
+                    settings['DATABASE_NAME']) # type: ignore
     if settings['DBMS'] == 'mysql':
-        DBMS.Database.setup()
+        DBMS.Database.setup() # type: ignore
     
     # print('[--] Database setup complete')
     
@@ -119,8 +119,9 @@ def setup_runit(args):
     domain = args.domain if hasattr(args, 'domain') else ''
     allowed = ['DBMS', 'DATABASE_HOST', 'DATABASE_PORT', 
                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
-               'DATABASE_NAME', 'RUNTIME_PYTHON',
-               'RUNTIME_PHP', 'RUNTIME_JAVASCRIPT']
+               'DATABASE_NAME', 'RUNTIME_PYTHON', 'RUNTIME_PHP',
+               'RUNTIME_JAVASCRIPT', 'GITHUB_APP_CLIENT_ID',
+               'GITHUB_APP_CLIENT_SECRET']
     
     default_settings = {
         'RUNIT_WORKDIR': os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR'),
@@ -135,6 +136,8 @@ def setup_runit(args):
         'RUNTIME_PYTHON': 'python',
         'RUNTIME_PHP': 'php',
         'RUNTIME_JAVASCRIPT': 'node',
+        'GITHUB_APP_CLIENT_ID': '',
+        'GITHUB_APP_CLIENT_SECRET': '',
         'SETUP': ''
     }
 
@@ -164,12 +167,12 @@ def setup_runit(args):
         settings['SETUP'] = 'completed'
     
     for key, value in settings.items():
-        set_key(find_dotenv(), key, value)
+        set_key(find_dotenv(), key, str(value))
     
     setup_database()
     create_default_admin()
 
-def run_server(args = None):
+def run_server(args = {}):
     if not find_dotenv():
         print('[#] Complete Setup configuration first.\n')
         setup_runit(args)

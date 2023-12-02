@@ -8,12 +8,39 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group mb-3">
-                        <input type="text"  name="name" 
-                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
-                        placeholder="Name of the project" autocomplete="off" required>
+                        <label for="repo" class="small">Github Repository</label>
+                        {% if user.gat %}
+                        <select name="github_repo" id="github_repo" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required>
+                            <option selected disabled>
+                                ...
+                            </option>
+                            {% for repo in repos %}
+                            <option value="{{ repo.id }}">
+                                <i class="fab fa-github me-2"></i> {{ repo.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <a href="https://github.com/login/oauth/authorize?client_id={{git_client_id}}" role="button" class="btn btn-light">
+                            <i class="fab fa-github me-2"></i> Connect Github
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="form-group mb-3 d-none" id="branches_elem">
+                        <label for="github_repo_branch" class="small">Select Branch</label>
+                        <select name="github_repo_branch" id="github_repo_branch" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required>
+                            <option selected disabled>
+                                Select Branch
+                            </option>
+                        </select>
                     </div>
                     <div class="form-group mb-3">
-                        <select name="language" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required>
+                        <input type="text"  name="name" id="name"
+                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
+                        placeholder="Name of the project" autocomplete="off" required style="text-transform: capitalize;">
+                    </div>
+                    <div class="form-group mb-3">
+                        <select name="language" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required="required">
                             <option selected disabled>
                                 <i class="fas fa-code fa-fw"></i> Programming Language
                             </option>
@@ -25,7 +52,7 @@
                         </select>
                     </div>
 					<div class="form-group mb-3">
-						<textarea
+						<textarea id="description"
                             class="text-dark form-control form-control-sm border-0 border-bottom border-dark rounded-0"
                             name="description" placeholder="Project Description"></textarea>
 					</div>
@@ -45,8 +72,8 @@
                     <button type="button" class="btn btn-danger rounded-0 m-0" data-bs-dismiss="modal">
                         <small>Close</small>
                     </button>
-                    <button type="submit" class="btn btn-dark rounded-0 m-0">
-                        <small>Create Project</small>
+                    <button type="submit" class="btn btn-dark rounded-0 m-0" id="submitBtn">
+                        <small><i class="fas fa-spinner fa-spin me-2 d-none"></i> Create Project</small>
                     </button>
                 </div>
             </form>

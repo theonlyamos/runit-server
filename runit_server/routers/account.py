@@ -1,6 +1,7 @@
 import os
 import time
 import base64
+import logging
 from pathlib import Path
 from typing import Annotated, Optional, Dict
 import aiofiles
@@ -19,11 +20,14 @@ from ..models import Function
 from runit import RunIt
 
 from dotenv import load_dotenv
+from github import Github
 
 from ..constants import (
     EXTENSIONS,
     LANGUAGE_TO_ICONS,
-    RUNIT_WORKDIR
+    RUNIT_WORKDIR,
+    GITHUB_APP_CLIENT_ID,
+    GITHUB_APP_CLIENT_SECRET
 )
 
 PROJECTS_INDEX_TEMPLATE = 'projects/index.html'
@@ -72,7 +76,7 @@ async def update_user_profile(request: Request, email: Annotated[str, Form()], n
     user_id = request.session['user_id']
     user = User.get(user_id)
 
-    if Utils.check_hashed_password(password, user.password):
+    if user and Utils.check_hashed_password(password, user.password):
         user.email = email
         user.name = name
         user.save()
@@ -82,7 +86,7 @@ async def update_user_profile(request: Request, email: Annotated[str, Form()], n
         flash(request, "Unauthorized Action", "warning")
         
     return templates.TemplateResponse('account/profile.html', context={
-        'request': request, 'page': 'profile', 'user':user.json()})
+        'request': request, 'page': 'profile', 'user':user.json() if user else {}})
 
 @account.post('/password')
 @account.post('/password/')
@@ -131,10 +135,30 @@ async def update_user_image(request: Request,  file: UploadFile):
         await file.close()
     
     user = User.get(user_id)  
-    user.image = filename
-    user.save()  
+    if user:
+        user.image = filename
+        user.save()  
     return JSONResponse({'status': 'success', 'filepath': str(request.url_for('uploads', path=user.id+'/'+user.image))})
     # return RedirectResponse(request.url_for('user_profile'), status_code=status.HTTP_303_SEE_OTHER)
+
+@account.get('/github/callback')
+async def index(request: Request):
+    user = User.get(request.session['user_id'])
+    try:
+        g = Github()
+        app = g.get_oauth_application(GITHUB_APP_CLIENT_ID, GITHUB_APP_CLIENT_SECRET)
+        code = request.query_params.get('code')
+        token = app.get_access_token(str(code))
+        if user:
+            user.gat = token.token
+            user.grt = str(token.refresh_token)
+            user.save()
+        flash(request, "Successfully connected to Github", "success")
+    except Exception as e:
+        logging.warn(str(e))
+        flash(request, 'Error connecting to Github', 'danger')
+    finally:
+        return RedirectResponse(request.url_for('list_user_projects'), status_code=status.HTTP_303_SEE_OTHER)
 
 @account.get('/logout/')
 async def user_logout(request: Request):

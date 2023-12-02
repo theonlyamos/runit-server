@@ -51,3 +51,7 @@
 </a>
 {% endif %}
 {% endblock %}
+{% block scripts %} 
+{{super()}}
+<script src="{{url_for('static', path='js/github.js')}}"></script>
+{% endblock %}

@@ -79,7 +79,6 @@ async def expose_with_func(request: Request, client_id: str, func: str):
 
 @public.get('/')
 @public.get('/login')
-@public.get('/login/')
 async def index(request: Request):
     settings = dotenv_values(find_dotenv())
 
@@ -90,12 +89,10 @@ async def index(request: Request):
     return templates.TemplateResponse('login.html', context={'request': request})
 
 @public.get('/register')
-@public.get('/register/')
 async def registration_page(request: Request):
     return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
 
 @public.post('/register')
-@public.post('/register/')
 async def register(
     request: Request,
     name: Annotated[str, Form()],
@@ -124,7 +121,6 @@ async def register(
         return RedirectResponse(request.url_for('registration_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.post('/login')
-@public.post('/login/')
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate(form_data.username, form_data.password)
 
@@ -140,14 +136,12 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.get('/login/admin')
-@public.get('/login/admin/')
 def admin_login_page(request: Request):
     if 'admin_id' in request.session and request.session['admin_id']:
         return RedirectResponse(request.url_for('admin_dashboard'))
     return templates.TemplateResponse('admin/login.html', context={'request': request, 'title':'Admin Login'})
 
 @public.post('/login/admin')
-@public.post('/login/admin/')
 def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     admin = Admin.get_by_username(form_data.username)
     if admin and Utils.check_hashed_password(form_data.password, admin.password):
@@ -161,6 +155,12 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
     flash(request, 'Invalid Login Credentials', 'danger')
     return RedirectResponse(request.url_for('admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
+
+    if settings is None or settings['SETUP'] != 'completed':
+        return RedirectResponse(request.url_for('setup.index'))
+    if 'user_id' in request.session.keys():
+        return RedirectResponse(request.url_for('user_home'))
+    return templates.TemplateResponse('login.html', context={'request': request})
 
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')

@@ -8,12 +8,17 @@ class User(Model):
     '''A model class for user'''
     TABLE_NAME = 'users'
 
-    def __init__(self, email, name, password, image: str = '', created_at=None, updated_at=None, id=None):
+    def __init__(self, email: str, name: str, password: str, 
+                 image: str = '', gat: str ='', 
+                 grt: str ='', created_at=None, 
+                 updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.email = email
         self.name = name
         self.password = password
         self.image = image
+        self.gat: str = gat
+        self.grt: str = grt
         
 
     def save(self):
@@ -28,6 +33,8 @@ class User(Model):
             "name": self.name,
             "email": self.email,
             "image": self.image,
+            "gat": self.gat,
+            "grt": self.grt,
             "password": Utils.hash_password(self.password)
         }
 
@@ -90,6 +97,8 @@ class User(Model):
             "email": self.email,
             "image": self.image,
             "projects": self.count_projects(),
+            "gat": self.gat,
+            "grt": self.grt,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
