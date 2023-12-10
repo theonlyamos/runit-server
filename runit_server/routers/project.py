@@ -17,10 +17,11 @@ from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
 from dotenv import load_dotenv, dotenv_values, set_key
 
 from ..core import flash, templates
-from ..common import get_session, get_session_user
+from ..common import get_session
 from ..models import Database
 from ..models import Project
 from ..models import User
+from ..models import ProjectData
 
 from runit import RunIt
 from ..constants import (
@@ -63,36 +64,41 @@ async def list_user_projects(request: Request, view: Optional[str] = None):
 @project.post('/')
 async def create_user_project(
     request: Request, 
-    name: Annotated[str, Form()], 
-    language: Annotated[str, Form()], 
-    background_task: BackgroundTasks,
-    description: Annotated[Optional[str], Form()] = None,
-    github_repo: Annotated[Optional[str], Form()] = None,
-    github_repo_branch: Annotated[Optional[str], Form()] = None,
-    database: Annotated[Optional[str], Form()] = None):
-    
+    project_data: ProjectData,
+    background_task: BackgroundTasks):
+    response = {
+        'status': 'success',
+        'message': 'Project created successfully'
+    }
+
     user_id = request.session['user_id']
     user = User.get(user_id)
     
-    if name and language:
+    if not user:
+        response['status'] = 'error'
+        response['message'] = 'User does not exist'
+        logging.error(f'User {user_id} does not exist')
+        return JSONResponse(response)
+    
+    if project_data.name and project_data.language:
         # name = RunIt.set_project_name(args.name)
         # if RunIt.exists(name):
         # flash(request, f'{name} project already Exists', category='danger')
         
         config = {}
-        config['name'] = name
-        config['language'] = language
-        config['runtime'] = LANGUAGE_TO_RUNTIME[language]
-        config['description'] = description
+        config['name'] = project_data.name
+        config['language'] = project_data.language
+        config['runtime'] = LANGUAGE_TO_RUNTIME[project_data.language.value]
+        config['description'] = project_data.description
         config['author'] = {}
-        config['author']['name'] = user.name
-        config['author']['email'] = user.email
-        if github_repo and github_repo_branch:
-            config['github_repo'] = github_repo
-            config['github_repo_branch'] = github_repo_branch
+        config['author']['name'] = user.name            # type: ignore
+        config['author']['email'] = user.email          # type: ignore
+        if project_data.github_repo and project_data.github_repo_branch:
+            config['github_repo'] = project_data.github_repo
+            config['github_repo_branch'] = project_data.github_repo_branch
         
         project = Project(user_id, **config)
-        project_id = project.save().inserted_id
+        project_id = project.save().inserted_id     # type: ignore
         project_id = str(project_id)
         project.id = project_id
         
@@ -102,27 +108,33 @@ async def create_user_project(
         config['_id'] = project_id
         config['homepage'] = homepage
         
-        os.chdir(PROJECTS_DIR)
-        
-        if github_repo and github_repo_branch:
+        if project_data.github_repo and project_data.github_repo_branch:
             Path(PROJECTS_DIR, project_id).resolve().mkdir()
-            os.chdir(Path(PROJECTS_DIR, project_id).resolve())
+            os.chdir(Path(PROJECTS_DIR, project_id))
             
-            EVENTS = ["push", "pull_request"]
-
+            EVENTS = ["push"]
+            HOOK_URL = "https://smee.io/gYpSAHqmso0R6aZ"
+            HAS_HOOK = False
             config = {
-                "url": "http://localhost:9000/github/webhook",
+                # "url": f"{request.base_url}/github/webhook",
+                "url": HOOK_URL,
                 "content_type": "json"
             }
-            auth = Auth.Token(user.gat) 
+            auth = Auth.Token(user.gat) # type: ignore
             g = Github(auth=auth)
-            repo = g.get_user().get_repo(f"{github_repo}")
-
-            # repo.create_hook("web", config, EVENTS, active=True)
+            repo = g.get_user().get_repo(f"{project_data.github_repo}")
+            
+            for hook in repo.get_hooks():
+                if hook.raw_data['config']['url'] == HOOK_URL:
+                    HAS_HOOK = True
+                    break
+                
+            if not HAS_HOOK:
+                repo.create_hook("web", config, EVENTS, active=True)
             
             contents = repo.get_contents("")
             while contents:
-                file_content = contents.pop(0)
+                file_content = contents.pop(0)      # type: ignore
                 
                 if file_content.type == "dir":
                     Path(PROJECTS_DIR, project_id, file_content.path).resolve().mkdir()
@@ -131,39 +143,48 @@ async def create_user_project(
                         await file.write(file_content.decoded_content)
             
             runit = RunIt(**RunIt.load_config())
+            print(runit)
             background_task.add_task(runit.install_dependency_packages)
         else:
+            os.chdir(PROJECTS_DIR)
             config['name'] = project_id
             new_runit = RunIt(**config)
             
             new_runit._id = project_id
-            new_runit.name = name
+            new_runit.name = project_data.name
         
             os.chdir(Path(PROJECTS_DIR, project_id))
             new_runit.update_config()
         
         # os.chdir(RUNIT_HOMEDIR)
         
-        if (database):
+        if (project_data.database):
             # Create database for project
-            Database(name+'_db', user_id, project_id).save()
+            Database(project_data.name+'_db', user_id, project_id).save()
         
-        flash(request, 'Project Created Successfully.', category='success')
+        response['project_id'] = project_id
     else:
-        flash(request, 'Missing required fields.', category='danger')
+        response['status'] = 'error'
+        response['message'] = 'Error creating project'
+        logging.error(f'Emsg=rror creating project by User {user_id}')
     
-    return RedirectResponse(request.url_for('list_user_projects'), status_code=status.HTTP_303_SEE_OTHER)
+    return JSONResponse(response)
 
 @project.get('/{project_id}')
 @project.get('/{project_id}/')
 async def user_project_details(request: Request, project_id: str):
     old_curdir = os.curdir
     
-    if not Path(PROJECTS_DIR).joinpath(project_id).resolve().exists():
+    project = Project.get(project_id)
+    if not project:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    os.chdir(Path(PROJECTS_DIR).joinpath(project_id).resolve())
+    elif not Path(PROJECTS_DIR, project.id).resolve().exists():
+        flash(request, PROJECT_404_ERROR, 'danger')
+        return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
+    
+    os.chdir(Path(PROJECTS_DIR, project.id).resolve())
     if not Path('.env').is_file():
         async with aiofiles.open('.env', 'w') as file:
             await file.close()
@@ -177,8 +198,8 @@ async def user_project_details(request: Request, project_id: str):
         funcs.append({'name': func})
     
     os.chdir(old_curdir)
-    project = Project.get(project_id)
-    project = project.json()
+
+    project = project.json()        # type: ignore
     del project['author']
     project['functions'] = len(funcs)
     if project:
@@ -195,11 +216,16 @@ async def reinstall_project_dependencies(request: Request, project_id: str, back
     try:
         old_curdir = os.curdir
         
-        if not Path(PROJECTS_DIR).joinpath(project_id).resolve().exists():
+        project = Project.get(project_id)
+        if not project:
+            flash(request, PROJECT_404_ERROR, 'danger')
+            return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
+        
+        if not Path(PROJECTS_DIR, project.id).resolve().exists():
             flash(request, PROJECT_404_ERROR, 'danger')
             return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
 
-        os.chdir(Path(PROJECTS_DIR, project_id).resolve())
+        os.chdir(Path(PROJECTS_DIR, project.id).resolve())
         runit = RunIt(**RunIt.load_config())
         background_task.add_task(runit.install_dependency_packages)
         
@@ -220,7 +246,7 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
         
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project_id))
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id))
             flash(request, 'Project deleted successfully', category='success')
         else:
             flash(request, 'Project was not found. Operation not successful.', category='danger')
@@ -231,7 +257,12 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
 
 @project.post('environ/{project_id}/')
 async def user_project_environ(request: Request, project_id):
-    env_file = Path(PROJECTS_DIR, project_id, '.env').resolve()
+    project = Project.get(project_id)
+    if not project:
+        flash(request, PROJECT_404_ERROR, 'danger')
+        return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
+    
+    env_file = Path(PROJECTS_DIR, project.id, '.env').resolve()
     async with aiofiles.open(env_file, 'w') as file:
         await file.close()
     

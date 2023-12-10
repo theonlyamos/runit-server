@@ -12,6 +12,7 @@ from ..core import WSConnectionManager, flash, templates, jsonify
 from ..common.security import authenticate, create_access_token, get_session_user
 from ..models import User
 from ..models import Admin
+from ..models import Project
 from ..common import Utils
 
 from runit import RunIt
@@ -165,7 +166,11 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')
 async def run_project(request: Request, project_id: str, function: Optional[str] = None):
-    current_project_dir = Path(PROJECTS_DIR, project_id).resolve()
+    project = Project.get(project_id)
+    if not project:
+        return RunIt.notfound()
+    
+    current_project_dir = Path(PROJECTS_DIR, project.id).resolve()
     function = function if function else 'index'
     if current_project_dir.is_dir():
         if not RunIt.is_private(project_id, str(current_project_dir)):

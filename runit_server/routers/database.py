@@ -47,7 +47,7 @@ async def list_user_databases(request: Request, view: Optional[str] = None):
     for db in databases:
         Collection.TABLE_NAME = db.collection_name
         if Collection.count():
-            stats = DBMS.Database.db.command('collstats', db.collection_name)
+            stats = DBMS.Database.db.command('collstats', db.collection_name)   # type: ignore
             if stats:
                 db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
         
@@ -71,7 +71,7 @@ async def create_user_database(
                 'project_id': project_id,'user_id': user_id}
         
         new_db = Database(**data)
-        results = new_db.save().inserted_id
+        results = new_db.save().inserted_id     # type: ignore
                 
         flash(request, 'Database Created Successfully.', category='success')
     else:

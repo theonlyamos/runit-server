@@ -98,6 +98,11 @@ def admin_list_projects(request: Request, view: Optional[str] = None):
 async def admin_get_project(request: Request, project_id):
     old_curdir = os.curdir
     
+    project = Project.get(project_id)
+    if not project:
+        flash(request, 'Project does not exist', 'danger')
+        return RedirectResponse(request.url_for('admin_list_projects'))
+    
     os.chdir(Path(PROJECTS_DIR, project_id))
     if not os.path.isfile('.env'):
         open('.env', 'w').close()
@@ -111,7 +116,7 @@ async def admin_get_project(request: Request, project_id):
         funcs.append({'name': func, 'link': f"/{project_id}/{func}/"})
     
     os.chdir(old_curdir)
-    project = Project.get(project_id)
+
     if project:
         return templates.TemplateResponse('admin/projects/details.html', context={
             'request': request, 'page': 'projects', 'project': project.json(),
@@ -194,7 +199,7 @@ async def admin_delete_project(request: Request, project_id, background_task: Ba
         
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project_id))
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id))
             flash(request, 'Project deleted successfully', category='success')
         else:
             flash(request, 'Project was not found. Operation not successful.', category='danger')

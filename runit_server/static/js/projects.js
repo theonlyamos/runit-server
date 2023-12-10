@@ -77,6 +77,109 @@ const createEnv = ()=>{
     
 }
 
-window.addEventListener('load', ()=>{
+const setLoading = (loading = false) => {
+    let submitBtn = document.getElementById('submitBtn')
+    if (loading) {
+        submitBtn.classList.add('disabled')
+        document.querySelector('.fa-spinner').classList.remove('d-none')
+    }
+    else {
+        submitBtn.classList.remove('disabled')
+        document.querySelector('.fa-spinner').classList.add('d-none')
+    } 
+}
+
+class Project{
+
+    constructor(project_data = {}){
+        for (let key in project_data){
+            this.__proto__[key] = project_data[key]
+        }
+    }
+
+    static async get(project_id = null){
+        if (!project_id) return null
+        let access_token = document.getElementById('accessToken').innerText.trim()
+        
+        // setLoading(true)
+        let url = `/api/v1/projects/${project_id}`
+
+        let response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${access_token}`
+            }
+        })
+
+        let result = await response.json()
+        
+        return new Project(result)
+    }
+
+    static async create(form){
+        if (!form.reportValidity()) return null
+
+        setLoading(true)
+        let data = Object.fromEntries(new FormData(form))
+        let access_token = document.getElementById('accessToken').innerText.trim()
+        let modalCloseBtn = document.querySelector('.btn-close')
+
+        let url =  '/api/v1/projects/'
+
+        let response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${access_token}`
+            },
+            method: 'POST',
+            mode: 'same-origin',
+            body: JSON.stringify(data)
+        })
+
+        let result = await response.json()
+  
+        setLoading(false)
+        
+        const {status, message, project} = result
+        
+        if (status === 'success'){
+            console.log(message)
+            console.log(project)
+            modalCloseBtn.click()
+            return new Project(project)
+        }
+        console.error(message)
+        return null
+
+        
+    }
+
+    static setRepos(repos = []){
+
+    }
+
+    static async setRepo(repo = {}){
+
+    }
+
     
-})
+}
+
+window.onload = async(e)=>{
+    let url_parts = window.location.pathname.split('/')
+    console.log(url_parts)
+    if (url_parts.length >= 3 && url_parts[1] === 'projects') {
+        let project_id = url_parts[2]
+        let project = await Project.get(project_id)
+    }
+
+    let projectForm = document.getElementById('projectForm')
+    console.log(projectForm)
+    if (projectForm){
+        projectForm.onsubmit = (e)=>{
+            e.preventDefault()
+
+            Project.create(projectForm)
+        }
+    }
+}

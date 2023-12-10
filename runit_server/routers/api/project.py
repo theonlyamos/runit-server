@@ -17,21 +17,15 @@ from ...common import get_current_user
 from ...models import Database
 from ...models import Project
 from ...models import User
+from ...models import ProjectData
 
 from runit import RunIt
 from ...constants import (
     PROJECTS_DIR,
-    LANGUAGE_TO_RUNTIME,
-    Language
+    LANGUAGE_TO_RUNTIME
 )
 
 PROJECT_404_ERROR = 'Project does not exist'
-    
-class ProjectData(BaseModel):
-    name: str
-    language: Language
-    description: Optional[str] = None
-    database: Optional[str] = None
 
 load_dotenv()
 
@@ -127,12 +121,19 @@ async def api_get_project_details(
     project_id: str
 ):
     old_curdir = os.curdir
-    
     response = {}
-    if not Path(PROJECTS_DIR).joinpath(project_id).resolve().exists():
+    
+    project = Project.get(project_id)
+    
+    if not project:
+        logging.error(f'Project {project_id} does not exist')
         return JSONResponse(response)
     
-    os.chdir(Path(PROJECTS_DIR, project_id).resolve())
+    if not Path(PROJECTS_DIR, project.id).resolve().exists():
+        logging.error(f'Project Path {Path(PROJECTS_DIR, project.id)} does not exist')
+        return JSONResponse(response)
+    
+    os.chdir(Path(PROJECTS_DIR, project.id).resolve())
     if not Path('.env').is_file():
         async with aiofiles.open('.env', 'w') as file:
             await file.close()
@@ -181,7 +182,7 @@ async def api_delete_user_project(
         if len(project):
             project = project[0]
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project_id).resolve())
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id).resolve())
             
         else:
             response['status'] = 'error'
