@@ -166,6 +166,9 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')
 async def run_project(request: Request, project_id: str, function: Optional[str] = None):
+    excluded = ['favicon.ico']
+    if project_id in excluded:
+        return None
     project = Project.get(project_id)
     if not project:
         return RunIt.notfound()

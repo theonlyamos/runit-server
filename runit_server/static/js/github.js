@@ -79,6 +79,7 @@ class Github{
                 option.textContent = branch
                 this.branchesElem.appendChild(option)
             })
+            this.branchesElem.value = 'main'
             this.branchesElem.setAttribute('required', 'required')
             this.branchesParentElem.classList.remove('d-none')
         }
@@ -95,15 +96,4 @@ class Github{
         }
             
     }
-}
-
-window.onload = (e)=>{
-    Github.init({
-        name: 'name',
-        repos: 'github_repo',
-        description: 'description',
-        branches: 'github_repo_branch',
-        branchesParent: 'branches_elem',
-        submitBtn: 'submitBtn'
-    })
 }

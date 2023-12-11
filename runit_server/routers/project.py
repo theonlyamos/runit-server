@@ -87,7 +87,7 @@ async def create_user_project(
         
         config = {}
         config['name'] = project_data.name
-        config['language'] = project_data.language
+        config['language'] = project_data.language.value
         config['runtime'] = LANGUAGE_TO_RUNTIME[project_data.language.value]
         config['description'] = project_data.description
         config['author'] = {}
@@ -246,7 +246,9 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
         
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id))
+            project_folder = Path(PROJECTS_DIR, project.id).resolve()
+            if project_folder.exists() and project_folder.is_dir():
+                background_task.add_task(shutil.rmtree, project_folder)
             flash(request, 'Project deleted successfully', category='success')
         else:
             flash(request, 'Project was not found. Operation not successful.', category='danger')

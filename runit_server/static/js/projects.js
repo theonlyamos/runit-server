@@ -124,7 +124,7 @@ class Project{
         let access_token = document.getElementById('accessToken').innerText.trim()
         let modalCloseBtn = document.querySelector('.btn-close')
 
-        let url =  '/api/v1/projects/'
+        let url =  '/projects/'
 
         let response = await fetch(url, {
             headers: {
@@ -166,8 +166,17 @@ class Project{
 }
 
 window.onload = async(e)=>{
+    Github.init({
+        name: 'name',
+        repos: 'github_repo',
+        description: 'description',
+        branches: 'github_repo_branch',
+        branchesParent: 'branches_elem',
+        submitBtn: 'submitBtn'
+    })
+
     let url_parts = window.location.pathname.split('/')
-    console.log(url_parts)
+    
     if (url_parts.length >= 3 && url_parts[1] === 'projects') {
         let project_id = url_parts[2]
         let project = await Project.get(project_id)

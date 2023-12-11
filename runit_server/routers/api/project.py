@@ -93,7 +93,11 @@ async def api_create_user_project(
         new_runit._id = project_id
         new_runit.name = project_data.name
         
-        os.chdir(Path(PROJECTS_DIR, str(project_id)))
+        project_folder = Path(PROJECTS_DIR, project_id).resolve()
+        # if not project_folder.exists():
+        #     project_folder.mkdir()
+            
+        os.chdir(str(project_folder))
         new_runit.update_config()
         
         # os.chdir(RUNIT_HOMEDIR)
@@ -107,7 +111,7 @@ async def api_create_user_project(
             ).save()
         response['project'] = Project.get(project_id).json() # type: ignore
     except Exception as e:
-        logging.info(str(e))
+        logging.exception(e)
         response['status'] = 'error'
         response['message'] = 'Error creating project'
     
@@ -133,12 +137,12 @@ async def api_publish_user_project(
     data = await request.form()
     data = data._dict
     file = data['file']
+    del data['file']
     
     result = {'status': 'success'}
 
     if '_id' not in data.keys() or not data['_id']:
         del data['_id']
-        del data['file']
         
         project = Project(user_id=user.id, **data)      # type: ignore
         project_id = project.save().inserted_id         # type: ignore
