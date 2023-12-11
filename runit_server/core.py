@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from typing import Dict
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -66,8 +67,10 @@ async def jsonify(data):
 
     # Convert string to dictionary
     try:
-        return json.loads(dictionary_str)
+        data = json.loads(dictionary_str)
     except Exception:
+        logging.warning('Data is not a valid json string')
+    finally:
         return data
 
 

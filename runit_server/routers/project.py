@@ -110,7 +110,7 @@ async def create_user_project(
         
         if project_data.github_repo and project_data.github_repo_branch:
             Path(PROJECTS_DIR, project_id).resolve().mkdir()
-            os.chdir(Path(PROJECTS_DIR, project_id))
+            os.chdir(Path(PROJECTS_DIR, project_id).resolve())
             
             EVENTS = ["push"]
             HOOK_URL = "https://smee.io/gYpSAHqmso0R6aZ"
@@ -142,8 +142,8 @@ async def create_user_project(
                     async with aiofiles.open(Path(PROJECTS_DIR, project_id, file_content.path).resolve(), 'wb') as file:
                         await file.write(file_content.decoded_content)
             
+            
             runit = RunIt(**RunIt.load_config())
-            print(runit)
             background_task.add_task(runit.install_dependency_packages)
         else:
             os.chdir(PROJECTS_DIR)

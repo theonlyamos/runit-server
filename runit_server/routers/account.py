@@ -126,7 +126,7 @@ async def update_user_image(request: Request,  file: UploadFile):
     encoded_filename = base64.urlsafe_b64encode(file.filename.encode('utf-8'))  # type: ignore
     encoded_filename = encoded_filename.decode('utf-8').replace('=','').replace('.', '')
     filename = f"{user_id}_{encoded_filename}_{Path(file.filename).suffix}"     # type: ignore
-    upload_dir = Path(RUNIT_WORKDIR).joinpath('accounts', user_id)
+    upload_dir = Path(RUNIT_WORKDIR, 'accounts', user_id)
     
     try:
         if not upload_dir.exists():

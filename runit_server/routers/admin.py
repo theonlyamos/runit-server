@@ -103,7 +103,7 @@ async def admin_get_project(request: Request, project_id):
         flash(request, 'Project does not exist', 'danger')
         return RedirectResponse(request.url_for('admin_list_projects'))
     
-    os.chdir(Path(PROJECTS_DIR, project_id))
+    os.chdir(Path(PROJECTS_DIR, project.id))
     if not os.path.isfile('.env'):
         open('.env', 'w').close()
 
