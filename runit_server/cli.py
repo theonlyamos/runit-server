@@ -16,6 +16,8 @@ from runit import RunIt
 from .constants import RUNIT_WORKDIR, VERSION
 import uvicorn
 
+logging.getLogger('uvicorn').setLevel(logging.INFO)
+
 load_dotenv()
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))

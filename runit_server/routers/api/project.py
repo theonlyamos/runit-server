@@ -190,7 +190,7 @@ async def api_publish_user_project(
     
     funcs = []
     for func in runit.get_functions():
-        funcs.append(f"{request.base_url}/{project_id}/{func}/")
+        funcs.append(f"{request.base_url}{project_id}/{func}/")
     
     result['functions'] = funcs                                                         # type: ignore
     result['homepage'] = funcs[0] if len(funcs) else ''
@@ -199,6 +199,7 @@ async def api_publish_user_project(
 
 @projects_api.get('/{project_id}')
 async def api_get_project_details(
+    request: Request,
     user: Annotated[User, Depends(get_current_user)],
     project_id: str
 ):
@@ -212,7 +213,7 @@ async def api_get_project_details(
         return JSONResponse(response)
     
     if not Path(PROJECTS_DIR, project.id).resolve().exists():
-        logging.error(f'Project Path {Path(PROJECTS_DIR, project.id)} does not exist')
+        logging.error(f'Project Path {str(Path(PROJECTS_DIR, project.id))} does not exist')
         return JSONResponse(response)
     
     os.chdir(Path(PROJECTS_DIR, project.id).resolve())
@@ -237,10 +238,10 @@ async def api_get_project_details(
     if len(project):
         project = project[0].json()
         del project['author']
-        project['functions'] = len(funcs)
+        project['functions'] = funcs
         project['endpoints'] = []
         for func in funcs:
-            project['endpoints'].append(f"{project['homepage']}{func}")
+            project['endpoints'].append(f"{request.base_url}{project_id}{func}")
         response = project
     
     return JSONResponse(response)
