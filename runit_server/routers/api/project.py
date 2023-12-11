@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Annotated, Optional
 import aiofiles
 
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import APIRouter, BackgroundTasks,  Request, \
     Depends, status, UploadFile
 from dotenv import load_dotenv, dotenv_values
@@ -199,6 +199,50 @@ async def api_publish_user_project(
     result['functions'] = funcs                                                         # type: ignore
     result['homepage'] = funcs[0] if len(funcs) else ''
     return result
+
+@projects_api.get('/clone/{project_name}')
+async def api_clone_user_project(
+    request: Request,
+    user: Annotated[User, Depends(get_current_user)],
+    project_name: str
+):
+    '''
+    Clone project from terminal
+    
+    @param project_id str ID of the project to clone
+    @return Compressed file of files in project directory
+    '''
+    global PROJECTS_DIR
+    
+    try:
+        project = Project.find_one({'name': project_name, 'user_id': user.id})
+        
+        if project:
+            if not Path(PROJECTS_DIR, project.id).resolve().exists():
+                raise FileNotFoundError('Project not found!')
+                
+            os.chdir(Path(PROJECTS_DIR, project.id).resolve())
+            config = RunIt.load_config()
+            
+            if not config:
+                raise FileNotFoundError
+            
+            runit_project = RunIt(**config)
+            filename = runit_project.compress()
+            # os.chdir(WORKDIR)
+            file_path = Path(PROJECTS_DIR, project.id, filename)
+            
+            def iterfile():
+                with open(file_path, mode="rb") as file:  
+                    yield from file
+            
+            return StreamingResponse(iterfile(), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+        else:
+            return JSONResponse({'status': 'error', 'message': 'Project does not exist'})
+    except Exception as e:
+        logging.error(str(e))
+        return JSONResponse({'status': 'error', 'message': "Couldn't clone project"})
 
 
 @projects_api.get('/{project_id}')
