@@ -84,7 +84,7 @@ async def index(request: Request):
     settings = dotenv_values(find_dotenv())
 
     if settings is None or settings['SETUP'] != 'completed':
-        return RedirectResponse(request.url_for('setup.index'))
+        return RedirectResponse(request.url_for('setup_index'))
     if 'user_id' in request.session.keys():
         return RedirectResponse(request.url_for('user_home'))
     return templates.TemplateResponse('login.html', context={'request': request})

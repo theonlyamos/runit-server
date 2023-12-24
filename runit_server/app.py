@@ -23,6 +23,7 @@ from .routers import database
 from .routers import github_router
 from .routers import admin
 from .routers import public
+from .routers import setup
 
 from .routers.api import api_router
 
@@ -52,6 +53,7 @@ app.include_router(project)
 app.include_router(database)
 app.include_router(github_router)
 app.include_router(public)
+app.include_router(setup)
 
 @app.exception_handler(UnauthorizedException)
 async def redirect_to_login(request: Request,  exception: Optional[str]):

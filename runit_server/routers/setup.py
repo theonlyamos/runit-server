@@ -14,7 +14,7 @@ from runit import RunIt
 load_dotenv()
 
 setup = APIRouter(
-    prefix="/projects",
+    prefix="/setup",
     tags=["projects"]
 )
 
@@ -29,20 +29,20 @@ def initial():
 ''' 
 
 @setup.get('/')
-def index(request: Request):
+async def setup_index(request: Request):
     env_file = find_dotenv()
     
     if env_file:
         settings = dotenv_values(env_file)
         if settings['SETUP'] == 'completed':
-            return RedirectResponse(request.url_for('public.index'))
+            return RedirectResponse(request.url_for('index'))
         
     return templates.TemplateResponse('setup/index.html', {
         'request': request
     })
 
 @setup.post('/')
-def initsetup(request: Request):
+async def initsetup(request: Request):
     env_file = find_dotenv()
     settings = dotenv_values(env_file)
 

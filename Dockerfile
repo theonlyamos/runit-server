@@ -51,7 +51,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY . /app/
 
-RUN mv .env.development .env
+RUN mv .env.production .env
 
 RUN pip install -e .
 

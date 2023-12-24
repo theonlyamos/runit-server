@@ -13,7 +13,7 @@
                         <h5 class="text-center text-black-50 fs-4 p-0 m-0">{{'setup' | capitalize}}</h5>
                     </div>
                     <div class="card-body">
-                        <form class="form-floating bg-gradient" action="{{ url_for('setup.initsetup') }}" method="post" id="setupForm">
+                        <form class="form-floating bg-gradient" action="{{ url_for('initsetup') }}" method="post" id="setupForm">
                             {% for (category, message) in get_flashed_messages(request) %}
                             <div
                                 class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
