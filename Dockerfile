@@ -37,13 +37,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN curl https://bun.sh/install | bash 
 
 RUN echo 'export BUN_PATH="$HOME/.bun"' >> $HOME/.bashrc \
-    && echo 'export PATH="$PATH:$BUN_PATH"' >> $HOME/.bashrc
-
-RUN source .bashrc
+    && echo 'export PATH="$PATH:$BUN_PATH"' >> $HOME/.bashrc \
+    && . $HOME/.bashrc \
+    && bun add -g dotenv
 
 RUN python3 -m pip install python-dotenv
-
-RUN bun add -g dotenv 
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
@@ -53,7 +51,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY . /app/
 
-RUN mv .env.production .env
+RUN mv .env.development .env
 
 RUN pip install -e .
 
