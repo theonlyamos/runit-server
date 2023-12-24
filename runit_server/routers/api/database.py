@@ -3,21 +3,15 @@ import logging
 from typing import Annotated, Optional
 
 from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, Depends
 from dotenv import load_dotenv
 
 from ...common import get_current_user
 from ...models import User
 from ...models import Database
 from ...models import Collection
-from ...models import ProjectData
 
 from runit import RunIt
-from ...constants import (
-    DOCKER_TEMPLATES,
-    PROJECTS_DIR,
-    LANGUAGE_TO_RUNTIME
-)
 
 PROJECT_404_ERROR = 'Project does not exist'
 
@@ -206,7 +200,7 @@ async def api_update_user_document(
 
 @database_api.delete('/{project_id}/{collection}')
 @database_api.delete('/{project_id}/{collection}/')
-async def api_update_user_document(
+async def api_delete_user_document(
     request: Request, 
     user: Annotated[User, Depends(get_current_user)],
     project_id: str,
