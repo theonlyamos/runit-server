@@ -20,13 +20,14 @@ from ..models import User
 from odbms import DBMS
 
 from ..constants import (
+    API_VERSION,
     RUNIT_HOMEDIR,
     LANGUAGE_TO_ICONS
 )
 
 load_dotenv()
 
-DATABASE_INDEX = 'list_user_databases'
+DATABASE_INDEX = 'list_user_databases' 
 
 database = APIRouter(
     prefix="/databases",
@@ -101,6 +102,7 @@ async def user_database_details(request: Request, database_id):
         return templates.TemplateResponse('databases/details.html', context={
                 'request': request, 'page':'databases',
                 'database': database.json(), 'collections': result,
+                'api_version': API_VERSION,
                 'inputTypes': schema_names_to_input_types})
     else:
         flash(request, 'Database does not exist', 'danger')

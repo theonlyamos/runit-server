@@ -138,8 +138,17 @@
                         <small class="fw-bold text-secondary font-roboto fs-6">Python Initialization</small>
                     </div>
                     <div class="card-body pb-0">
-						<pre id="initialization">
-                        </pre>
+						<code>
+                            <pre>
+from runit_database import Document
+
+Document.initialize(
+    '{{request.base_url}}api/{{api_version}}',
+    '{{request.session["access_token"]}}',
+    '{{database.project_id}}'
+)
+                            </pre>
+                        </code>
                     </div>
                 </div>
             </div>
@@ -155,26 +164,4 @@ document.getElementById("database").textContent = JSON.stringify(db, null, 4);
 </script> -->
 {{super()}}
 <script src="{{url_for('static', path='js/databases.js')}}"></script>
-<script src="{{url_for('static', path='js/ace/ace.js')}}" type="text/javascript" charset="utf-8"></script>
-<script>
-    const editor = ace.edit("database");
-    editor.setTheme("ace/theme/chaos")
-    editor.setReadOnly(true)
-    editor.session.setMode(`ace/mode/javascript`)
-    let db = {{ collections | tojson }}
-    editor.session.setValue(JSON.stringify(db, null, 4))
-
-    const editor1 = ace.edit("initialization");
-    editor1.setTheme("ace/theme/monokai")
-    editor1.setReadOnly(true)
-    editor1.session.setMode(`ace/mode/python`)
-    editor1.session.setValue(`from runit_database import Document
-
-Document.initialize(
-    '{{request.base_url}}api',
-    '{{request.session["access_token"]}}',
-    '{{database.project_id}}'
-)
-    `)
-</script>
 {% endblock %}

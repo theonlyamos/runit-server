@@ -1,7 +1,7 @@
 from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
-VERSION = "0.3.4"
+VERSION = "0.3.5"
 
 with open('README.md', 'rt') as file:
     description = file.read()

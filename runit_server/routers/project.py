@@ -160,7 +160,8 @@ async def create_user_project(
         
         if (project_data.database):
             # Create database for project
-            Database(project_data.name+'_db', user_id, project_id).save()
+            collection_name = f"{project_data.name}_db_{user_id}_{project_id}"
+            Database(project_data.name+'_db', collection_name, project_id).save()
         
         response['project_id'] = project_id
     else:

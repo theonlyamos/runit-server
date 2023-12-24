@@ -12,7 +12,7 @@ from .utils import Utils
 from ..exceptions import UnauthorizedException, UnauthorizedAdminException
 from ..constants import JWT_SECRET_KEY, JWT_ALGORITHM, API_VERSION
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"api/{API_VERSION}/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"api/{API_VERSION}/login")
 
 class Token(BaseModel):
     access_token: str
