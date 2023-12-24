@@ -82,7 +82,7 @@ async def expose_with_func(request: Request, client_id: str, func: str):
 @public.get('/login')
 async def index(request: Request):
     settings = dotenv_values(find_dotenv())
-
+    
     if settings is None or settings['SETUP'] != 'completed':
         return RedirectResponse(request.url_for('setup_index'))
     if 'user_id' in request.session.keys():

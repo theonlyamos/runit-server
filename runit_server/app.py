@@ -36,6 +36,7 @@ app.add_middleware(
     max_age=3600,
     https_only=True
 )
+
 static = Path(__file__).resolve().parent / "static"
 uploads = Path(RUNIT_WORKDIR, 'accounts')
 app.mount('/static', StaticFiles(directory=static, html=True),  name='static')
@@ -45,7 +46,10 @@ if not Path(RUNIT_WORKDIR).resolve().exists():
 if not Path(uploads).resolve().exists():
     Path(uploads).resolve().mkdir()
     
+
 app.mount('/uploads', StaticFiles(directory=uploads, html=True),  name='uploads')
+
+
 app.include_router(api_router)
 app.include_router(admin)
 app.include_router(account)
