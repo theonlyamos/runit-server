@@ -39,6 +39,8 @@ RUN curl https://bun.sh/install | bash
 RUN echo 'export BUN_PATH="$HOME/.bun"' >> $HOME/.bashrc \
     && echo 'export PATH="$PATH:$BUN_PATH"' >> $HOME/.bashrc
 
+RUN source .bashrc
+
 RUN python3 -m pip install python-dotenv
 
 RUN bun add -g dotenv 
