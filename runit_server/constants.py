@@ -1,10 +1,11 @@
 import os
 from enum import Enum
+from typing import Literal
 from dotenv import load_dotenv
 
 load_dotenv()
 
-VERSION = "0.3.9"
+VERSION = "0.4.0"
 CURRENT_PROJECT = ""
 NOT_FOUND_FILE = '404.html'
 DOT_RUNIT_IGNORE = '.runitignore'
@@ -16,6 +17,7 @@ SESSION_SECRET_KEY = 'dsafidsalkjdsaofwpdsncdsfdsafdsafjhdkjsfndsfkjsldfdsfjaskl
 JWT_SECRET_KEY = '972a444fb071aa8ee83bf128808d255ec72e3a6b464a836b7d06254529c6'
 JWT_ALGORITHM = 'HS256'
 API_VERSION = 'v1'
+SUBSCRIPTION_EVENTS = Literal['all', 'create', 'update', 'delete']
 
 RUNIT_HOMEDIR = os.getenv(
     'RUNIT_HOMEDIR',

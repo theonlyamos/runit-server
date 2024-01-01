@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from typing import Dict
+from typing import Dict, Literal, Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, Request
 from fastapi.templating import Jinja2Templates
 
 
-from .constants import RUNIT_WORKDIR
+from .constants import RUNIT_WORKDIR, SUBSCRIPTION_EVENTS
 
 def flash(request: Request, message: str, category: str = "primary") -> None:
    if "_messages" not in request.session:
@@ -73,24 +73,65 @@ async def jsonify(data):
     finally:
         return data
 
-
 class WSConnectionManager:
+    
     def __init__(self) -> None:
         self.clients: Dict[str, WebSocket] = {}
         self.receivers: Dict[str, str] = {}
+        self.subscribers: Dict[str, WebSocket] = {}
+        self.subscriptions = {}
         
     async def connect(self, websocket: WebSocket, client_id: str):
         await websocket.accept()
         self.clients[client_id] = websocket
+        
+    async def subscribe(
+        self, websocket: WebSocket, 
+        event: SUBSCRIPTION_EVENTS,
+        client_id: str, 
+        project_id: str,
+        collection: str,
+        document_id: Optional[str]=None):
+        await websocket.accept()
+        self.subscribers[client_id] = websocket
+        
+        sub_info = {
+            "event": event,
+            "client_id": client_id,
+            "collection": collection,
+            "document_id": document_id
+        }
+        
+        if not project_id in self.subscriptions.keys():
+            self.subscriptions[project_id] = [sub_info]
+        else:
+            self.subscriptions[project_id].append(sub_info)
     
     def disconnect(self, client_id: str):
         if client_id in list(self.clients.keys()):
             del self.clients[client_id]
         if client_id in list(self.receivers.keys()):
             del self.receivers[client_id]
+        if client_id in list(self.subscribers.keys()):
+            del self.subscribers[client_id]
         
     async def send(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
     
     async def json(self, data: dict, websocket: WebSocket):
         await websocket.send_json(data)
+    
+    async def has_subscription(
+        self, event: SUBSCRIPTION_EVENTS, project_id: str, 
+        collection: str, document_id: str|list,
+        data
+        ):
+        response = {'event': event, 'data': data}
+        
+        if project_id in self.subscriptions.keys():
+            for subber in self.subscriptions[project_id]:
+                sub_client = subber['client_id']
+                if subber['collection'] == collection \
+                    and (subber['document_id'] == document_id or subber['document_id'] is None) \
+                    and (event == subber['event'] or subber['event'] == 'all'):
+                    await self.send(json.dumps(response), self.subscribers[sub_client])
