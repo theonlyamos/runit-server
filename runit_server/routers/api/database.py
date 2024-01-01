@@ -24,9 +24,11 @@ database_api = APIRouter(
 )
 
 @database_api.get('/')
+@database_api.get('/{project_id}')
 @database_api.get('/{project_id}/')
 @database_api.get('/{project_id}/{collection}')
 @database_api.get('/{project_id}/{collection}/')
+@database_api.get('/{project_id}/{collection}/{document_id}')
 @database_api.get('/{project_id}/{collection}/{document_id}/')
 async def api_list_user_documents(
     request: Request, 

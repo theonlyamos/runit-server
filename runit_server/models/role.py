@@ -26,14 +26,11 @@ class Role(Model):
         @return None
         '''
 
-        data = {
-            "name": self.name,
-            "permission_ids": self.permission_ids,
-        }
+        data = self.__dict__.copy()
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"] = self.created_at
-            data["updated_at"] = self.updated_at
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         return DBMS.Database.insert(Role.TABLE_NAME, data)
     
@@ -44,14 +41,12 @@ class Role(Model):
         @paramas None
         @return dict() format of Function instance
         '''
+        
+        data = super().json()
+        data['id'] = str(self.id)
+        data['permissions'] = self.permissions()
 
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "permissions": self.permissions(),
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
+        return data
     
     @classmethod
     def get_by_name(cls, name: str):
@@ -73,6 +68,6 @@ class Role(Model):
         '''
         permissions = []
         for perm_id in self.permission_ids:
-            permissions.append(DBMS.Database.db.find_one('permissions', {'id': perm_id}))
+            permissions.append(DBMS.Database.find_one('permissions', {'id': perm_id}))
         
         return permissions

@@ -28,24 +28,11 @@ class Project(Model):
         @return None
         '''
 
-        data = {
-            "name": self.name,
-            "user_id": self.user_id,
-            "version": self.version,
-            "description": self.description,
-            "homepage": self.homepage,
-            "language": self.language,
-            "runtime": self.runtime,
-            "private": self.private,
-            "github_repo": self.github_repo,
-            "github_repo_branch": self.github_repo_branch,
-            "start_file": self.start_file,
-            "author": self.author
-        }
+        data = self.__dict__.copy()
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"]: self.created_at
-            data["updated_at"]: self.updated_at
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         return DBMS.Database.insert(Project.TABLE_NAME, Model.normalise(data, 'params'))
     
@@ -59,7 +46,7 @@ class Project(Model):
 
         return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params')))
     
-    def functions(self)-> list:
+    def functions(self):
         '''
         Instance Method for retrieving Functions of Project Instance
 
@@ -86,24 +73,12 @@ class Project(Model):
         @paramas None
         @return Dict() format of Project instance
         '''
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "user_id": str(self.user_id),
-            "version": self.version,
-            "description": self.description,
-            "homepage": self.homepage,
-            "language": self.language,
-            "runtime": self.runtime,
-            "private": self.private,
-            "start_file": self.start_file,
-            "author": self.author,
-            "functions": self.count_functions(),
-            "github_repo": self.github_repo,
-            "github_repo_branch": self.github_repo_branch,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
+        data = super().json()
+        data['id'] = str(data['id'])
+        data['user_id'] = str(data['user_id'])
+        data['functions'] = self.count_functions()
+        
+        return data
 
     @classmethod
     def get_by_user(cls, user_id: str)-> list:

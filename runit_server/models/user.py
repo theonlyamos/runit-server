@@ -17,8 +17,8 @@ class User(Model):
         self.name = name
         self.password = password
         self.image = image
-        self.gat: str = gat
-        self.grt: str = grt
+        self.gat = gat
+        self.grt = grt
         
 
     def save(self):
@@ -28,22 +28,18 @@ class User(Model):
         @params None
         @return None
         '''
+        
+        data = self.__dict__.copy()
+        data['updated_at'] = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
 
-        data = {
-            "name": self.name,
-            "email": self.email,
-            "image": self.image,
-            "gat": self.gat,
-            "grt": self.grt,
-            "password": Utils.hash_password(self.password)
-        }
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"] = self.created_at
-            data["updated_at"] = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         if isinstance(self.id, uuid.UUID):
-            return DBMS.Database.insert(User.TABLE_NAME, data)
+            data['password'] = Utils.hash_password(self.password)
+            return DBMS.Database.insert(User.TABLE_NAME, Model.normalise(data, 'params'))
         
         # Update the existing record in database
         del data['password']
@@ -90,18 +86,11 @@ class User(Model):
         @paramas None
         @return dict() format of Function instance
         '''
+        
+        data = super().json()
+        data['projects'] = self.count_projects()
 
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "email": self.email,
-            "image": self.image,
-            "projects": self.count_projects(),
-            "gat": self.gat,
-            "grt": self.grt,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
+        return data
 
     @classmethod
     def get_by_email(cls, email: str):

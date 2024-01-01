@@ -20,29 +20,10 @@ class Permission(Model):
         @return None
         '''
 
-        data = {
-            "name": self.name,
-            "description": self.description
-        }
+        data = self.__dict__.copy()
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"] = self.created_at
-            data["updated_at"] = self.updated_at
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         return DBMS.Database.insert(Permission.TABLE_NAME, data)
-    
-    def json(self)-> dict:
-        '''
-        Instance Method for converting Permission Instance to Dict
-
-        @paramas None
-        @return dict() format of Function instance
-        '''
-
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "description": self.description,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }

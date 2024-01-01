@@ -28,17 +28,12 @@ class Admin(Model):
         @return None
         '''
 
-        data = {
-            "email": self.email,
-            "name": self.name,
-            "username": self.username,
-            "role": self.role,
-            "password": Utils.hash_password(self.password)
-        }
+        data = self.__dict__.copy()
+        data['password'] =  Utils.hash_password(self.password)
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"] = self.created_at
-            data["updated_at"] = self.updated_at
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         return DBMS.Database.insert(Admin.TABLE_NAME, data)
     
@@ -50,7 +45,7 @@ class Admin(Model):
         @return None
         '''
 
-        DBMS.Database.update_one(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': new_password})
+        DBMS.Database.update(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': new_password})
     
 
     def json(self)-> dict:
@@ -60,16 +55,12 @@ class Admin(Model):
         @paramas None
         @return dict() format of Function instance
         '''
+        
+        data = super().json()
+        data['id'] = str(self.id)
+        data['role'] = self.normalise(self.get_role())
 
-        return {
-            "id": str(self.id),
-            "email": self.email,
-            "name": self.name,
-            "role": self.normalise(self.get_role()),
-            "username": self.username,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
+        return data
     
     def get_role(self):
         '''

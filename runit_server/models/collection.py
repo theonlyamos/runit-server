@@ -17,25 +17,15 @@ class Collection(Model):
         @return None
         '''
 
-        data = self.__dict__
+        data = self.__dict__.copy()
         
         del data['id']
 
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"]: self.created_at
-            data["updated_at"]: self.updated_at
+        if DBMS.Database.dbms != 'mongodb':
+            del data["created_at"]
+            del data["updated_at"]
 
         return DBMS.Database.insert(self.TABLE_NAME, Model.normalise(data, 'params'))
-    
-    def user(self):
-        '''
-        Instance Method for retrieving User of Database instance
-        
-        @params None
-        @return User Instance
-        '''
-
-        return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params')))
 
     @classmethod
     def get_by_user(cls, user_id: str)-> list:
@@ -62,16 +52,6 @@ class Collection(Model):
         databases = DBMS.Database.find(cls.TABLE_NAME, Model.normalise({'project_id': project_id}, 'params'))
         
         return [cls(**Model.normalise(elem)) for elem in databases]
-
-    def json(self)-> dict:
-        '''
-        Instance Method for converting instance to Dict
-
-        @paramas None
-        @return Dict() format of Database instance
-        '''
-        
-        return self.__dict__
     
     @staticmethod
     def stats(collection_name: str):
@@ -82,4 +62,7 @@ class Collection(Model):
         @return Collection Stats
         '''
         
-        return DBMS.Database.db.command('collstats', collection_name)
+        if DBMS.Database.dbms == 'mongodb':
+            return DBMS.Database.db.command('collstats', collection_name)
+        
+        return {}
