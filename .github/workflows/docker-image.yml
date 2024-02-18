@@ -27,4 +27,4 @@ jobs:
       - name: Push Docker image
         run: |
           echo Image name is ${{ steps.build_docker_image.outputs.tag }}
-          docker push ${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
+          docker push theonlyamos/${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
