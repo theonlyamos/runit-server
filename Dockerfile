@@ -51,11 +51,11 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN pip install runit-server
 
-# COPY . /app/
+COPY . /app/
 
-# # RUN mv .env.production .env
+# RUN mv .env.production .env
 
-# RUN pip install -e .
+RUN pip install -e .
 
 EXPOSE 9000
 
