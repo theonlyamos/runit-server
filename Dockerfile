@@ -53,7 +53,7 @@ RUN pip install runit-server
 
 # COPY . /app/
 
-# RUN mv .env.production .env
+# # RUN mv .env.production .env
 
 # RUN pip install -e .
 
