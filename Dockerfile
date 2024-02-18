@@ -49,11 +49,13 @@ RUN ln -s /usr/bin/python
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-COPY . /app/
+RUN pip install runit-server
 
-RUN mv .env.production .env
+# COPY . /app/
 
-RUN pip install -e .
+# RUN mv .env.production .env
+
+# RUN pip install -e .
 
 EXPOSE 9000
 

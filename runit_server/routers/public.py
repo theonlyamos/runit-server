@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from pathlib import Path
+import time
 from typing import Annotated, Optional
 
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -23,8 +24,6 @@ from ..constants import (
     RUNIT_HOMEDIR,
     PROJECTS_DIR
 )
-
-load_dotenv()
 
 REGISTER_HTML_TEMPLATE = 'register.html'
 HOME_PAGE = 'index'
@@ -166,6 +165,7 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')
 async def run_project(request: Request, project_id: str, function: Optional[str] = None):
+    t0 = time.perf_counter()
     excluded = ['favicon.ico']
     if project_id in excluded:
         return None
@@ -180,6 +180,9 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
             result = RunIt.start(project_id, function, str(current_project_dir), request.query_params._dict)
             os.chdir(RUNIT_HOMEDIR)
             response = await jsonify(result)
-            return JSONResponse(response) if type(response) is dict else response
-
+        t1 = time.perf_counter() # Record the stop time
+        elapsed_time = t1 - t0 # Calculate elapsed time
+        print(f'Time taken: {elapsed_time:.8f} seconds')
+        return JSONResponse(response) if type(response) is dict else response
+    
     return RunIt.notfound()
