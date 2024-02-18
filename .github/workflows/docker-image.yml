@@ -25,4 +25,6 @@ jobs:
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
       - name: Push Docker image
-        run: docker push ${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
+        run: |
+          echo Image name is ${{ steps.build_docker_image.outputs.tag }}
+          docker push ${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
