@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build the Docker image
         run: |
-          TAG="runit_server:$(date +%s)"
+          TAG="theonlyamos/runit_server:$(date +%s)"
           docker build . --file Dockerfile --tag $TAG
           echo "::set-output name=tag::$TAG" # Set the output variable
         id: build_docker_image
@@ -27,4 +27,4 @@ jobs:
       - name: Push Docker image
         run: |
           echo Image name is ${{ steps.build_docker_image.outputs.tag }}
-          docker push theonlyamos/${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
+          docker push ${{ steps.build_docker_image.outputs.tag }} # Use the saved tag variable
