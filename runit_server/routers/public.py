@@ -82,8 +82,9 @@ async def expose_with_func(request: Request, client_id: str, func: str):
 @public.get('/login')
 async def index(request: Request):
     settings = dotenv_values(find_dotenv())
+    setup = os.getenv('SETUP') or settings['SETUP']
     
-    if settings is None or settings['SETUP'] != 'completed':
+    if setup != 'completed':
         return RedirectResponse(request.url_for('setup_index'))
     if 'user_id' in request.session.keys():
         return RedirectResponse(request.url_for('user_home'))
@@ -124,7 +125,7 @@ async def register(
 @public.post('/login')
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate(form_data.username, form_data.password)
-
+    
     if not user:
         flash(request, 'Invalid Login Credentials', 'danger')
         return templates.TemplateResponse('login.html', context={'request': request})

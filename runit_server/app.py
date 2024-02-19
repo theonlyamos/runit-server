@@ -4,7 +4,7 @@ from sys import platform
 from datetime import timedelta
 
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from starlette.middleware import Middleware
@@ -29,7 +29,7 @@ from .routers.api import api_router
 
 load_dotenv()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(dependencies=[Depends(lifespan)])
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET_KEY,
@@ -40,8 +40,9 @@ app.add_middleware(
 static = Path(__file__).resolve().parent / "static"
 uploads = Path(RUNIT_WORKDIR, 'accounts')
 app.mount('/static', StaticFiles(directory=static, html=True),  name='static')
-if not Path(RUNIT_WORKDIR).resolve().exists():
-    Path(RUNIT_WORKDIR).resolve().mkdir()
+
+if not Path(RUNIT_WORKDIR).exists():
+    Path(RUNIT_WORKDIR).mkdir()
     
 if not Path(uploads).resolve().exists():
     Path(uploads).resolve().mkdir()

@@ -118,38 +118,45 @@ class Project{
 
     static async create(form){
         if (!form.reportValidity()) return null
-
         setLoading(true)
-        let data = Object.fromEntries(new FormData(form))
-        let access_token = document.getElementById('accessToken').innerText.trim()
-        let modalCloseBtn = document.querySelector('.btn-close')
 
-        let url =  '/projects/'
-
-        let response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${access_token}`
-            },
-            method: 'POST',
-            mode: 'same-origin',
-            body: JSON.stringify(data)
-        })
-
-        let result = await response.json()
-  
-        setLoading(false)
-        
-        const {status, message, project} = result
-        
-        if (status === 'success'){
-            console.log(message)
-            console.log(project)
-            modalCloseBtn.click()
-            return new Project(project)
+        try {
+            let data = Object.fromEntries(new FormData(form))
+            let access_token = document.getElementById('accessToken').innerText.trim()
+            let modalCloseBtn = document.querySelector('.btn-close')
+    
+            let url =  '/projects/'
+    
+            let response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${access_token}`
+                },
+                method: 'POST',
+                mode: 'same-origin',
+                body: JSON.stringify(data)
+            })
+    
+            let result = await response.json()
+      
+            setLoading(false)
+            
+            const {status, message, project} = result
+            
+            if (status === 'success'){
+                console.log(message)
+                console.log(project)
+                modalCloseBtn.click()
+                return new Project(project)
+            }
+            console.error(message)
+            return null
+            
+        } catch (error) {
+            setLoading(false)
+            console.log(error)
         }
-        console.error(message)
-        return null
+
 
         
     }

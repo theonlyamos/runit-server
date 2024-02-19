@@ -45,8 +45,9 @@ async def setup_index(request: Request):
 async def initsetup(request: Request):
     env_file = find_dotenv()
     settings = dotenv_values(env_file)
-
-    settings.update(request.form().__dict__)
+    data = await request.form()
+    
+    settings.update(data._dict)
 
     for key, value in settings.items():
          set_key(env_file, key, value) # type: ignore
@@ -54,3 +55,14 @@ async def initsetup(request: Request):
     
     flash(request,'Setup completed', category='success')
     return RedirectResponse(request.url_for('complete_setup'))
+
+@setup.get('/complete')
+async def complete_setup():
+    settings = dotenv_values(find_dotenv())
+
+    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
+        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
+                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
+                    settings['DATABASE_NAME']) # type: ignore
+
+    return RedirectResponse(request.url_for('index'))

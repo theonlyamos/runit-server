@@ -9,9 +9,11 @@ from odbms import DBMS
 from dotenv import dotenv_values, find_dotenv
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.templating import Jinja2Templates
-
+from fastapi.responses import RedirectResponse
 
 from .constants import RUNIT_WORKDIR, SUBSCRIPTION_EVENTS
+
+app_initialized = False
 
 def flash(request: Request, message: str, category: str = "primary") -> None:
    if "_messages" not in request.session:
@@ -25,8 +27,9 @@ templates_path = Path(__file__).resolve().parent / 'templates'
 templates = Jinja2Templates(templates_path)
 templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(request: Request):
+    global app_initialized
+    
     if not Path(RUNIT_WORKDIR).resolve().exists():
         Path(RUNIT_WORKDIR).resolve().mkdir()
     
@@ -37,12 +40,20 @@ async def lifespan(app: FastAPI):
         Path(RUNIT_WORKDIR, 'projects').resolve().mkdir()
 
     settings = dotenv_values(find_dotenv())
-
-    if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
-        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
-                    settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
-                    settings['DATABASE_NAME']) # type: ignore
-    yield
+    setup = os.getenv('SETUP') or settings['SETUP']
+    DB_DBMS = os.getenv('DBMS') or settings['DBMS']
+    DB_HOST = os.getenv('DATABASE_HOST') or settings['DATABASE_HOST']
+    DB_PORT = os.getenv('DATABASE_PORT') or settings['DATABASE_PORT']
+    DB_USERNAME = os.getenv('DATABASE_USERNAME') or settings['DATABASE_USERNAME']
+    DB_PASSWORD = os.getenv('DATABASE_PASSWORD') or settings['DATABASE_PASSWORD']
+    DB_DATABASE = os.getenv('DATABASE_NAME') or settings['DATABASE_NAME']
+    
+    if not app_initialized and setup and setup == 'completed':
+        DBMS.initialize(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD,DB_DATABASE) # type: ignore
+        app_initialized = True
+    else:
+        return RedirectResponse(request.url_for('setup_index'))
+    return True
 
 async def jsonify(data):
     """

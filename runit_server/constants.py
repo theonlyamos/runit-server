@@ -23,10 +23,8 @@ RUNIT_HOMEDIR = os.getenv(
     'RUNIT_HOMEDIR',
     os.path.dirname(os.path.realpath(__file__))
 )
-RUNIT_WORKDIR = os.getenv(
-    'RUNIT_WORKDIR',
-    os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR')
-)
+
+RUNIT_WORKDIR = os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR')
 
 GITHUB_APP_CLIENT_ID = os.getenv('GITHUB_APP_CLIENT_ID','')
 GITHUB_APP_CLIENT_SECRET = os.getenv('GITHUB_APP_CLIENT_SECRET','')
