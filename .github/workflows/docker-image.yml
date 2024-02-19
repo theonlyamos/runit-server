@@ -1,10 +1,11 @@
 name: Docker Push
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
 
 jobs:
   build:
