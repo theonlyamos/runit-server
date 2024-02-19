@@ -10,8 +10,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update \
     && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor \
-       sqlite3 libcap2-bin libpng-dev python3 python3-dev python3-venv \
-    && curl https://bootstrap.pypa.io/get-pip.py | python3
+       sqlite3 libcap2-bin libpng-dev python3.11 python3.11-dev python3.11-venv \
+    && curl https://bootstrap.pypa.io/get-pip.py | python3.11
 
 RUN mkdir -p ~/.gnupg \
     && chmod 600 ~/.gnupg \
@@ -41,19 +41,19 @@ RUN echo 'export BUN_PATH="$HOME/.bun"' >> $HOME/.bashrc \
     && . $HOME/.bashrc \
     && bun add -g dotenv
 
-RUN python3 -m pip install python-dotenv
+RUN python3.11 -m pip install python-dotenv
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
 RUN ln -s /usr/bin/python
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
 
 RUN pip install runit-server
 
 COPY . /app/
 
-# RUN mv .env.production .env
+RUN mv .env.development .env
 
 RUN pip install -e .
 
