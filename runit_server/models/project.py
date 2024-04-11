@@ -44,7 +44,7 @@ class Project(Model):
         @return User Instance
         '''
 
-        return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params')))
+        return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params'))) # type: ignore
     
     def functions(self):
         '''
@@ -64,7 +64,7 @@ class Project(Model):
         @return Count of functions
         '''
 
-        return DBMS.Database.count('functions', Model.normalise({'project_id': self.id}, 'params'))
+        return DBMS.Database.count('functions', Model.normalise({'project_id': self.id}, 'params')) # type: ignore
     
     def json(self)-> dict:
         '''
@@ -91,5 +91,5 @@ class Project(Model):
         
         projects = DBMS.Database.find(Project.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
         
-        return [cls(**Model.normalise(elem)) for elem in projects]
+        return [cls(**Model.normalise(elem)) for elem in projects] # type: ignore
 

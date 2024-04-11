@@ -29,7 +29,7 @@ from .routers.api import api_router
 
 load_dotenv()
 
-app = FastAPI(dependencies=[Depends(lifespan)])
+app = FastAPI(dependencies=[Depends(lifespan)], force_https=True)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET_KEY,

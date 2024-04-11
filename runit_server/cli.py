@@ -183,7 +183,7 @@ def run_server(args = {}):
     RunIt.DOCKER = args.docker
     RunIt.KUBERNETES = args.kubernetes
 
-    uvicorn.run(app, host=args.host, port=args.port, log_level='info', proxy_headers=True)
+    uvicorn.run(app, host=args.host, port=args.port, log_level='info', proxy_headers=True, forwarded_allow_ips="*")
 
 def get_arguments():
     global parser

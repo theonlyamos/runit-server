@@ -27,7 +27,7 @@ RUN mkdir -p ~/.gnupg \
       php8.2-imap php8.2-mysql php8.2-mbstring \
       php8.2-xml php8.2-zip php8.2-bcmath php8.2-soap \
       php8.2-readline php8.2-ldap mysql-client \
-      libmysqlclient-dev \
+      libmysqlclient-dev libpq-dev \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -47,7 +47,7 @@ RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.2
 
 RUN ln -s /usr/bin/python
 
-RUN ln -s /usr/bin/python3.11 /usr/bin/python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python  
 
 RUN pip install runit-server
 

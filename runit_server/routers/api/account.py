@@ -50,8 +50,12 @@ async def api_list_user_projects(user: Annotated[User, Depends(get_current_user)
 @account_api.get('/profile')
 async def api_user_profile(user: Annotated[User, Depends(get_current_user)]):
     user = User.get(str(user.id)) # type: ignore
+    user_json = user.json()
+    del user_json['password']
+    del user_json['gat']
+    del user_json['grt']
     
-    return JSONResponse(user.json())
+    return JSONResponse(user_json)
 
 @account_api.post('/profile')
 async def api_update_user_profile(

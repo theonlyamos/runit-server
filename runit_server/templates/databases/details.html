@@ -163,5 +163,5 @@ let db = JSON.parse({{ database | tojson }})
 document.getElementById("database").textContent = JSON.stringify(db, null, 4);
 </script> -->
 {{super()}}
-<script src="{{url_for('static', path='js/databases.js')}}"></script>
+<script src="/static/js/databases.js"></script>
 {% endblock %}
