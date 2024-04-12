@@ -141,64 +141,70 @@ async def api_publish_user_project(
     
     result = {'status': 'success'}
 
-    if '_id' not in data.keys() or not data['_id']:
-        del data['_id']
-        
-        project = Project(user_id=user.id, **data)      # type: ignore
-        project_id = project.save().inserted_id         # type: ignore
-        project_id = str(project_id)
-        project.id = project_id
-        homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
-        project.update({'homepage': homepage})
-        result['project_id'] = project_id
-    else:
-        project_id = str(data['_id'])
-        project = Project.get(data['_id'])
-        if project:
+    try:
+        if '_id' not in data.keys() or not data['_id']:
             del data['_id']
-            project.update(data, {'id': project.id})
+            
+            project = Project(user_id=user.id, **data)      # type: ignore
+            project_id = project.save().inserted_id         # type: ignore
+            project_id = str(project_id)
+            project.id = project_id
+            homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
+            project.update({'homepage': homepage})
+            result['project_id'] = project_id
+        else:
+            project_id = str(data['_id'])
+            project = Project.get(data['_id'])
+            if project:
+                del data['_id']
+                project.update(data, {'id': project.id})
 
-    PROJECT_PATH = Path(PROJECTS_DIR, project_id).resolve()
-    if not os.path.exists(PROJECT_PATH):
-        os.mkdir(PROJECT_PATH)
+        PROJECT_PATH = Path(PROJECTS_DIR, project_id).resolve()
+        if not os.path.exists(PROJECT_PATH):
+            os.mkdir(PROJECT_PATH)
+            
+        filepath = Path(PROJECT_PATH, file.filename)                                 # type: ignore
+        contents = await file.read()                                    # type: ignore
+        async with aiofiles.open(filepath, 'wb') as f:
+            await f.write(contents)
+        await file.close()                                                           # type: ignore
+
+        RunIt.extract_project(filepath)
+        os.chdir(PROJECT_PATH)
+
+        runit = RunIt(**RunIt.load_config())
+        print(PROJECT_PATH)
+        if RunIt.DOCKER:
+            docker_file = f"{runit.runtime}.dockerfile"
+            full_docker_filepath = f"{os.path.join(DOCKER_TEMPLATES, docker_file)}"
+            print(f'[~] {full_docker_filepath}')
+            project_docker_file = os.path.join(PROJECT_PATH, 'Dockerfile')
+            
+            if not os.path.exists(project_docker_file):
+                with open(full_docker_filepath, 'rt') as nf:
+                    with open(project_docker_file, 'wt') as pf:
+                        content = nf.read()
+                        pf.write(content)
+
+            background_task.add_task(RunIt.dockerize, str(PROJECT_PATH))   # type: ignore
+        else:
+            runit.install_dependency_packages()
         
-    filepath = Path(PROJECT_PATH, file.filename)                                 # type: ignore
-    contents = await file.read()                                    # type: ignore
-    async with aiofiles.open(filepath, 'wb') as f:
-        await f.write(contents)
-    await file.close()                                                           # type: ignore
-
-    RunIt.extract_project(filepath)
-    os.chdir(PROJECT_PATH)
-
-    runit = RunIt(**RunIt.load_config())
-    print(PROJECT_PATH)
-    if RunIt.DOCKER:
-        docker_file = f"{runit.runtime}.dockerfile"
-        full_docker_filepath = f"{os.path.join(DOCKER_TEMPLATES, docker_file)}"
-        print(f'[~] {full_docker_filepath}')
-        project_docker_file = os.path.join(PROJECT_PATH, 'Dockerfile')
+        runit._id = project_id
+        runit.update_config()
         
-        if not os.path.exists(project_docker_file):
-            with open(full_docker_filepath, 'rt') as nf:
-                with open(project_docker_file, 'wt') as pf:
-                    content = nf.read()
-                    pf.write(content)
-
-        background_task.add_task(RunIt.dockerize, str(PROJECT_PATH))   # type: ignore
-    else:
-        runit.install_dependency_packages()
+        funcs = []
+        for func in runit.get_functions():
+            funcs.append(f"{request.base_url}{project_id}/{func}/")
+        
+        result['functions'] = funcs                                                         # type: ignore
+        result['homepage'] = funcs[0] if len(funcs) else ''
+        return result
     
-    runit._id = project_id
-    runit.update_config()
+    except Exception as e:
+        logging.exception(e)
+        return JSONResponse({'status': 'error', 'message': "Error publishing project."})
     
-    funcs = []
-    for func in runit.get_functions():
-        funcs.append(f"{request.base_url}{project_id}/{func}/")
-    
-    result['functions'] = funcs                                                         # type: ignore
-    result['homepage'] = funcs[0] if len(funcs) else ''
-    return result
 
 @projects_api.get('/clone/{project_name}')
 async def api_clone_user_project(

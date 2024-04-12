@@ -55,6 +55,8 @@ async def api_user_profile(user: Annotated[User, Depends(get_current_user)]):
     del user_json['gat']
     del user_json['grt']
     
+    print('---Account Info', user_json)
+    
     return JSONResponse(user_json)
 
 @account_api.post('/profile')
