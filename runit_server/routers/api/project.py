@@ -172,7 +172,7 @@ async def api_publish_user_project(
     os.chdir(PROJECT_PATH)
 
     runit = RunIt(**RunIt.load_config())
-
+    print(PROJECT_PATH)
     if RunIt.DOCKER:
         docker_file = f"{runit.runtime}.dockerfile"
         full_docker_filepath = f"{os.path.join(DOCKER_TEMPLATES, docker_file)}"
