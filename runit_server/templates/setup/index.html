@@ -28,9 +28,10 @@
                                         <label class="small" for="email">DBMS</label>
                                         <select name="DBMS" id="" class="form-select form-select-sm text-black-50" required onchange="selectDMEngine(this.value)">
                                             <option></option>
-                                            <option value="mongodb">MongoDB</option>
-                                            <option value="mysql">Mysql</option>
-                                            <option value="sqlite">Sqlites</option>
+                                            <option value="sqlite" selected>SQLITE</option>
+                                            <option value="mongodb">MONGODB</option>
+                                            <option value="postgresql">POSTGRESQL</option>
+                                            <option value="mysql" disabled>MYSQL</option>
                                         </select>
                                     </div>
                                     <div class="form-group mb-1">
@@ -41,7 +42,7 @@
                                     <div class="form-group mb-1">
                                         <label class="small">Port</label>
                                         <input type="text" class="form-control form-control-sm text-black-50"
-                                            name="DATABASE_PORT" required>
+                                            name="DATABASE_PORT">
                                     </div>
                                     <div class="form-group mb-1">
                                         <label class="small">Database Name</label>
@@ -79,6 +80,11 @@
                                 </div>
                                 <div class="setup-step">
                                     <h6 class="text-center text-danger fs-6">Administrator Setup</h6>
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-bold font-roboto">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm text-black-50"
+                                            value="" name="adminemail" required>
+                                    </div>
                                     <div class="form-group mb-3">
                                         <label class="small font-weight-bold font-roboto">Username</label>
                                         <input type="text" class="form-control form-control-sm text-black-50"

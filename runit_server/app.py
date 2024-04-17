@@ -3,19 +3,16 @@ from pathlib import Path
 from sys import platform
 from datetime import timedelta
 
-
 from fastapi import FastAPI, Request, status, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-
-from dotenv import load_dotenv
 
 from .core import lifespan, templates
 from .exceptions import UnauthorizedException, UnauthorizedAdminException
-from .constants import RUNIT_WORKDIR, SESSION_SECRET_KEY
+from .constants import RUNIT_WORKDIR, SESSION_SECRET_KEY, DOTENV_FILE
 
+from dotenv import load_dotenv
 
 from .routers import account
 from .routers import project
@@ -27,7 +24,7 @@ from .routers import setup
 
 from .routers.api import api_router
 
-load_dotenv()
+load_dotenv(DOTENV_FILE)
 
 app = FastAPI(dependencies=[Depends(lifespan)], force_https=True)
 app.add_middleware(
@@ -40,16 +37,27 @@ app.add_middleware(
 static = Path(__file__).resolve().parent / "static"
 uploads = Path(RUNIT_WORKDIR, 'accounts')
 app.mount('/static', StaticFiles(directory=static, html=True),  name='static')
-
-if not Path(RUNIT_WORKDIR).exists():
-    Path(RUNIT_WORKDIR).mkdir()
     
-if not Path(uploads).resolve().exists():
-    Path(uploads).resolve().mkdir()
+if not uploads.resolve().exists():
+    uploads.resolve().mkdir()
     
 
 app.mount('/uploads', StaticFiles(directory=uploads, html=True),  name='uploads')
 
+# # Create Database tables
+# Admin.create_table()
+# User.create_table()
+# Permission.create_table()
+# Role.create_table()   
+# Project.create_table()   
+# Database.create_table()   
+
+# # print('[--] Database setup complete')
+# # Populate tables initially
+# if not Role.count():
+#     print('[#] Populating Roles')
+    
+#     print('[--] Roles populated')
 
 app.include_router(api_router)
 app.include_router(admin)

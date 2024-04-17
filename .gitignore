@@ -38,10 +38,8 @@ MANIFEST
 *.manifest
 *.spec
 
-# Project Folders
-runit_server/projects/
-projects/
-accounts/
+# Project Folders and Files
+runit
 
 # Installer logs
 pip-log.txt

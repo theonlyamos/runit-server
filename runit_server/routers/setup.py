@@ -1,10 +1,10 @@
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
-    Depends, status, UploadFile
+from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Request, status
+from odbms import DBMS
     
+from ..models import Admin, User, Role, Permission, Project, Database
 from ..core import flash, templates
-from ..common.security import authenticate
-from ..models import User
+from ..constants import  DOTENV_FILE
 
 import os
 from dotenv import load_dotenv, dotenv_values, set_key, find_dotenv
@@ -30,11 +30,11 @@ def initial():
 
 @setup.get('/')
 async def setup_index(request: Request):
-    env_file = find_dotenv()
+    env_file = find_dotenv(str(DOTENV_FILE))
     
     if env_file:
         settings = dotenv_values(env_file)
-        if settings['SETUP'] == 'completed':
+        if settings.get('SETUP') == 'completed':
             return RedirectResponse(request.url_for('index'))
         
     return templates.TemplateResponse('setup/index.html', {
@@ -43,26 +43,45 @@ async def setup_index(request: Request):
 
 @setup.post('/')
 async def initsetup(request: Request):
-    env_file = find_dotenv()
+    env_file = find_dotenv(str(DOTENV_FILE))
     settings = dotenv_values(env_file)
     data = await request.form()
+    data_json = data._dict
     
-    settings.update(data._dict)
-
+    admin_email = str(data_json.get('adminemail'))
+    admin_username = str(data_json.get('adminusername'))
+    admin_password = str(data_json.get('adminpassword'))
+    del data_json['adminemail']
+    del data_json['adminusername']
+    del data_json['adminpassword']
+    
+    settings.update(data._dict)                             # type: ignore
+    
     for key, value in settings.items():
          set_key(env_file, key, value) # type: ignore
     set_key(env_file, 'SETUP', 'completed')
     
-    flash(request,'Setup completed', category='success')
-    return RedirectResponse(request.url_for('complete_setup'))
-
-@setup.get('/complete')
-async def complete_setup():
-    settings = dotenv_values(find_dotenv())
-
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    
     if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
         DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
                     settings['DATABASE_NAME']) # type: ignore
 
-    return RedirectResponse(request.url_for('index'))
+        # Create tables if they do not exist in relational datatabases
+        # [sqlite, mysql, postgresql]
+        Admin.create_table()
+        User.create_table()
+        Permission.create_table()
+        Role.create_table()   
+        Project.create_table()   
+        Database.create_table()   
+        
+        Role('developer', []).save()
+        Role('superadmin', []).save()
+        Role('subadmin', []).save()
+        
+        Admin(admin_email, 'Administrator', admin_username, admin_password, 'superadmin').save()
+    
+    flash(request,'Setup completed', category='success')
+    return RedirectResponse(request.url_for('index'), status_code=status.HTTP_303_SEE_OTHER)

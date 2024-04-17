@@ -66,7 +66,7 @@ async def api_login(form_data: LoginData):
     return JSONResponse({"access_token": access_token, "token_type": "bearer"})
 
 @public_api.post('/register', response_model=Token)
-async def register(
+async def api_register(
     data: UserData
 ):
     if data.password != data.cpassword:

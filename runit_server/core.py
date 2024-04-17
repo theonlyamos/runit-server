@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 
-from .constants import RUNIT_WORKDIR, SUBSCRIPTION_EVENTS
+from .constants import DOTENV_FILE, RUNIT_WORKDIR, SUBSCRIPTION_EVENTS
 
 app_initialized = False
 
@@ -30,23 +30,24 @@ templates.env.globals['get_flashed_messages'] = get_flashed_messages
 async def lifespan(request: Request):
     global app_initialized
     
-    if not Path(RUNIT_WORKDIR).resolve().exists():
-        Path(RUNIT_WORKDIR).resolve().mkdir()
+    if not RUNIT_WORKDIR.resolve().exists():
+        RUNIT_WORKDIR.resolve().mkdir()
     
-    if not Path(RUNIT_WORKDIR, 'accounts').resolve().exists():
-        Path(RUNIT_WORKDIR, 'account').resolve().mkdir()
+    if not RUNIT_WORKDIR.joinpath('accounts').resolve().exists():
+        RUNIT_WORKDIR.joinpath('account').resolve().mkdir()
         
-    if not Path(RUNIT_WORKDIR, 'projects').resolve().exists():
-        Path(RUNIT_WORKDIR, 'projects').resolve().mkdir()
+    if not RUNIT_WORKDIR.joinpath('projects').resolve().exists():
+        RUNIT_WORKDIR.joinpath('projects').resolve().mkdir()
 
-    settings = dotenv_values(find_dotenv())
-    setup = os.getenv('SETUP') or settings['SETUP']
-    DB_DBMS = os.getenv('DBMS') or settings['DBMS']
-    DB_HOST = os.getenv('DATABASE_HOST') or settings['DATABASE_HOST']
-    DB_PORT = os.getenv('DATABASE_PORT') or settings['DATABASE_PORT']
-    DB_USERNAME = os.getenv('DATABASE_USERNAME') or settings['DATABASE_USERNAME']
-    DB_PASSWORD = os.getenv('DATABASE_PASSWORD') or settings['DATABASE_PASSWORD']
-    DB_DATABASE = os.getenv('DATABASE_NAME') or settings['DATABASE_NAME']
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    setup = os.getenv('SETUP') or settings.get('SETUP')
+    
+    DB_DBMS = os.getenv('DBMS') or settings.get('DBMS')
+    DB_HOST = os.getenv('DATABASE_HOST') or settings.get('DATABASE_HOST')
+    DB_PORT = os.getenv('DATABASE_PORT') or settings.get('DATABASE_PORT')
+    DB_USERNAME = os.getenv('DATABASE_USERNAME') or settings.get('DATABASE_USERNAME')
+    DB_PASSWORD = os.getenv('DATABASE_PASSWORD') or settings.get('DATABASE_PASSWORD')
+    DB_DATABASE = os.getenv('DATABASE_NAME') or settings.get('DATABASE_NAME')
     
     if not app_initialized and setup and setup == 'completed':
         DBMS.initialize(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD,DB_DATABASE) # type: ignore

@@ -43,6 +43,16 @@ project = APIRouter(
     dependencies=[Depends(get_session)]
 )
 
+def create_runit_project(config: dict, name: str):
+    os.chdir(PROJECTS_DIR)
+    new_runit = RunIt(**config)
+    
+    new_runit._id = config['name']
+    new_runit.name = name
+
+    os.chdir(Path(PROJECTS_DIR, config['name']))
+    new_runit.update_config()
+
 @project.get('/')
 async def list_user_projects(request: Request, view: Optional[str] = None):
     user_id = request.session['user_id']
@@ -146,15 +156,8 @@ async def create_user_project(
             runit = RunIt(**RunIt.load_config())
             background_task.add_task(runit.install_dependency_packages)
         else:
-            os.chdir(PROJECTS_DIR)
             config['name'] = project_id
-            new_runit = RunIt(**config)
-            
-            new_runit._id = project_id
-            new_runit.name = project_data.name
-        
-            os.chdir(Path(PROJECTS_DIR, project_id))
-            new_runit.update_config()
+            background_task.add_task(create_runit_project, config, project.name)
         
         # os.chdir(RUNIT_HOMEDIR)
         

@@ -1,8 +1,4 @@
 from datetime import datetime
-import uuid
-
-from bson.objectid import ObjectId
-
 from odbms import DBMS, Model
 from ..common.utils import Utils
 
@@ -11,7 +7,7 @@ class Admin(Model):
     '''A model class for admin'''
     TABLE_NAME = 'admins'
 
-    def __init__(self, email, name, username, password, role, created_at=None, updated_at=None, id=None):
+    def __init__(self, email: str, name: str, username: str, password: str, role: str, created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.email = email
         self.username = username
@@ -29,6 +25,7 @@ class Admin(Model):
         '''
 
         data = self.__dict__.copy()
+        data['updated_at'] = (datetime.now()).strftime("%a %b %d %Y %H:%M:%S")
         data['password'] =  Utils.hash_password(self.password)
 
         if DBMS.Database.dbms != 'mongodb':
@@ -58,7 +55,7 @@ class Admin(Model):
         
         data = super().json()
         data['id'] = str(self.id)
-        data['role'] = self.normalise(self.get_role())
+        data['role'] = self.normalise(self.get_role()) # type: ignore
 
         return data
     
@@ -81,8 +78,12 @@ class Admin(Model):
         @param username username of the admin 
         @return Admin instance
         '''
-        admin = DBMS.Database.find_one(Admin.TABLE_NAME, {"username": username})
-        return cls(**Model.normalise(admin)) if admin else None
+        admin = DBMS.Database.find_one(Admin.TABLE_NAME, Admin.normalise({"username": username}, 'params'))
+        
+        if isinstance(admin, dict):
+            return cls(**cls.normalise(admin)) if len(admin.keys()) else None
+        elif isinstance(admin, list) or isinstance(admin, tuple):
+            return cls(*admin) if len(admin) else None
     
     @classmethod
     def get_by_role(cls, role: str):
@@ -93,4 +94,7 @@ class Admin(Model):
         @return Admin instance
         '''
         admin = DBMS.Database.find_one(Admin.TABLE_NAME, {"role": role})
-        return cls(**Model.normalise(admin)) if admin else None
+        if isinstance(admin, dict):
+            return cls(**cls.normalise(admin)) if len(admin.keys()) else None
+        elif isinstance(admin, list) or isinstance(admin, tuple):
+            return cls(*admin) if len(admin) else None

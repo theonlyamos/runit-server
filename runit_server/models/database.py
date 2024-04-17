@@ -3,7 +3,7 @@ from odbms import DBMS, Model
 class Database(Model):
     TABLE_NAME = 'databases'
 
-    def __init__(self, name, collection_name, user_id, project_id = None, schema={}, created_at=None, updated_at=None, id=None, **kwargs):
+    def __init__(self, name: str, collection_name: str, user_id: str, project_id: str = '', schema: str = '{}', created_at=None, updated_at=None, id=None, **kwargs):
         super().__init__(created_at, updated_at, id)
         self.name = name
         self.collection_name = collection_name
@@ -14,24 +14,6 @@ class Database(Model):
         for key, value in kwargs.items():
             self.__setattr__(key, value)
 
-    def save(self):
-        '''
-        Instance Method for saving Database instance to database
-
-        @params None
-        @return None
-        '''
-
-        data = self.__dict__
-        
-        del data['id']
-
-        if DBMS.Database.dbms == 'mongodb':
-            data["created_at"]: self.created_at
-            data["updated_at"]: self.updated_at
-
-        return DBMS.Database.insert(Database.TABLE_NAME, Model.normalise(data, 'params'))
-    
     def user(self):
         '''
         Instance Method for retrieving User of Database instance
@@ -40,7 +22,7 @@ class Database(Model):
         @return User Instance
         '''
 
-        return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params')))
+        return Model.normalise(DBMS.Database.find_one('users', Model.normalise({'id': self.user_id}, 'params'))) # type: ignore
 
     @classmethod
     def get_by_name(cls, collection_name: str)-> list:

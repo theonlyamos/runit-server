@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 import logging
 import argparse
@@ -9,18 +10,17 @@ from dotenv import load_dotenv, set_key, find_dotenv, dotenv_values
 from .app import app
 
 from odbms import DBMS
-from .models import Role, Admin
+from .models import Role, Admin, User, Permission
 
 from runit import RunIt
 
-from .constants import RUNIT_WORKDIR, VERSION
+from .constants import RUNIT_WORKDIR, RUNIT_HOMEDIR, DOTENV_FILE, VERSION
 import uvicorn
 
 logging.getLogger('uvicorn').setLevel(logging.INFO)
 
-load_dotenv()
+load_dotenv(DOTENV_FILE)
 
-CURDIR = os.path.dirname(os.path.realpath(__file__))
 RunIt.RUNTIME_ENV = 'server'
 
 def setup_database():
@@ -30,15 +30,24 @@ def setup_database():
     @params None
     @return None
     '''
-    settings = dotenv_values(find_dotenv())
-    DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    if settings.get('DBMS') == 'sqlite':
+        DBMS.initialize_with_defaults('sqlitle', settings.get('DATABASE_NAME'))
+    
+    else:
+        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
                     settings['DATABASE_NAME']) # type: ignore
-    if settings['DBMS'] == 'mysql':
-        DBMS.Database.setup() # type: ignore
     
+    # Create tables if they do not exist in relational datatabases
+    # [sqlite, mysql, postgresql]
+    Admin.create_table()
+    User.create_table()
+    Permission.create_table()
+    Role.create_table()   
+     
     # print('[--] Database setup complete')
-    
+    # Populate tables initially
     if not Role.count():
         print('[#] Populating Roles')
         Role('developer', []).save()
@@ -65,9 +74,11 @@ def create_dot_env(settings: dict):
     @return None
     '''
     
-    open('.env', 'wt').close()
+    if not DOTENV_FILE.resolve().exists():
+        open(DOTENV_FILE, 'wt').close()
+        
     for key, value in settings.items():
-        set_key(find_dotenv(), key, value)
+        set_key(str(DOTENV_FILE), key, value)
 
 def create_default_admin(args_is_true: bool = False):
     '''
@@ -115,71 +126,66 @@ def setup_runit(args):
     @params args
     @return None
     '''
-    if args.admin:
-        return create_default_admin(args.admin)
+    try:
+        if args.admin:
+            return create_default_admin(args.admin)
+            
+        domain = args.domain if hasattr(args, 'domain') else ''
+        allowed = ['DBMS', 'DATABASE_HOST', 'DATABASE_PORT', 
+                'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
+                'DATABASE_NAME', 'RUNTIME_PYTHON', 'RUNTIME_PHP',
+                'RUNTIME_JAVASCRIPT', 'GITHUB_APP_CLIENT_ID',
+                'GITHUB_APP_CLIENT_SECRET']
         
-    domain = args.domain if hasattr(args, 'domain') else ''
-    allowed = ['DBMS', 'DATABASE_HOST', 'DATABASE_PORT', 
-               'DATABASE_USERNAME', 'DATABASE_PASSWORD', 
-               'DATABASE_NAME', 'RUNTIME_PYTHON', 'RUNTIME_PHP',
-               'RUNTIME_JAVASCRIPT', 'GITHUB_APP_CLIENT_ID',
-               'GITHUB_APP_CLIENT_SECRET']
-    
-    default_settings = {
-        'RUNIT_WORKDIR': os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR'),
-        'RUNIT_HOMEDIR': CURDIR,
-        'RUNIT_SERVERNAME': '',
-        'DBMS': 'mongodb',
-        'DATABASE_HOST': 'localhost',
-        'DATABASE_PORT': '27017',
-        'DATABASE_USERNAME': '',
-        'DATABASE_PASSWORD': '',
-        'DATABASE_NAME': 'runit',
-        'RUNTIME_PYTHON': 'python',
-        'RUNTIME_PHP': 'php',
-        'RUNTIME_JAVASCRIPT': 'node',
-        'GITHUB_APP_CLIENT_ID': '',
-        'GITHUB_APP_CLIENT_SECRET': '',
-        'SETUP': ''
-    }
+        default_settings = {
+            'RUNIT_WORKDIR': str(RUNIT_WORKDIR),
+            'RUNIT_HOMEDIR': str(RUNIT_HOMEDIR),
+            'RUNIT_SERVERNAME': '',
+            'DBMS': 'sqlite',
+            'DATABASE_HOST': '127.0.0.1',
+            'DATABASE_PORT': '',
+            'DATABASE_USERNAME': '',
+            'DATABASE_PASSWORD': '',
+            'DATABASE_NAME': 'runit',
+            'RUNTIME_PYTHON': 'python',
+            'RUNTIME_PHP': 'php',
+            'RUNTIME_JAVASCRIPT': 'node',
+            'GITHUB_APP_CLIENT_ID': '',
+            'GITHUB_APP_CLIENT_SECRET': '',
+            'SETUP': ''
+        }
 
-    settings = dotenv_values(find_dotenv())
-    
-    if settings is None or settings.keys() != default_settings.keys():
-        create_dot_env(default_settings)
+        settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+        
+        if settings is None or settings.keys() != default_settings.keys():
+            create_dot_env(default_settings)
 
-    settings = dotenv_values(find_dotenv())
+        settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+        
+        print('')
+        for key, value in settings.items():
+            if key in allowed:
+                settings[key] = input(f'{key} [{value}]: ')
+                if key != 'DATABASE_USERNAME' and key != 'dbpassword':
+                    settings[key] = settings[key] if settings[key] else value
+        
+        settings['RUNIT_HOMEDIR'] = RUNIT_HOMEDIR           # type: ignore
+        
+        if settings['DBMS'] and settings['DATABASE_HOST'] \
+            and settings['DATABASE_PORT'] and settings['DATABASE_NAME']:
+            settings['SETUP'] = 'completed'
+        
+        for key, value in settings.items():
+            set_key(DOTENV_FILE, key, str(value))
+        
+        setup_database()
+        create_default_admin()
     
-    if not domain:
-        default = settings['RUNIT_SERVERNAME']
-        domain = input(f'RUNIT_SERVERNAME [{default}]: ')
-        domain = domain if domain else default
-    
-    for key, value in settings.items():
-        if key in allowed:
-            settings[key] = input(f'{key} [{value}]: ')
-            if key != 'DATABASE_USERNAME' and key != 'dbpassword':
-                settings[key] = settings[key] if settings[key] else value
-    
-    settings['RUNIT_SERVERNAME'] = domain
-    settings['RUNIT_HOMEDIR'] = os.path.join('..', os.path.realpath(os.path.split(__file__)[0]))
-    
-    if settings['DBMS'] and settings['DATABASE_HOST'] \
-        and settings['DATABASE_PORT'] and settings['DATABASE_NAME']:
-        settings['SETUP'] = 'completed'
-    
-    for key, value in settings.items():
-        set_key(find_dotenv(), key, str(value))
-    
-    setup_database()
-    create_default_admin()
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
 
 def run_server(args = {}):
-    if not find_dotenv():
-        print('[#] Complete Setup configuration first.\n')
-        setup_runit(args)
-        print('')
-
     RunIt.DOCKER = args.docker
     RunIt.KUBERNETES = args.kubernetes
 

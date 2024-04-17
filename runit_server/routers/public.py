@@ -21,6 +21,7 @@ from runit import RunIt
 from dotenv import load_dotenv, find_dotenv, dotenv_values
 
 from ..constants import (
+    DOTENV_FILE,
     RUNIT_HOMEDIR,
     PROJECTS_DIR
 )
@@ -80,8 +81,8 @@ async def expose_with_func(request: Request, client_id: str, func: str):
 @public.get('/')
 @public.get('/login')
 async def index(request: Request):
-    settings = dotenv_values(find_dotenv())
-    setup = os.getenv('SETUP') or settings['SETUP']
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    setup = os.getenv('SETUP') or settings.get('SETUP')
     
     if setup != 'completed':
         return RedirectResponse(request.url_for('setup_index'))
@@ -107,11 +108,13 @@ async def register(
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
         user = User.get_by_email(email)
+ 
         if user:
-            flash(request, 'User is already registered!', 'danger')
+            flash(request, 'User already exists!', 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
-        User(email, name, password).save()
+        user = User(email, name, password).save()
+
         #print(user.inserted_id)
         flash(request, 'Registration Successful!', 'success')
         return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_303_SEE_OTHER)
@@ -136,17 +139,17 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 
     return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
 
-@public.get('/login/admin')
+@public.get('/admin/login')
 def admin_login_page(request: Request):
     if 'admin_id' in request.session and request.session['admin_id']:
         return RedirectResponse(request.url_for('admin_dashboard'))
     return templates.TemplateResponse('admin/login.html', context={'request': request, 'title':'Admin Login'})
 
-@public.post('/login/admin')
+@public.post('/admin/login')
 def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     admin = Admin.get_by_username(form_data.username)
+
     if admin and Utils.check_hashed_password(form_data.password, admin.password):
-            
             access_token = create_access_token(admin.json())
             request.session['admin_id'] = admin.id
             request.session['admin_name'] = admin.name
@@ -156,12 +159,6 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
     flash(request, 'Invalid Login Credentials', 'danger')
     return RedirectResponse(request.url_for('admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
-
-    if settings is None or settings['SETUP'] != 'completed':
-        return RedirectResponse(request.url_for('setup.index'))
-    if 'user_id' in request.session.keys():
-        return RedirectResponse(request.url_for('user_home'))
-    return templates.TemplateResponse('login.html', context={'request': request})
 
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')
@@ -174,7 +171,7 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
     if not project:
         return RunIt.notfound()
     
-    current_project_dir = Path(PROJECTS_DIR, project.id).resolve()
+    current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
     function = function if function else 'index'
     if current_project_dir.is_dir():
         if not RunIt.is_private(project_id, str(current_project_dir)):

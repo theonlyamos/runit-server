@@ -80,6 +80,7 @@ class Account():
         except Exception as e:
             print(str(e))
     
+    @staticmethod
     def logout(args):
         '''
         Logout of Current Account
@@ -142,7 +143,7 @@ class Account():
 
         except Exception as e:
             print(str(e))
-            return None
+            return {}
   
     @staticmethod
     def info(args):
@@ -282,7 +283,7 @@ class Account():
             print(str(e))
     
     @staticmethod
-    def functions(args)-> dict:
+    def functions(args):
         '''
         Retrieve Functions
         

@@ -3,8 +3,8 @@ from odbms import DBMS, Model
 class Project(Model):
     TABLE_NAME = 'projects'
 
-    def __init__(self, user_id, name, version="0.0.1", description="", homepage="",
-        language="", runtime="", start_file="", private=False, author={}, 
+    def __init__(self, user_id: str, name: str, version: str = "0.0.1", description: str = "", homepage: str = "",
+        language: str = "", runtime: str = "", start_file: str = "", private: bool = False, author: str = '', 
         github_repo: str = '', github_repo_branch: str = '', created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.name = name
@@ -20,21 +20,6 @@ class Project(Model):
         self.github_repo = github_repo
         self.github_repo_branch = github_repo_branch
 
-    def save(self):
-        '''
-        Instance Method for saving Project instance to database
-
-        @params None
-        @return None
-        '''
-
-        data = self.__dict__.copy()
-
-        if DBMS.Database.dbms != 'mongodb':
-            del data["created_at"]
-            del data["updated_at"]
-
-        return DBMS.Database.insert(Project.TABLE_NAME, Model.normalise(data, 'params'))
     
     def user(self):#-> User:
         '''
@@ -89,7 +74,16 @@ class Project(Model):
         @return List of Project instances
         '''
         
-        projects = DBMS.Database.find(Project.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
         
-        return [cls(**Model.normalise(elem)) for elem in projects] # type: ignore
+        
+        data = []
+        projects = DBMS.Database.find(Project.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
+
+        for elem in projects:
+            if isinstance(elem, dict):
+                data.append(cls(**cls.normalise(elem)))
+            else:
+                data.append(cls(*elem))
+
+        return data
 

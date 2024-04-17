@@ -1,9 +1,8 @@
 import os
 from enum import Enum
 from typing import Literal
-from dotenv import load_dotenv
-
-load_dotenv()
+from dotenv import find_dotenv, load_dotenv
+from pathlib import Path
 
 VERSION = "0.4.1"
 CURRENT_PROJECT = ""
@@ -19,12 +18,19 @@ JWT_ALGORITHM = 'HS256'
 API_VERSION = 'v1'
 SUBSCRIPTION_EVENTS = Literal['all', 'create', 'update', 'delete']
 
-RUNIT_HOMEDIR = os.getenv(
-    'RUNIT_HOMEDIR',
-    os.path.dirname(os.path.realpath(__file__))
-)
+RUNIT_WORKDIR = Path(os.path.expanduser('~')).joinpath('RUNIT_WORKDIR')
 
-RUNIT_WORKDIR = os.path.join(os.path.expanduser('~'), 'RUNIT_WORKDIR')
+RUNIT_HOMEDIR = Path(__file__).resolve().parent
+
+if not RUNIT_WORKDIR.exists():
+    RUNIT_WORKDIR.mkdir()
+
+DOTENV_FILE = RUNIT_WORKDIR.joinpath('.env')
+if not DOTENV_FILE.exists():
+    with open(DOTENV_FILE, 'w') as file:
+        pass 
+
+load_dotenv(find_dotenv(str(DOTENV_FILE)))
 
 GITHUB_APP_CLIENT_ID = os.getenv('GITHUB_APP_CLIENT_ID','')
 GITHUB_APP_CLIENT_SECRET = os.getenv('GITHUB_APP_CLIENT_SECRET','')

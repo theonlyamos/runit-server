@@ -10,7 +10,7 @@ class Role(Model):
     '''A model class for role'''
     TABLE_NAME = 'roles'
 
-    def __init__(self, name, permission_ids, created_at=None, updated_at=None, id=None):
+    def __init__(self, name: str, permission_ids: list, created_at=None, updated_at=None, id=None):
         super().__init__(created_at, updated_at, id)
         self.name = name
         #self.permission_ids =  permission_ids.split('::') if type(permission_ids) == str \
@@ -29,6 +29,7 @@ class Role(Model):
         data = self.__dict__.copy()
 
         if DBMS.Database.dbms != 'mongodb':
+            data['permission_ids'] = '::'.join(self.permission_ids)
             del data["created_at"]
             del data["updated_at"]
 
@@ -57,7 +58,11 @@ class Role(Model):
         @return Role instance
         '''
         role = DBMS.Database.find_one(Role.TABLE_NAME, {"name": name})
-        return cls(**Model.normalise(role)) if role else None
+        
+        if isinstance(role, dict):
+            return cls(**cls.normalise(role)) if len(role.keys()) else None
+        elif isinstance(role, list) or isinstance(role, tuple):
+            return cls(*role) if len(role) else None
 
     def permissions(self):
         '''

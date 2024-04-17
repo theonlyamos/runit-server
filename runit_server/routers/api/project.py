@@ -149,7 +149,7 @@ async def api_publish_user_project(
             project_id = project.save().inserted_id         # type: ignore
             project_id = str(project_id)
             project.id = project_id
-            homepage = f"{os.getenv('RUNIT_PROTOCOL')}{os.getenv('RUNIT_SERVERNAME')}/{project_id}/"
+            homepage = f"{request.base_url}/{project_id}"
             project.update({'homepage': homepage})
             result['project_id'] = project_id
         else:

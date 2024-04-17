@@ -12,12 +12,12 @@ primary_region = "hkg"
 
 [mounts]
   source = "runit_data"
-  destination = "/data"
+  destination = "/root"
 
 [env]
   PORT = "9000"
   RUNIT_SERVERNAME = 'https://runit.fly.dev'
-  RUNIT_WORKDIR = '/data/RUNIT_WORKDIR'
+  RUNIT_WORKDIR = '/root/RUNIT_WORKDIR'
 
 [http_service]
   internal_port = 9000

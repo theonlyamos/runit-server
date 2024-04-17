@@ -1,5 +1,5 @@
 from datetime import datetime
-import uuid
+from bson.objectid import ObjectId
 from odbms import DBMS, Model
 
 from ..common.utils import Utils
@@ -30,20 +30,19 @@ class User(Model):
         '''
         
         data = self.__dict__.copy()
-        data['updated_at'] = (datetime.utcnow()).strftime("%a %b %d %Y %H:%M:%S")
-
-
+        data['updated_at'] = (datetime.now()).strftime("%a %b %d %Y %H:%M:%S")
+        
         if DBMS.Database.dbms != 'mongodb':
             del data["created_at"]
             del data["updated_at"]
 
-        if isinstance(self.id, uuid.UUID):
+        if isinstance(self.id, ObjectId):
             data['password'] = Utils.hash_password(self.password)
             return DBMS.Database.insert(User.TABLE_NAME, Model.normalise(data, 'params'))
         
         # Update the existing record in database
         del data['password']
-        return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), data)
+        return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), self.normalise(data, 'params'))
         
         
     
@@ -69,7 +68,7 @@ class User(Model):
 
         return DBMS.Database.find('projects', {'user_id': self.id})
     
-    def count_projects(self)-> int:
+    def count_projects(self):
         '''
         Instance Method for counting User Projects
 
@@ -101,4 +100,8 @@ class User(Model):
         @return User instance
         '''
         user = DBMS.Database.find_one(User.TABLE_NAME, {"email": email})
-        return cls(**Model.normalise(user)) if user else None
+        
+        if isinstance(user, dict):
+            return cls(**cls.normalise(user)) if len(user.keys()) else None
+        elif isinstance(user, list) or isinstance(user, tuple):
+            return cls(*user) if len(user) else None

@@ -49,8 +49,6 @@ RUN ln -s /usr/bin/python
 
 RUN ln -s /usr/bin/python3.11 /usr/bin/python  
 
-RUN pip install runit-server
-
 COPY . /app/
 
 RUN mv .env.development .env

@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-const DB_PORTS = {'mysql': 33060, 'mongodb': 27017}
+const DB_PORTS = {mysql: 33060, mongodb: 27017, postgresql: 5432}
 
 class SetupWizard {
     static form;
@@ -134,7 +134,7 @@ class SetupWizard {
 }
 
 const selectDMEngine = (value)=>{
-    document.querySelector("[name='dbport']").value = DB_PORTS[value]
+    document.querySelector("[name='DATABASE_PORT']").value = DB_PORTS[value] || ''
 }
 
 window.onload = (e)=>{
