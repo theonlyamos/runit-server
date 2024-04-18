@@ -125,7 +125,7 @@ class Project{
             let access_token = document.getElementById('accessToken').innerText.trim()
             let modalCloseBtn = document.querySelector('.btn-close')
     
-            let url =  '/projects/'
+            let url =  '/api/v1/projects/'
     
             let response = await fetch(url, {
                 headers: {
@@ -144,10 +144,9 @@ class Project{
             const {status, message, project} = result
             
             if (status === 'success'){
-                console.log(message)
-                console.log(project)
-                modalCloseBtn.click()
-                return new Project(project)
+                // modalCloseBtn.click()
+                window.location.reload()
+                // return new Project(project)
             }
             console.error(message)
             return null
@@ -173,14 +172,16 @@ class Project{
 }
 
 window.onload = async(e)=>{
-    Github.init({
-        name: 'name',
-        repos: 'github_repo',
-        description: 'description',
-        branches: 'github_repo_branch',
-        branchesParent: 'branches_elem',
-        submitBtn: 'submitBtn'
-    })
+    if (window.location.pathname === '/projects/'){
+        Github.init({
+            name: 'name',
+            repos: 'github_repo',
+            description: 'description',
+            branches: 'github_repo_branch',
+            branchesParent: 'branches_elem',
+            submitBtn: 'submitBtn'
+        })
+    }
 
     let url_parts = window.location.pathname.split('/')
     
@@ -190,7 +191,7 @@ window.onload = async(e)=>{
     }
 
     let projectForm = document.getElementById('projectForm')
-    console.log(projectForm)
+    
     if (projectForm){
         projectForm.onsubmit = (e)=>{
             e.preventDefault()

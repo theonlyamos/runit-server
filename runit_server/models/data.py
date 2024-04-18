@@ -9,4 +9,4 @@ class ProjectData(BaseModel):
     description: Optional[str] = None
     github_repo: Optional[str] = None
     github_repo_branch: Optional[str] = None
-    database: Optional[str] = None
+    database: Optional[int] = None

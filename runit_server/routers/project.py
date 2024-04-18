@@ -184,11 +184,11 @@ async def user_project_details(request: Request, project_id: str):
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    elif not Path(PROJECTS_DIR, project.id).resolve().exists():
+    elif not Path(PROJECTS_DIR, str(project.id)).resolve().exists():
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    os.chdir(Path(PROJECTS_DIR, project.id).resolve())
+    os.chdir(Path(PROJECTS_DIR, str(project.id)).resolve())
     if not Path('.env').is_file():
         async with aiofiles.open('.env', 'w') as file:
             await file.close()
@@ -225,11 +225,11 @@ async def reinstall_project_dependencies(request: Request, project_id: str, back
             flash(request, PROJECT_404_ERROR, 'danger')
             return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
         
-        if not Path(PROJECTS_DIR, project.id).resolve().exists():
+        if not Path(PROJECTS_DIR, str(project.id)).resolve().exists():
             flash(request, PROJECT_404_ERROR, 'danger')
             return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
 
-        os.chdir(Path(PROJECTS_DIR, project.id).resolve())
+        os.chdir(Path(PROJECTS_DIR, str(project.id)).resolve())
         runit = RunIt(**RunIt.load_config())
         background_task.add_task(runit.install_dependency_packages)
         
@@ -249,8 +249,8 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
         project = Project.get(project_id)
         
         if project:
-            Project.remove({'_id': project_id, 'user_id': user_id})
-            project_folder = Path(PROJECTS_DIR, project.id).resolve()
+            Project.remove({'id': project_id, 'user_id': user_id})
+            project_folder = Path(PROJECTS_DIR, str(project.id)).resolve()
             if project_folder.exists() and project_folder.is_dir():
                 background_task.add_task(shutil.rmtree, project_folder)
             flash(request, 'Project deleted successfully', category='success')
@@ -268,7 +268,7 @@ async def user_project_environ(request: Request, project_id):
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    env_file = Path(PROJECTS_DIR, project.id, '.env').resolve()
+    env_file = Path(PROJECTS_DIR, str(project.id), '.env').resolve()
     async with aiofiles.open(env_file, 'w') as file:
         await file.close()
     

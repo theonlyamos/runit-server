@@ -29,8 +29,10 @@ class Github{
         this.projectDescription = document.getElementById(options.description)
         this.branchesParentElem = document.getElementById(options.branchesParent)
         
-        this.reposElem.onchange = (e)=>{
-            this.getRepos(e.target.value)
+        if (this.reposElem){
+            this.reposElem.onchange = (e)=>{
+                this.getRepos(e.target.value)
+            }
         }
         this.getRepos()
     }
@@ -45,13 +47,9 @@ class Github{
 
         const {status, message, data} = response
         this.setLoading(false)
-        status === 'success' 
-        ? repo_name
-        ? this.setRepo(data[0])
+        status === 'success' ? repo_name ? this.setRepo(data[0])
         : this.setRepos(data)
-        : message === 'Expired access tokens'
-        ? window.location.reload()
-        : console.error(message)
+        : console.log(message)
     }
 
     static setRepos(repos = []){

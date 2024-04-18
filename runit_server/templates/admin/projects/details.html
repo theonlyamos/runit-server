@@ -114,5 +114,6 @@
 
 {% block scripts %} 
 {{super()}}
+<script src="{{url_for('static', path='js/github.js')}}"></script>
 <script src="{{url_for('static', path='js/projects.js')}}"></script>
 {% endblock %}

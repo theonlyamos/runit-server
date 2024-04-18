@@ -1,4 +1,5 @@
 from datetime import datetime
+from bson import ObjectId
 from odbms import DBMS, Model
 from ..common.utils import Utils
 
@@ -26,13 +27,18 @@ class Admin(Model):
 
         data = self.__dict__.copy()
         data['updated_at'] = (datetime.now()).strftime("%a %b %d %Y %H:%M:%S")
-        data['password'] =  Utils.hash_password(self.password)
-
+        
         if DBMS.Database.dbms != 'mongodb':
             del data["created_at"]
             del data["updated_at"]
 
-        return DBMS.Database.insert(Admin.TABLE_NAME, data)
+        if isinstance(self.id, ObjectId):
+            data['password'] =  Utils.hash_password(self.password)
+            return DBMS.Database.insert(self.TABLE_NAME, self.normalise(data, 'params'))
+        
+        # Update the existing record in database
+        del data['password']
+        return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), self.normalise(data, 'params'))
     
     def reset_password(self, new_password: str):
         '''
@@ -55,7 +61,7 @@ class Admin(Model):
         
         data = super().json()
         data['id'] = str(self.id)
-        data['role'] = self.normalise(self.get_role()) # type: ignore
+        data['role'] = self.normalise(self.get_role(), 'params') # type: ignore
 
         return data
     

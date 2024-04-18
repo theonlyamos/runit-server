@@ -117,7 +117,7 @@ async def get_repos(request: Request, repo_name: Optional[str] = None):
     try:
         if not user or not user.gat:
             raise Exception('User is not authenticated')
-
+        
         g = await user_access_token(user.gat) # type: ignore
         repos = await fetch_repositories(g, repo_name)
         response['data'] = repos
@@ -133,7 +133,7 @@ async def get_repos(request: Request, repo_name: Optional[str] = None):
         response['status'] = 'error'
         response['message'] = 'Error connecting to github'
     except Exception as e:
-        logging.exception(e)
+        logging.warning(str(e))
         response['status'] = 'error'
         response['message'] = 'Expired access tokens'
     finally:

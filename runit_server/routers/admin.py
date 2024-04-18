@@ -70,7 +70,7 @@ async def admin_get_user(request: Request, user_id: str):
         if not User:
             raise Exception('User not found')
         
-        projects = Project.get_by_user(user.id)
+        projects = Project.get_by_user(str(user.id))
         
         return templates.TemplateResponse('admin/users/details.html', context={
             'request': request, 'page': 'users', 'user': user.json(),
@@ -91,7 +91,7 @@ def admin_list_projects(request: Request, view: Optional[str] = None):
         
     return templates.TemplateResponse('admin/projects/index.html', context={
             'request': request, 'page': 'projects', 'projects': projects,
-            'icons': LANGUAGE_TO_ICONS})
+            'user': {}, 'icons': LANGUAGE_TO_ICONS})
 
 @admin.get('/projects/{project_id}')
 @admin.get('/projects/{project_id}/')
@@ -103,7 +103,7 @@ async def admin_get_project(request: Request, project_id):
         flash(request, 'Project does not exist', 'danger')
         return RedirectResponse(request.url_for('admin_list_projects'))
     
-    os.chdir(Path(PROJECTS_DIR, project.id))
+    os.chdir(Path(PROJECTS_DIR, str(project.id)))
     if not os.path.isfile('.env'):
         open('.env', 'w').close()
 
@@ -199,7 +199,7 @@ async def admin_delete_project(request: Request, project_id, background_task: Ba
         
         if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id))
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)))
             flash(request, 'Project deleted successfully', category='success')
         else:
             flash(request, 'Project was not found. Operation not successful.', category='danger')
@@ -236,7 +236,7 @@ async def admin_get_database(request: Request, database_id: str):
     database = Database.get(database_id)
     
     if database:
-        Collection.TABLE_NAME = database.collection_name
+        Collection.TABLE_NAME = database.collection_name            # type: ignore
         collections = Collection.find({})
         
         result = []
@@ -312,8 +312,15 @@ async def admin_delete_database(request: Request, database_id: str):
 
 @admin.get('/profile/')
 async def admin_profile(request: Request):
+    user_id = request.session['admin_id']
+    user = Admin.get(user_id)
+    
+    if not user:
+        flash(request, "User does not exist", "danger")
+        return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
+    
     return templates.TemplateResponse('admin/profile.html', context={
-        'request': request, 'page': 'profile'})
+        'request': request, 'page': 'profile', 'user': user.json()})
 
 @admin.get('/logout/')
 async def admin_logout(request: Request):

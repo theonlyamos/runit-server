@@ -170,14 +170,15 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
     project = Project.get(project_id)
     if not project:
         return RunIt.notfound()
+    if project.private and request.session.get('user_id') != project.user_id:
+        return RunIt.notfound()
     
     current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
     function = function if function else 'index'
     if current_project_dir.is_dir():
-        if not RunIt.is_private(project_id, str(current_project_dir)):
-            result = RunIt.start(project_id, function, str(current_project_dir), request.query_params._dict)
-            os.chdir(RUNIT_HOMEDIR)
-            response = await jsonify(result)
+        result = RunIt.start(project_id, function, PROJECTS_DIR, request.query_params._dict)
+        os.chdir(RUNIT_HOMEDIR)
+        response = await jsonify(result)
         t1 = time.perf_counter() # Record the stop time
         elapsed_time = t1 - t0 # Calculate elapsed time
         print(f'Time taken: {elapsed_time:.8f} seconds')

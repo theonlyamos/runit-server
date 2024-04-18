@@ -13,11 +13,15 @@ from fastapi import APIRouter, BackgroundTasks,  Request, \
 from dotenv import load_dotenv, dotenv_values
 from pydantic import BaseModel
 
+from odbms import DBMS
+
 from ...common import get_current_user
 from ...models import Database
 from ...models import Project
 from ...models import User
 from ...models import ProjectData
+
+from ...core import flash
 
 from runit import RunIt
 from ...constants import (
@@ -74,12 +78,13 @@ async def api_create_user_project(
         config['author']['name'] = user.name
         config['author']['email'] = user.email
         
-        project = Project(user.id, **config)
-        project_id = project.save().inserted_id # type: ignore
+        project = Project(str(user.id), **config)
+        saved_project = project.save()
+        project_id = saved_project.inserted_id if DBMS.Database.dbms == 'mongodb' else saved_project # type: ignore
         project_id = str(project_id)
         project.id = project_id
         
-        homepage = f"{request.base_url}{project_id}/"
+        homepage = f"{request.base_url}{project_id}"
         Project.update({'id': project_id}, {'homepage': homepage})
 
         config['_id'] = project_id
@@ -106,19 +111,20 @@ async def api_create_user_project(
             # Create database for project
             Database(
                 project_data.name+'_db',
-                user.id,
+                str(user.id),
                 project_id
             ).save()
+        flash(request, 'Project created successfully', category='success')
         response['project'] = Project.get(project_id).json() # type: ignore
     except Exception as e:
         logging.exception(e)
         response['status'] = 'error'
         response['message'] = 'Error creating project'
-    
-    return JSONResponse(
-        response,
-        status_code=status.HTTP_201_CREATED if response['status'] == 'success' else status.HTTP_204_NO_CONTENT
-    )
+    finally:
+        return JSONResponse(
+            response,
+            status_code=status.HTTP_201_CREATED if response['status'] == 'success' else status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @projects_api.post('/publish')
 async def api_publish_user_project(
@@ -146,21 +152,22 @@ async def api_publish_user_project(
             del data['_id']
             
             project = Project(user_id=user.id, **data)      # type: ignore
-            project_id = project.save().inserted_id         # type: ignore
+            saved_project = project.save()
+            project_id = saved_project.inserted_id if DBMS.Database.dbms == 'mongodb' else saved_project # type: ignore
             project_id = str(project_id)
             project.id = project_id
-            homepage = f"{request.base_url}/{project_id}"
-            project.update({'homepage': homepage})
+            homepage = f"{request.base_url}{project_id}"
+            Project.update({'id': project_id}, {'homepage': homepage})
             result['project_id'] = project_id
         else:
             project_id = str(data['_id'])
-            project = Project.get(data['_id'])
+            project = Project.get(str(data['_id']))
             if project:
                 del data['_id']
-                project.update(data, {'id': project.id})
+                Project.update({'id': project_id}, data)
 
         PROJECT_PATH = Path(PROJECTS_DIR, project_id).resolve()
-        if not os.path.exists(PROJECT_PATH):
+        if not PROJECT_PATH.exists():
             os.mkdir(PROJECT_PATH)
             
         filepath = Path(PROJECT_PATH, file.filename)                                 # type: ignore
@@ -224,10 +231,10 @@ async def api_clone_user_project(
         project = Project.find_one({'name': project_name, 'user_id': user.id})
         
         if project:
-            if not Path(PROJECTS_DIR, project.id).resolve().exists():
+            if not Path(PROJECTS_DIR, str(project.id)).resolve().exists():
                 raise FileNotFoundError('Project not found!')
                 
-            os.chdir(Path(PROJECTS_DIR, project.id).resolve())
+            os.chdir(Path(PROJECTS_DIR, str(project.id)).resolve())
             config = RunIt.load_config()
             
             if not config:
@@ -236,7 +243,7 @@ async def api_clone_user_project(
             runit_project = RunIt(**config)
             filename = runit_project.compress()
             # os.chdir(WORKDIR)
-            file_path = Path(PROJECTS_DIR, project.id, filename)
+            file_path = Path(PROJECTS_DIR, str(project.id), filename)
             
             def iterfile():
                 with open(file_path, mode="rb") as file:  
@@ -266,11 +273,11 @@ async def api_get_project_details(
         logging.error(f'Project {project_id} does not exist')
         return JSONResponse(response)
     
-    if not Path(PROJECTS_DIR, project.id).resolve().exists():
-        logging.error(f'Project Path {str(Path(PROJECTS_DIR, project.id))} does not exist')
+    if not Path(PROJECTS_DIR, str(project.id)).resolve().exists():
+        logging.error(f'Project Path {str(Path(PROJECTS_DIR, str(project.id)))} does not exist')
         return JSONResponse(response)
     
-    os.chdir(Path(PROJECTS_DIR, project.id).resolve())
+    os.chdir(Path(PROJECTS_DIR, str(project.id)).resolve())
     if not Path('.env').is_file():
         async with aiofiles.open('.env', 'w') as file:
             await file.close()
@@ -319,7 +326,7 @@ async def api_delete_user_project(
         if len(project):
             project = project[0]
             Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, project.id).resolve())
+            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)).resolve())
             
         else:
             response['status'] = 'error'

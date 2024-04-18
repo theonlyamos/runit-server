@@ -29,11 +29,10 @@ class Role(Model):
         data = self.__dict__.copy()
 
         if DBMS.Database.dbms != 'mongodb':
-            data['permission_ids'] = '::'.join(self.permission_ids)
             del data["created_at"]
             del data["updated_at"]
 
-        return DBMS.Database.insert(Role.TABLE_NAME, data)
+        return DBMS.Database.insert(Role.TABLE_NAME, Role.normalise(data, 'params'))
     
     def json(self)-> dict:
         '''

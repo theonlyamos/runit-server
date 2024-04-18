@@ -41,16 +41,6 @@ class Project(Model):
 
         return DBMS.Database.find('functions', Model.normalise({'project_id': self.id}, 'params'))
     
-    def count_functions(self)-> int:
-        '''
-        Instance Method for counting function in Project
-
-        @params None
-        @return Count of functions
-        '''
-
-        return DBMS.Database.count('functions', Model.normalise({'project_id': self.id}, 'params')) # type: ignore
-    
     def json(self)-> dict:
         '''
         Instance Method for converting instance to Dict
@@ -61,7 +51,6 @@ class Project(Model):
         data = super().json()
         data['id'] = str(data['id'])
         data['user_id'] = str(data['user_id'])
-        data['functions'] = self.count_functions()
         
         return data
 

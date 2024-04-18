@@ -75,6 +75,9 @@ ylesheet">
             }
         }
     </style>
+    <div class="d-none" id="accessToken">
+        {{request.session['access_token']}}
+    </div>
     <div class="offcanvas offcanvas-start w-auto" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="offcanvasMenuLabel">Menu</h5>
