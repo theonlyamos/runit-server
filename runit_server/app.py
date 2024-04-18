@@ -27,6 +27,7 @@ from .routers.api import api_router
 load_dotenv(DOTENV_FILE)
 
 app = FastAPI(dependencies=[Depends(lifespan)], force_https=True)
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET_KEY,
@@ -43,21 +44,6 @@ if not uploads.resolve().exists():
     
 
 app.mount('/uploads', StaticFiles(directory=uploads, html=True),  name='uploads')
-
-# # Create Database tables
-# Admin.create_table()
-# User.create_table()
-# Permission.create_table()
-# Role.create_table()   
-# Project.create_table()   
-# Database.create_table()   
-
-# # print('[--] Database setup complete')
-# # Populate tables initially
-# if not Role.count():
-#     print('[#] Populating Roles')
-    
-#     print('[--] Roles populated')
 
 app.include_router(api_router)
 app.include_router(admin)
