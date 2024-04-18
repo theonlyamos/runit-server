@@ -20,6 +20,7 @@ from ...models import Database
 from ...models import Project
 from ...models import User
 from ...models import ProjectData
+from ...models import Collection
 
 from ...core import flash
 
@@ -109,11 +110,15 @@ async def api_create_user_project(
         
         if (project_data.database):
             # Create database for project
+            collection_name = f"{project_data.name}_{str(user.id)}_{project_id}"
             Database(
                 project_data.name+'_db',
+                collection_name,
                 str(user.id),
                 project_id
             ).save()
+            Collection.TABLE_NAME = collection_name # type: ignore
+            Collection.create_table()
         flash(request, 'Project created successfully', category='success')
         response['project'] = Project.get(project_id).json() # type: ignore
     except Exception as e:

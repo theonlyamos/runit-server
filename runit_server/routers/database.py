@@ -71,9 +71,9 @@ async def create_user_database(
         data = {'name': name, 'collection_name': collection_name,
                 'project_id': project_id,'user_id': user_id}
         
-        new_db = Database(**data)
-        results = new_db.save().inserted_id     # type: ignore
-                
+        Database(**data).save()
+        Collection.TABLE_NAME = collection_name # type: ignore
+        Collection.create_table()
         flash(request, 'Database Created Successfully.', category='success')
     else:
         flash(request, 'Missing required fields.', category='danger')
@@ -84,7 +84,7 @@ async def user_database_details(request: Request, database_id):
     database = Database.get(database_id)
     
     if database:
-        Collection.TABLE_NAME = database.collection_name
+        Collection.TABLE_NAME = database.collection_name                # type: ignore
         collections = Collection.find({})
         
         result = []
