@@ -4,7 +4,7 @@ from typing import Literal
 from dotenv import find_dotenv, load_dotenv
 from pathlib import Path
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 CURRENT_PROJECT = ""
 NOT_FOUND_FILE = '404.html'
 DOT_RUNIT_IGNORE = '.runitignore'
