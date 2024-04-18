@@ -180,7 +180,7 @@ async def api_publish_user_project(
         os.chdir(PROJECT_PATH)
 
         runit = RunIt(**RunIt.load_config())
-        print(PROJECT_PATH)
+        
         if RunIt.DOCKER:
             docker_file = f"{runit.runtime}.dockerfile"
             full_docker_filepath = f"{os.path.join(DOCKER_TEMPLATES, docker_file)}"
@@ -231,19 +231,20 @@ async def api_clone_user_project(
         project = Project.find_one({'name': project_name, 'user_id': user.id})
         
         if project:
-            if not Path(PROJECTS_DIR, str(project.id)).resolve().exists():
+            project_path = Path(PROJECTS_DIR, str(project.id)).resolve()
+            if not project_path.exists():
                 raise FileNotFoundError('Project not found!')
                 
-            os.chdir(Path(PROJECTS_DIR, str(project.id)).resolve())
+            os.chdir(project_path)
             config = RunIt.load_config()
             
             if not config:
-                raise FileNotFoundError
+                raise FileNotFoundError('Project not found!')
             
             runit_project = RunIt(**config)
             filename = runit_project.compress()
             # os.chdir(WORKDIR)
-            file_path = Path(PROJECTS_DIR, str(project.id), filename)
+            file_path = Path(project_path, filename)
             
             def iterfile():
                 with open(file_path, mode="rb") as file:  
