@@ -169,9 +169,11 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
         return None
     project = Project.get(project_id)
     if not project:
-        return RunIt.notfound()
-    if project.private and request.session.get('user_id') != project.user_id:
-        return RunIt.notfound()
+        logging.warning('Project not found')
+        return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
+    # elif project.private and request.session.get('user_id') != project.user_id:
+    #     logging.warning('Project is private')
+    #     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
     
     current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
     function = function if function else 'index'
@@ -184,4 +186,5 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
         print(f'Time taken: {elapsed_time:.8f} seconds')
         return JSONResponse(response) if type(response) is dict else response
     
-    return RunIt.notfound()
+    logging.warning('Project directory not found')
+    return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
