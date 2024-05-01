@@ -2,7 +2,7 @@ from fastapi.responses import RedirectResponse
 from fastapi import APIRouter, Request, status
 from odbms import DBMS
     
-from ..models import Admin, User, Role, Permission, Project, Database
+from ..models import Admin, User, Role, Permission, Project, Database, Secret
 from ..core import flash, templates
 from ..constants import  DOTENV_FILE
 
@@ -75,7 +75,8 @@ async def initsetup(request: Request):
         Permission.create_table()
         Role.create_table()   
         Project.create_table()   
-        Database.create_table()   
+        Database.create_table()
+        Secret.create_table()
         
         Role('developer', []).save()
         Role('superadmin', []).save()

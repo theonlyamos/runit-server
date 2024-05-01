@@ -20,6 +20,7 @@ from ..core import flash, templates
 from ..common import get_session
 from ..models import Database
 from ..models import Project
+from ..models import Secret
 from ..models import User
 from ..models import ProjectData
 
@@ -64,7 +65,10 @@ async def list_user_projects(request: Request, view: Optional[str] = None):
     elif 'view' not in request.session.keys():
         request.session['view'] = 'grid'
         
-    projects = Project.get_by_user(user_id)
+    results = Project.get_by_user(user_id)
+    projects = []
+    for project in results:
+        projects.append(project.json())
     
     return templates.TemplateResponse('projects/index.html', context={
         'request': request, 'page': 'projects', 'projects': projects, 
@@ -177,6 +181,7 @@ async def create_user_project(
 @project.get('/{project_id}')
 @project.get('/{project_id}/')
 async def user_project_details(request: Request, project_id: str):
+    user_id = request.session['user_id']
     old_curdir = os.curdir
     
     project = Project.get(project_id)
@@ -193,7 +198,7 @@ async def user_project_details(request: Request, project_id: str):
         async with aiofiles.open('.env', 'w') as file:
             await file.close()
 
-    environs = dotenv_values('.env')
+    environs = {}
     
     runit = RunIt(**RunIt.load_config())
 
@@ -207,6 +212,10 @@ async def user_project_details(request: Request, project_id: str):
     del project['author']
     project['functions'] = len(funcs)
     if project:
+        secret = Secret.find_one({'user_id': user_id, 'project_id': project_id})
+        if secret:
+            environs = secret.variables
+        
         return templates.TemplateResponse('projects/details.html', context={
             'request': request, 'page': 'projects','project': project, 
             'environs': environs, 'funcs': funcs})
@@ -261,23 +270,29 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
         flash(request, 'Project deleted successfully', category='success')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
 
-@project.post('environ/{project_id}/')
+@project.post('/environ/{project_id}')
+@project.post('/environ/{project_id}/')
 async def user_project_environ(request: Request, project_id):
+    user_id = request.session['user_id']
     project = Project.get(project_id)
     if not project:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    env_file = Path(PROJECTS_DIR, str(project.id), '.env').resolve()
-    async with aiofiles.open(env_file, 'w') as file:
-        await file.close()
+    secret = Secret.find_one({'user_id': user_id, 'project_id': project_id})
+    if not secret:
+        secret = Secret(user_id, project_id)
     
-    for key, value in request.form.items():
-        set_key(env_file, key, value)
+    form = await request.form()
+    data = form._dict
+
+    
+    secret.variables = form._dict
+    secret.save()
 
     # project = Project.get(project_id)
     flash(request, 'Environment variables updated successfully', category='success')
-    return RedirectResponse(request.url_for('user_project_details', project_id=project_id))
+    return RedirectResponse(request.url_for('user_project_details', project_id=project_id), status_code=status.HTTP_303_SEE_OTHER)
 
 @project.patch('/')
 async def update_user_project(request: Request):

@@ -25,7 +25,7 @@
     {% endfor %}
 
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
+        <div class="btn-group" role="group" aria-label="tool buttons">
             <nav class="nav-item dropdown" aria-label="Functions">
                 <a href="#" class="btn btn-outline-dark mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
@@ -58,130 +58,70 @@
         </div>
     </div>
 
-    <div class="card rounded-0 border-0">
-        <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <span>Config</span>
-                </button>
-                <button class="nav-link" id="nav-functions-tab" data-bs-toggle="tab" data-bs-target="#nav-functions" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <span>Functions</span>
-                </button>
-                <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
-                    <span>Settings</span>
-                </button>
-                <button class="nav-link" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab" aria-controls="nav-loggs" aria-selected="false" disabled>
-                    <span>Logs</span>
-                </button>
-                <button class="nav-link" id="nav-console-tab" data-bs-toggle="tab" data-bs-target="#nav-console" type="button" role="tab" aria-controls="nav-console" aria-selected="false" disabled>
-                    <span>Console</span>
-                </button>
-            </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
-                <div class="card rounded-0 border-0 shadow-sm my-2">
-                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
-                        <small class="fw-bold"></small>
-                        <div class="btn-group">
-                            <button type="submit" class="btn btn-primary bg-gradient shadow-sm border-0" onclick="updateEnvs()">
-                                <i class="fas fa-save fa-fw"></i> Update
-                            </button>
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-4 mt-4">
+            <div class="card rounded-0 border-0 shadow-sm">
+                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
+                    <small class="fw-bold">Project Details</small>
+                </div>
+                <div class="card-body pb-0 d-flex flex-column gap-3">
+                    {% for key, value in project.items() %}
+                        <div class="border-bottom pb-2">
+                            <small class="text-center pe-2">{{key | capitalize}}:</small>
+                            <small class="text-secondary">{{value}}</small>
                         </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mt-4">
+            <div class="card rounded-0 border-0 shadow-sm">
+                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
+                    <small class="fw-bold">Functions</small>
+                </div>
+                <div class="card-body pb-0 d-flex flex-column gap-3">
+                    {% for func in funcs %}
+                        <div class="border-bottom pb-2">
+                            <small class="text-center pe-2">{{func.name | title}}</small>
+                            <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
+                                <small class="text-secondary">
+                                    {{url_for('run_project', project_id=project.id, function=func.name) }}
+                                </small>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mt-4">
+            <div class="card rounded-0 border-0 shadow-sm">
+                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
+                    <small class="fw-bold">Environment Variables</small>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="createEnv()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-outline-dark" onclick="updateEnvs()">
+                            <i class="fas fa-save fa-fw"></i> Update
+                        </button>
                     </div>
-                    <div class="card-body pb-0 d-flex gap-3 custom-flex-wrap">
-                        {% for key, value in project.items() %}
-                            <div class="border hover:shadow-sm d-flex flex-column" style="border-radius: 25px;">
-                                <small class="border-bottom p-2 text-bg-secondary"  style="border-top-left-radius: 25px; border-top-right-radius: 25px;">{{key | upper}}</small>
-                                <small class="m-0 p-2 text-center">{{value}}</small>
+                </div>
+                <div class="card-body pb-0 d-flex flex-column gap-3">
+                    <form action="{{url_for('user_project_environ', project_id=project.id)}}" method="post" class="env-form">
+                        {% for key, value in environs.items() %}
+                        {% set id = 'env'+(loop.index | string) %}
+                        {% set envKey = 'envKey'+(loop.index | string) %}
+                            <div class="form-group d-flex justify-content-between align-items-center gap-3 pb-2" id="{{id}}">
+                                <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-sm key-input rounded-0" data-name="{{envKey}}" required onkeyup="setEnvKey(this)">
+                                <span>=</span>
+                                <input type="text" name="{{key}}" value="{{value}}" placeholder="value" id="{{envKey}}" class="form-control form-control-sm rounded-0" required>
+                                <a href="javascript: deleteElem('{{id}}')" class="nav-link">
+                                    <i class="fas fa-times text-danger"></i>
+                                </a>
                             </div>
                         {% endfor %}
-                    </div>
+                    </form>
                 </div>
-            </div>
-            <div class="tab-pane fade bg-light" id="nav-functions" role="tabpanel" aria-labelledby="nav-functions-tab" tabindex="0">
-                <div class="card rounded-0 border-0 shadow-sm my-2 bg-light">
-                    <div class="card-body pb-0 w-100">
-                        <table class="table table-hover table-striped fs-5">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Link</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for func in funcs %}
-                                <tr>
-                                    <td>
-                                        <h4 class="small text-primary">{{func.name | title}}</h4>
-                                    </td>
-                                    <td>
-                                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
-                                            <small>
-                                                {{url_for('run_project', project_id=project.id, function=func.name) }}
-                                            </small>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="bg-dark nav-link px-2 rounded" style="width: fit-content" target="_blank">
-                                            <i class="fas fa-terminal fa-fw text-bg-dark p-1 rounded-1"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card rounded-0 border-0 shadow-sm my-2">
-                            <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
-                                <small class="fw-bold">Environment Variables</small>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-dark" onclick="createEnv()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                    <button type="submit" class="btn btn-sm btn-primary border-0" onclick="updateEnvs()">
-                                        <i class="fas fa-save fa-fw"></i> Save
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body pb-0">
-                                <form action="{{url_for('user_project_environ', project_id=project.id)}}" method="post" class="env-form">
-                                    {% for key, value in environs.items() %}
-                                    {% set id = 'env'+(loop.index | string) %}
-                                    {% set envKey = 'envKey'+(loop.index | string) %}
-                                        <div class="form-group row align-items-center mb-2" id="{{id}}">
-                                            <div class="col-5">
-                                                <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-sm key-input" data-name="{{envKey}}" required onkeyup="setEnvKey(this)">
-                                            </div>
-                                            <div class="col-1">
-                                                <span>=</span>
-                                            </div>
-                                            <div class="col-5">
-                                                <input type="text" name="{{key}}" value="{{value}}" placeholder="value" id="{{envKey}}" class="form-control form-control-sm" required>
-                                            </div>
-                                            <div class="col-1">
-                                                <a href="javascript: deleteElem('{{id}}')" class="nav-link">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6"></div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="nav-logs" role="tabpanel" aria-labelledby="nav-logs-tab" tabindex="0">...</div>
-            <div class="tab-pane fade" id="nav-console" role="tabpanel" aria-labelledby="nav-console-tab" tabindex="0">
-                Terminal Console
             </div>
         </div>
     </div>

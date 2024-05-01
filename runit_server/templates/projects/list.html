@@ -1,44 +1,38 @@
-<div class="card rounded-0 border-0 shadow-sm mt-3">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-light table-striped table-hover mb-0  fs-5">
-                <thead>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Language</th>
-                    <!-- <th>Updated At</th> -->
-                    <th class="text-center">Actions</th>
-                </thead>
-                <tbody>
-                    {% for project in projects %}
-                    <tr>
-                        <td>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="">
-                            </div>
-                        </td>
-                        <td>
-                            <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link">
-                                {{ project['name'] }}
-                            </a>
-                        </td>
-                        <td>
-                            <i class="{{ icons[project.language]}} fa-fw"></i>
-                            <span>{{project['language']}}</span>
-                        </td>
-                        <!-- <td>{{ project['updated_at'] }}</td> -->
-                        <td class="d-flex justify-content-center gap-3">
-                            <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link">
-                                <i class="far fa-file-alt text-primary"></i>
-                            </a>
-                            <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal">
-                                <i class="fas fa-trash-alt text-danger"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="row bg-dark text-white w-100 rounded-0 border-0 shadow-sm d-flex justify-content-between fs-5 p-2 px-4 mt-3">
+    <div class="col d-flex gap-2">
+        <input class="form-check-input cursor-pointer" type="checkbox" value="" id="selectAll">
+        <span>Name</span>
+    </div>
+    <div class="col d-flex align-items-center gap-2">
+        <span>Language</span>
+    </div>
+    <div class="col d-flex align-items-center justify-content-end gap-2">
+        <span>Actions</span>
     </div>
 </div>
+{% for project in projects %}
+<div class="row bg-white w-100 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-between fs-5 p-2 px-4 mt-3">
+    <div class="col d-flex gap-2">
+        <input 
+            class="form-check-input cursor-pointer" 
+            type="checkbox"
+            data-project-id="{{project.id}}"
+            data-project-name="{{project.name}}">
+        <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link">
+            {{ project['name'] | title}}
+        </a>
+    </div>
+    <div class="col d-flex align-items-center gap-2">
+        <i class="{{ icons[project.language]}} fa-fw"></i>
+        <span>{{project['language'] | title}}</span>project
+    </div>
+    <div class="col d-flex align-items-center justify-content-end gap-2">
+        <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link" title="Details">
+            <i class="far fa-file-alt text-primary"></i>
+        </a>
+        <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal" title="Delete">
+            <i class="fas fa-trash-alt text-danger"></i>
+        </a>
+    </div>
+</div>
+{% endfor %}

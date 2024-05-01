@@ -14,6 +14,7 @@ from ..common.security import authenticate, create_access_token, get_session_use
 from ..models import User
 from ..models import Admin
 from ..models import Project
+from ..models import Secret
 from ..common import Utils
 
 from runit import RunIt
@@ -174,6 +175,11 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
     # elif project.private and request.session.get('user_id') != project.user_id:
     #     logging.warning('Project is private')
     #     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
+    secret = Secret.find_one({'project_id': project_id})
+    if secret and secret.variables:
+        environs = secret.variables
+        for key, value in environs.items():
+            os.environ[key] = value
     
     current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
     function = function if function else 'index'
@@ -187,4 +193,5 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
         return JSONResponse(response) if type(response) is dict else response
     
     logging.warning('Project directory not found')
+    
     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)

@@ -21,8 +21,9 @@ ylesheet">
 
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
 
-    <link rel='icon' href="/static/images/dark-terminal.svg')}}">
+    <link rel='icon' href="/static/images/dark-terminal.svg">
 
     <meta name="msapplication-TileColor" content="#ffff00">
     
@@ -30,47 +31,6 @@ ylesheet">
 </head>
 
 <body>
-    <style>
-        body {
-            overflow: hidden;
-            font-size: 16px;
-        }
-
-        .sidebar a:hover {
-            opacity: 1 !important;
-        }
-    
-        .sidebar a.active {
-            opacity: 1 !important;
-        }
-
-        .main-content {
-            height: 100vh;
-            overflow-y: auto;
-        }
-
-        .hover\:shadow-sm:hover {
-            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
-        }
-
-        .hover\:text-dark:hover {
-            color: rgba(var(--bs-dark-rgb),var(--bs-text-opacity))!important;
-        }
-
-        .custom-flex-wrap {
-            flex-wrap: wrap;
-        }
-
-        .white-space-nowrap {
-            white-space: nowrap;
-        }
-
-        @media screen and (min-width: 576px) {
-            .main-content {
-                height: 80vh;
-            }
-        }
-    </style>
     <div class="d-none" id="accessToken">
         {{request.session['access_token']}}
     </div>

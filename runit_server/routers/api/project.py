@@ -297,20 +297,20 @@ async def api_get_project_details(
         funcs.append(func)
     
     os.chdir(old_curdir)
-    project = Project.find({
+    project = Project.find_one({
         'id': project_id,
         'user_id': user.id
     })
 
-    if len(project):
-        project = project[0].json()
+    if project:
+        project = project.json()
         del project['author']
         project['functions'] = funcs
         project['endpoints'] = []
         for func in funcs:
             project['endpoints'].append(f"{request.base_url}{project_id}{func}")
         response = project
-    
+        
     return JSONResponse(response)
 
 @projects_api.get('/delete/{project_id}')
@@ -324,13 +324,12 @@ async def api_delete_user_project(
         }
     try:
         user_id = user.id
-        project = Project.find({
+        project = Project.find_one({
             'id': project_id,
             'user_id': user_id
         })
         
-        if len(project):
-            project = project[0]
+        if project:
             Project.remove({'_id': project_id, 'user_id': user_id})
             background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)).resolve())
             

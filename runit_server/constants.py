@@ -26,6 +26,7 @@ if not RUNIT_WORKDIR.exists():
     RUNIT_WORKDIR.mkdir()
 
 DOTENV_FILE = RUNIT_WORKDIR.joinpath('.env')
+
 if not DOTENV_FILE.exists():
     with open(DOTENV_FILE, 'w') as file:
         pass 

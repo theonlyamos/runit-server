@@ -1,28 +1,57 @@
-<div class="d-flex flex-wrap mt-3">
+<div class="row mt-3">
 {% for project in projects %}
-<div class="position-relative m-2 p-3 border rounded shadow-sm">
-    <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
-        <i class="{{ icons[project.language]}} fa-fw fa-3x mb-2"></i>
-        <span>{{ project['name'] }}</span>
-    </a>
-    <nav class="nav-item dropdown position-absolute" style="right: 13px; top: 8px">
-        <a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-            <i class="fas fa-ellipsis-v text-secondary"></i>
+<div class="col-md-6 col-lg-4 col-lx-3">
+    <div class="card position-relative bg-white m-2 p-3 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-center align-items-center cursor-pointer" style="height: 200px;">
+        <input 
+            class="form-check-input cursor-pointer position-absolute fs-5" 
+            type="checkbox"
+            style="top: 4px; left: 10px;"
+            data-project-id="{{project.id}}"
+            data-project-name="{{project.name}}"
+        >
+        <a 
+            href="{{url_for('user_project_details', project_id=project.id)}}" 
+            class="nav-link d-flex flex-column align-items-center text-black-50 hover:text-dark position-absolute"
+            style="right: 0; bottom: 0"
+            title="{{ project.language }}">
+            <i class="{{ icons[project.language]}} fa-2x fa-fw mb-2 text-dark"></i>
         </a>
-        <ul class="dropdown-menu rounded-0 shadow border-0">
-            <li>
-                <a href="{{url_for('user_project_details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
-                    Details
-                </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <a href="{{url_for('delete_user_project', project_id=project.id)}}" class="dropdown-item text-danger small py-0">
-                    Delete
-                </a>
-			</li>
-        </ul>
-    </nav>
+        <a 
+            href="{{url_for('user_project_details', project_id=project.id)}}"
+            class="nav-link d-flex flex-column justify-content-center w-100 p-4 gap-3"
+            style="height: 200px;">
+            <div class="border-bottom pb-2 d-flex justify-content-between custom-flex-wrap">
+                <small class="text-center pe-2">Name:</small>
+                <small class="text-secondary">{{ project['name'] | title }}</small>
+            </div>
+            <div class="border-bottom pb-2 d-flex justify-content-between custom-flex-wrap">
+                <small class="text-center pe-2">Language:</small>
+                <small class="text-secondary">{{ project['language'] | title }}</small>
+            </div>
+            <div class="border-bottom pb-2 d-flex justify-content-between custom-flex-wrap">
+                <small class="text-center pe-2">Last Update:</small>
+                <small class="text-secondary">{{ project['updated_at'] | title }}</small>
+            </div>
+        </a>
+        <nav class="nav-item dropdown position-absolute" style="right: 13px; top: 8px">
+            <a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <i class="fas fa-ellipsis-v text-secondary"></i>
+            </a>
+            <ul class="dropdown-menu rounded-0 shadow border-0">
+                <li>
+                    <a href="{{url_for('user_project_details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
+                        Details
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a href="{{url_for('delete_user_project', project_id=project.id)}}" class="dropdown-item text-danger small py-0">
+                        Delete
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 </div>
 {% endfor %}
 </div>

@@ -28,31 +28,22 @@ const createEnv = ()=>{
     let form = document.querySelector('.env-form')
     
     let formGroup = document.createElement('div')
-    formGroup.classList.add('form-group', 'row', 'align-items-center', 'mb-2')
+    formGroup.classList.add('form-group', 'd-flex', 'justify-content-between', 'align-items-center', 'gap-3', 'rounded-0', 'pb-2')
     let id = uid()
     formGroup.id = id
 
-    let firstCol = document.createElement('div')
-    let secCol = document.createElement('div')
-    let thirdCold = document.createElement('div')
-    let fourthCol = document.createElement('div')
-
-    firstCol.classList.add('col-5')
-    secCol.classList.add('col-1')
-    thirdCold.classList.add('col-5')
-    fourthCol.classList.add('col-1')
 
     let envNameInput = document.createElement('input')
     envNameInput.setAttribute('type', 'text')
     envNameInput.setAttribute('required', 'required')
     envNameInput.setAttribute('placeholder', 'Key')
-    envNameInput.classList.add('form-control', 'form-control-sm')
+    envNameInput.classList.add('form-control', 'form-control-sm', 'key-input', 'rounded-0')
 
     let envValueInput = document.createElement('input')
     envValueInput.setAttribute('type', 'text')
     envValueInput.setAttribute('required', 'required')
     envValueInput.setAttribute('placeholder', 'Value')
-    envValueInput.classList.add('form-control', 'form-control-sm')
+    envValueInput.classList.add('form-control', 'form-control-sm', 'rounded-0')
 
     envNameInput.addEventListener('keydown', e => {
         const regex = /[^A-Za-z0-9]/g
@@ -61,19 +52,20 @@ const createEnv = ()=>{
         }
     })
 
-    firstCol.appendChild(envNameInput)
-    secCol.innerHTML = `<span>=</span>`
-    thirdCold.appendChild(envValueInput)
-    fourthCol.innerHTML = `<a href="javascript: deleteElem('${id}')" class="nav-link">
-                            <i class="fas fa-trash-alt"></i>
-                           </a>`
+    let equalSign = document.createElement('span')
+    equalSign.innerText = '='
+    
+    let deleteBtn = document.createElement('a')
+    deleteBtn.setAttribute('href', `javascript: deleteElem('${id}')`)
+    deleteBtn.classList.add('nav-link')
+    deleteBtn.innerHTML = `<i class="fas fa-times text-danger"></i>`
 
-    formGroup.appendChild(firstCol)
-    formGroup.appendChild(secCol)
-    formGroup.appendChild(thirdCold)
-    formGroup.appendChild(fourthCol)
+    formGroup.appendChild(envNameInput)
+    formGroup.appendChild(equalSign)
+    formGroup.appendChild(envValueInput)
+    formGroup.appendChild(deleteBtn)
 
-    form.prepend(formGroup)
+    form.append(formGroup)
     
 }
 
@@ -173,6 +165,40 @@ class Project{
 
 window.onload = async(e)=>{
     if (window.location.pathname === '/projects/'){
+        let selectAll = document.getElementById('selectAll')
+        let allChecks = document.querySelectorAll('[type=checkbox]:not(#selectAll)')
+
+        if (selectAll){ 
+            selectAll.onchange = ((e)=>{
+                allChecks.forEach((checker)=>{
+                    checker.checked = selectAll.checked
+                })
+            })
+        }
+        const confirmModal = document.getElementById('confirmModal')
+        confirmModal.addEventListener('show.bs.modal', event => {
+            let selected = document.querySelectorAll('[type=checkbox]:checked:not(#selectAll)')
+            if (!selected.length){
+                event.preventDefault()
+            }
+            let projectIds = []
+            let projectNames = []
+
+            selected.forEach(checkbox => {
+                let projectId = checkbox.dataset.projectId;
+                let projectName = checkbox.dataset.projectName;
+                if (projectId && projectName) {
+                    projectIds.push(projectId);
+                    projectNames.push(projectName);
+                }
+            });
+            let confirmElem = document.getElementById('confirmationMessage')
+
+            if (confirmElem){
+                let count = projectNames.length
+                confirmElem.innerText = `Are you sure you want to delete ${count > 1 ? 'these' : 'this'} project${count > 1 ? 's' : ''}: [${projectNames}]?`
+            }
+        })
         Github.init({
             name: 'name',
             repos: 'github_repo',
