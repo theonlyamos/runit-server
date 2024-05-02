@@ -2,15 +2,18 @@
     <div class="modal-dialog">
         <div class="modal-content rounded-0">
             <form action="{{ url_for('create_user_project') }}" method="post" id="projectForm">
-                <div class="modal-header text-bg-dark rounded-0">
+                <div class="modal-header text-bg-secondary rounded-0">
                     <h5 class="modal-title fw-bolder" id="projectModalLabel">New Project</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group mb-3">
-                        <label for="repo" class="small">Github Repository</label>
+                        <label for="repo" class="small text-secondary">Github Repository</label>
                         {% if user.gat %}
-                        <select name="github_repo" id="github_repo" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required>
+                        <select 
+                            name="github_repo" 
+                            id="github_repo" 
+                            class="form-select form-select-sm border-0 bg-light hover:shadow-sm py-2" required>
                             <option selected disabled>
                                 ...
                             </option>
@@ -21,59 +24,72 @@
                             {% endfor %}
                         </select>
                         {% else %}
-                        <a href="https://github.com/login/oauth/authorize?client_id={{git_client_id}}" role="button" class="btn btn-light d-block">
+                        <a href="https://github.com/login/oauth/authorize?client_id={{git_client_id}}" role="button" class="btn btn-light d-block hover:shadow-sm">
                             <i class="fab fa-github me-2"></i> Connect Github
                         </a>
                         {% endif %}
                     </div>
                     <div class="form-group mb-3 d-none" id="branches_elem">
-                        <label for="github_repo_branch" class="small">Select Branch</label>
-                        <select name="github_repo_branch" id="github_repo_branch" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" required>
+                        <label for="github_repo_branch" class="small text-secondary">Select Branch</label>
+                        <select 
+                            name="github_repo_branch" 
+                            id="github_repo_branch" 
+                            class="form-select form-select-sm border-0 bg-light hover:shadow-sm py-2" 
+                            required>
                             <option selected disabled>
                                 ...
                             </option>
                         </select>
                     </div>
                     <div class="form-group mb-3">
+                        <label for="name" class="small text-secondary">Project Name</label>
                         <input type="text"  name="name" id="name"
-                        class="form-control form-control-sm border-0 border-bottom border-dark rounded-0" 
-                        placeholder="Name of the project" autocomplete="off" required style="text-transform: capitalize;">
+                            class="form-control form-control-sm border-0 bg-light hover:shadow-sm py-2" 
+                            autocomplete="off" 
+                            required style="text-transform: capitalize;">
                     </div>
                     <div class="form-group mb-3">
-                        <label for="language" class="small">Programming Language</label>
-                        <select name="language" class="form-select form-select-sm border-0 border-bottom border-dark rounded-0" id="language" required>
+                        <label for="language" class="small text-secondary">Programming Language</label>
+                        <select 
+                            name="language" 
+                            class="form-select form-select-sm border-0 bg-light hover:shadow-sm py-2 text-secondary"
+                            id="language" 
+                            required>
                             <option disabled>
                                 <i class="fas fa-code fa-fw"></i> ...
                             </option>
                             {% for lang in icons %}
-                            <option value="{{lang | lower }}">
-                                <i class="fab fa-{{icons[lang]}} fa-fw"></i> {{ lang | capitalize }}
+                            <option value="{{lang | lower }}" class="text-secondary">
+                                <i class="fab fa-{{icons[lang]}} fa-fw"></i> {{ lang }}
                             </option>
                             {% endfor %}
                         </select>
                     </div>
 					<div class="form-group mb-3">
-						<textarea id="description"
-                            class="text-dark form-control form-control-sm border-0 border-bottom border-dark rounded-0"
-                            name="description" placeholder="Project Description"></textarea>
+                        <label for="description" class="small text-secondary">Project Description</label>
+						<textarea 
+                            id="description"
+                            class="text-dark form-control form-control-sm border-0 bg-light hover:shadow-sm"
+                            name="description" 
+                            rows="3"></textarea>
 					</div>
 					<div class="form-group mb-3">
-						<label for="database" class="small">Create database for project?</label>
+						<label for="database" class="small text-secondary">Create database for project?</label>
 						<div class="form-check">
-							<label class="form-check-label small">NO</label>
+							<label class="form-check-label small text-secondary">NO</label>
 							<input type="radio" name="database" value=0 checked class="form-check-input">
 						</div>
 						<div class="form-check">
-							<label class="form-check-label small">YES</label>
+							<label class="form-check-label small text-secondary">YES</label>
 							<input type="radio" name="database" value=1 class="form-check-input">
 						</div>
 					</div>
                 </div>
-                <div class="modal-footer p-0">
-                    <button type="button" class="btn btn-danger rounded-0 m-0" data-bs-dismiss="modal">
+                <div class="modal-footer gap-3 border-0">
+                    <button type="button" class="btn btn-light bg-gradient shadow-sm m-0" data-bs-dismiss="modal">
                         <small>Close</small>
                     </button>
-                    <button type="submit" class="btn btn-dark rounded-0 m-0" id="submitBtn">
+                    <button type="submit" class="btn btn-secondary bg-gradient border-0 shadow-sm m-0" id="submitBtn">
                         <small><i class="fas fa-spinner fa-spin me-2 d-none"></i> Create Project</small>
                     </button>
                 </div>

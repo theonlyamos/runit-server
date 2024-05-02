@@ -37,13 +37,15 @@ const createEnv = ()=>{
     envNameInput.setAttribute('type', 'text')
     envNameInput.setAttribute('required', 'required')
     envNameInput.setAttribute('placeholder', 'Key')
-    envNameInput.classList.add('form-control', 'form-control-sm', 'key-input', 'rounded-0')
+    envNameInput.classList.add('form-control', 'form-control-sm', 'key-input', 'text-secondary')
+    envNameInput.classList.add('border-0', 'bg-light', 'hover:shadow-sm', 'py-2')
 
     let envValueInput = document.createElement('input')
     envValueInput.setAttribute('type', 'text')
     envValueInput.setAttribute('required', 'required')
     envValueInput.setAttribute('placeholder', 'Value')
-    envValueInput.classList.add('form-control', 'form-control-sm', 'rounded-0')
+    envValueInput.classList.add('form-control', 'form-control-sm', 'text-secondary')
+    envValueInput.classList.add('border-0', 'bg-light', 'hover:shadow-sm', 'py-2')
 
     envNameInput.addEventListener('keydown', e => {
         const regex = /[^A-Za-z0-9]/g
@@ -111,11 +113,11 @@ class Project{
     static async create(form){
         if (!form.reportValidity()) return null
         setLoading(true)
+        let modalCloseBtn = document.querySelector('.btn-close')
 
         try {
             let data = Object.fromEntries(new FormData(form))
             let access_token = document.getElementById('accessToken').innerText.trim()
-            let modalCloseBtn = document.querySelector('.btn-close')
     
             let url =  '/api/v1/projects/'
     
@@ -136,16 +138,69 @@ class Project{
             const {status, message, project} = result
             
             if (status === 'success'){
-                // modalCloseBtn.click()
-                window.location.reload()
+                Alert.success(message)
+                setTimeout((e)=>{
+                    window.location.reload()
+                }, 3000)
                 // return new Project(project)
             }
-            console.error(message)
-            return null
+            else{
+                console.log(modalCloseBtn)
+                modalCloseBtn.click()
+                Alert.error(message)
+            }
             
         } catch (error) {
             setLoading(false)
-            console.log(error)
+            modalCloseBtn.click()
+            Alert.error(error)
+        }
+
+
+        
+    }
+
+    static async delete(projectIds){
+
+        try {
+            let data = projectIds.join(',')
+            let access_token = document.getElementById('accessToken').innerText.trim()
+            let modalCloseBtn = document.querySelector('.btn-close')
+    
+            let url =  `/api/v1/projects/${data}`
+    
+            let response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${access_token}`
+                },
+                method: 'DELETE',
+                mode: 'same-origin',
+            })
+    
+            let result = await response.json()
+            
+            const {status, message} = result
+            
+            if (status === 'success'){
+                modalCloseBtn.click()
+                projectIds.forEach((projectId)=>{
+                    let projectElem = document.getElementById(projectId)
+                    if (projectElem)
+                        projectElem.remove()
+                })
+                Alert.success(message)
+                // return new Project(project)
+            }
+            else{
+
+                Alert.error(message)
+            }
+            
+        } catch (error) {
+            Alert.error(error)
+        } finally {
+            setLoading(false)
         }
 
 
@@ -163,42 +218,74 @@ class Project{
     
 }
 
+const openConfirmModal = ()=>{
+    let selectAll = document.getElementById('selectAll')
+    let allChecks = document.querySelectorAll('[type=checkbox]:not(#selectAll)')
+
+    if (selectAll){ 
+        selectAll.onchange = ((e)=>{
+            allChecks.forEach((checker)=>{
+                checker.checked = selectAll.checked
+            })
+        })
+    }
+    
+    const confirmModal = document.getElementById('confirmModal')
+    confirmModal.addEventListener('show.bs.modal', event => {
+        let projectIds = []
+        let projectNames = []
+    
+        let selectedProjects = document.querySelectorAll('[type=checkbox]:checked:not(#selectAll)')
+        if (!selectedProjects.length){
+            event.preventDefault()
+        }
+
+        selectedProjects.forEach(checkbox => {
+            let projectId = checkbox.dataset.projectId;
+            let projectName = checkbox.dataset.projectName;
+            if (projectId && projectName) {
+                projectIds.push(projectId);
+                projectNames.push(projectName);
+            }
+        });
+
+        let confirmElem = document.getElementById('confirmationMessage')
+
+        if (confirmElem){
+            let count = projectNames.length
+            confirmElem.innerText = `Are you sure you want to delete ${count > 1 ? 'these' : 'this'} project${count > 1 ? 's' : ''}: [${projectNames}]?`
+        }
+
+        let deleteBtn = document.getElementById('deleteBtn')
+        if (deleteBtn){
+            deleteBtn.onclick = (e)=>{
+                Project.delete(projectIds)
+            }
+        }
+    })
+}
+
+const onDeleteProject = (projectId)=>{
+    let allChecks = document.querySelectorAll('[type=checkbox]:not(#selectAll)')
+    allChecks.forEach((checker)=>{
+        checker.checked = false
+    })
+
+    const projectSelector = document.getElementById(`input_${projectId}`)
+    if (projectSelector){
+        projectSelector.checked = true
+        const modal = new bootstrap.Modal('#confirmModal')
+        modal.show()
+    }
+
+    openConfirmModal()
+}
+
 window.onload = async(e)=>{
     if (window.location.pathname === '/projects/'){
-        let selectAll = document.getElementById('selectAll')
-        let allChecks = document.querySelectorAll('[type=checkbox]:not(#selectAll)')
 
-        if (selectAll){ 
-            selectAll.onchange = ((e)=>{
-                allChecks.forEach((checker)=>{
-                    checker.checked = selectAll.checked
-                })
-            })
-        }
-        const confirmModal = document.getElementById('confirmModal')
-        confirmModal.addEventListener('show.bs.modal', event => {
-            let selected = document.querySelectorAll('[type=checkbox]:checked:not(#selectAll)')
-            if (!selected.length){
-                event.preventDefault()
-            }
-            let projectIds = []
-            let projectNames = []
-
-            selected.forEach(checkbox => {
-                let projectId = checkbox.dataset.projectId;
-                let projectName = checkbox.dataset.projectName;
-                if (projectId && projectName) {
-                    projectIds.push(projectId);
-                    projectNames.push(projectName);
-                }
-            });
-            let confirmElem = document.getElementById('confirmationMessage')
-
-            if (confirmElem){
-                let count = projectNames.length
-                confirmElem.innerText = `Are you sure you want to delete ${count > 1 ? 'these' : 'this'} project${count > 1 ? 's' : ''}: [${projectNames}]?`
-            }
-        })
+        onDeleteProject()
+        
         Github.init({
             name: 'name',
             repos: 'github_repo',

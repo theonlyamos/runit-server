@@ -11,13 +11,17 @@
     </div>
 </div>
 {% for project in projects %}
-<div class="row bg-white w-100 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-between fs-5 p-2 px-4 mt-3">
+<div 
+    class="row bg-white w-100 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-between fs-5 p-2 px-4 mt-3" 
+    id="{{project.id}}">
     <div class="col d-flex gap-2">
         <input 
             class="form-check-input cursor-pointer" 
             type="checkbox"
             data-project-id="{{project.id}}"
-            data-project-name="{{project.name}}">
+            data-project-name="{{project.name}}"
+            id="input_{{project.id}}">
+
         <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link">
             {{ project['name'] | title}}
         </a>
@@ -30,7 +34,9 @@
         <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link" title="Details">
             <i class="far fa-file-alt text-primary"></i>
         </a>
-        <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal" title="Delete">
+        <a href="javascript:onDeleteProject('{{project.id}}')" 
+            class="nav-link"
+            title="Delete">
             <i class="fas fa-trash-alt text-danger"></i>
         </a>
     </div>

@@ -44,6 +44,32 @@ body {
     white-space: nowrap;
 }
 
+.custom-alert {
+    animation: slideIn .5s ease-in,
+                slideOut .5s ease-out 4.5s;
+    transition: all .5s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        right: -300px;
+    }
+
+    to {
+        right: 10px;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        right: 10px;
+    }
+
+    to {
+        right: -300px;
+    }
+}
+
 @media screen and (min-width: 576px) {
     .main-content {
         height: 80vh;

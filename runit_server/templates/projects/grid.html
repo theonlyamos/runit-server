@@ -1,6 +1,6 @@
 <div class="row mt-3">
 {% for project in projects %}
-<div class="col-md-6 col-lg-4 col-lx-3">
+<div class="col-md-6 col-lg-4 col-lx-3" id="{{project.id}}">
     <div class="card position-relative bg-white m-2 p-3 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-center align-items-center cursor-pointer" style="height: 200px;">
         <input 
             class="form-check-input cursor-pointer position-absolute fs-5" 
@@ -8,6 +8,7 @@
             style="top: 4px; left: 10px;"
             data-project-id="{{project.id}}"
             data-project-name="{{project.name}}"
+            id="input_{{project.id}}"
         >
         <a 
             href="{{url_for('user_project_details', project_id=project.id)}}" 
@@ -39,13 +40,14 @@
             </a>
             <ul class="dropdown-menu rounded-0 shadow border-0">
                 <li>
-                    <a href="{{url_for('user_project_details', project_id=project.id)}}" class="dropdown-item small py-0" target="_blank">
+                    <a href="{{url_for('user_project_details', project_id=project.id)}}" class="dropdown-item small py-0">
                         Details
                     </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <a href="{{url_for('delete_user_project', project_id=project.id)}}" class="dropdown-item text-danger small py-0">
+                    <a href="javascript:onDeleteProject('{{project.id}}')" 
+                        class="dropdown-item text-danger small py-0">
                         Delete
                     </a>
                 </li>

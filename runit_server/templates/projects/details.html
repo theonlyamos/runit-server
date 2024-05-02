@@ -1,6 +1,6 @@
 {% extends "account/layout.html" %}
 {% block title %} 
-{{super()}} | {{page | capitalize}} | {{project.name}}
+{{super()}} - {{page | capitalize}} - {{project.name}}
 {% endblock %}
 
 {% block pagetitle %}
@@ -15,7 +15,8 @@
 {% endblock %}
 
 {% block content %}
-
+{% include 'modals/confirm.html' %}
+{% include 'projects/modal.html' %}
 <div class="container">
     {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -24,10 +25,18 @@
     </div>
     {% endfor %}
 
+    <input 
+        class="form-check-input d-none" 
+        type="checkbox"
+        data-project-id="{{project.id}}"
+        data-project-name="{{project.name}}"
+        id="input_{{project.id}}"
+    >
+
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group" role="group" aria-label="tool buttons">
+        <div class="btn-group hover:shadow-sm pb-0" role="group" aria-label="tool buttons">
             <nav class="nav-item dropdown" aria-label="Functions">
-                <a href="#" class="btn btn-outline-dark mb-2 rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
+                <a href="#" class="btn btn-outline-dark rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
                     <i class="fas fa-terminal"></i>
                 </a>
                 <ul class="dropdown-menu rounded-0 shadow border-0">
@@ -40,19 +49,19 @@
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id)}}" role="button" class="btn btn-outline-success hover:shadow-sm mb-2" title="Reinstall Dependencies">
+            <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id)}}" role="button" class="btn btn-outline-success" title="Reinstall Dependencies">
                 <i class="fas fa-wrench"></i>
             </a>
             {% if project.private %}
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Make project public">
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary" title="Make project public">
                 <i class="fas fa-eye"></i>
             </a>
             {% else %}
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary hover:shadow-sm mb-2" title="Make project private">
+            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary" title="Make project private">
                 <i class="fas fa-eye-slash"></i>
             </a>
             {% endif %}
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-danger hover:shadow-sm mb-2" title="Delete Project">
+            <a href="javascript:onDeleteProject('{{project.id}}')" class="btn btn-outline-danger" title="Delete Project">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
@@ -60,7 +69,7 @@
 
     <div class="row mb-4">
         <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm">
+            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
                 <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
                     <small class="fw-bold">Project Details</small>
                 </div>
@@ -75,7 +84,7 @@
             </div>
         </div>
         <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm">
+            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
                 <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
                     <small class="fw-bold">Functions</small>
                 </div>
@@ -94,10 +103,10 @@
             </div>
         </div>
         <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm">
+            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
                 <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
                     <small class="fw-bold">Environment Variables</small>
-                    <div class="btn-group">
+                    <div class="btn-group hover:shadow-sm">
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="createEnv()">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -112,9 +121,23 @@
                         {% set id = 'env'+(loop.index | string) %}
                         {% set envKey = 'envKey'+(loop.index | string) %}
                             <div class="form-group d-flex justify-content-between align-items-center gap-3 pb-2" id="{{id}}">
-                                <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-sm key-input rounded-0" data-name="{{envKey}}" required onkeyup="setEnvKey(this)">
+                                <input 
+                                    type="text" 
+                                    value="{{key}}" 
+                                    placeholder="key" 
+                                    class="form-control form-control-sm key-input text-secondary border-0 bg-light hover:shadow-sm py-2"
+                                    data-name="{{envKey}}" 
+                                    required 
+                                    onkeyup="setEnvKey(this)">
                                 <span>=</span>
-                                <input type="text" name="{{key}}" value="{{value}}" placeholder="value" id="{{envKey}}" class="form-control form-control-sm rounded-0" required>
+                                <input 
+                                    type="text" 
+                                    name="{{key}}" 
+                                    value="{{value}}" 
+                                    placeholder="value" 
+                                    id="{{envKey}}" 
+                                    class="form-control form-control-sm text-secondary border-0 bg-light hover:shadow-sm py-2" 
+                                    required>
                                 <a href="javascript: deleteElem('{{id}}')" class="nav-link">
                                     <i class="fas fa-times text-danger"></i>
                                 </a>

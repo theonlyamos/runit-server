@@ -54,6 +54,7 @@ def create_runit_project(config: dict, name: str):
     os.chdir(Path(PROJECTS_DIR, config['name']))
     new_runit.update_config()
 
+@project.get('')
 @project.get('/')
 async def list_user_projects(request: Request, view: Optional[str] = None):
     user_id = request.session['user_id']
@@ -182,6 +183,8 @@ async def create_user_project(
 @project.get('/{project_id}/')
 async def user_project_details(request: Request, project_id: str):
     user_id = request.session['user_id']
+    user = User.get(user_id)
+    user = user.json() if user else None
     old_curdir = os.curdir
     
     project = Project.get(project_id)
@@ -218,7 +221,7 @@ async def user_project_details(request: Request, project_id: str):
         
         return templates.TemplateResponse('projects/details.html', context={
             'request': request, 'page': 'projects','project': project, 
-            'environs': environs, 'funcs': funcs})
+            'environs': environs, 'funcs': funcs, 'user': user})
     else:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))

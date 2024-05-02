@@ -42,7 +42,6 @@ ylesheet">
         {% set menu = [
             {'name': 'home', 'icon': 'home', 'url': 'user_home'},
             {'name': 'projects', 'icon': 'sitemap', 'url': 'list_user_projects'},
-            {'name': 'functions', 'icon': 'terminal', 'url': 'list_user_functions'},
             {'name': 'databases', 'icon': 'database', 'url': 'list_user_databases'},
             {'name': 'profile', 'icon': 'user', 'url': 'user_profile'}
         ] %}
@@ -83,6 +82,7 @@ ylesheet">
     </main>
     {% block scripts %}
     <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/components.js"></script>
     {% endblock %}
 </body>
 </html>

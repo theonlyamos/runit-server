@@ -1,7 +1,7 @@
 {% extends "account/layout.html" %}
 
 {% block title %}
-{{super()}} | {{page | capitalize}}
+{{super()}} - {{page | capitalize}}
 {% endblock %}
 
 {% block content %}
@@ -17,7 +17,7 @@
     {% if projects %}
     
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
+        <div class="btn-group shadow-sm hover:shadow" role="group" aria-label="tool buttons">
             <a href="{{url_for('list_user_projects')}}?view=grid" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
                 <small><i class="fas fa-th-large fa-fw"></i></small>
             </a>
@@ -25,7 +25,7 @@
                 <small><i class="fas fa-th-list fa-fw"></i></small>
             </a>
         </div>
-        <div class="btn-group shadow-sm ms-3" role="group" aria-label="tool buttons">
+        <div class="btn-group shadow-sm hover:shadow ms-3" role="group" aria-label="tool buttons">
             <a href="#confirmModal" role="button" class="btn btn-outline-danger bg-gradient" data-bs-toggle="modal">
                 <small><i class="fas fa-trash-alt fa-fw"></i></small>
             </a>

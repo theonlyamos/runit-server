@@ -82,45 +82,50 @@ async def api_create_user_project(
         project = Project(str(user.id), **config)
         saved_project = project.save()
         project_id = saved_project.inserted_id if DBMS.Database.dbms == 'mongodb' else saved_project # type: ignore
-        project_id = str(project_id)
-        project.id = project_id
         
-        homepage = f"{request.base_url}{project_id}"
-        Project.update({'id': project_id}, {'homepage': homepage})
-
-        config['_id'] = project_id
-        config['homepage'] = homepage
-        
-        os.chdir(PROJECTS_DIR)
-        
-        config['name'] = project_id
-        new_runit = RunIt(**config)
-        
-        new_runit._id = project_id
-        new_runit.name = project_data.name
-        
-        project_folder = Path(PROJECTS_DIR, project_id).resolve()
-        # if not project_folder.exists():
-        #     project_folder.mkdir()
+        if not project_id:
+            response['status'] = 'error'
+            response['message'] = 'Error creating project'
+        else:
+            project_id = str(project_id)
+            project.id = project_id
             
-        os.chdir(str(project_folder))
-        new_runit.update_config()
-        
-        # os.chdir(RUNIT_HOMEDIR)
-        
-        if (project_data.database):
-            # Create database for project
-            collection_name = f"{project_data.name}_{str(user.id)}_{project_id}"
-            Database(
-                project_data.name+'_db',
-                collection_name,
-                str(user.id),
-                project_id
-            ).save()
-            Collection.TABLE_NAME = collection_name # type: ignore
-            Collection.create_table()
-        flash(request, 'Project created successfully', category='success')
-        response['project'] = Project.get(project_id).json() # type: ignore
+            homepage = f"{request.base_url}{project_id}"
+            Project.update({'id': project_id}, {'homepage': homepage})
+
+            config['_id'] = project_id
+            config['homepage'] = homepage
+            
+            os.chdir(PROJECTS_DIR)
+            
+            config['name'] = project_id
+            new_runit = RunIt(**config)
+            
+            new_runit._id = project_id
+            new_runit.name = project_data.name
+            
+            project_folder = Path(PROJECTS_DIR, project_id).resolve()
+            # if not project_folder.exists():
+            #     project_folder.mkdir()
+                
+            os.chdir(str(project_folder))
+            new_runit.update_config()
+            
+            # os.chdir(RUNIT_HOMEDIR)
+            
+            if (project_data.database):
+                # Create database for project
+                collection_name = f"{project_data.name}_{str(user.id)}_{project_id}"
+                Database(
+                    project_data.name+'_db',
+                    collection_name,
+                    str(user.id),
+                    project_id
+                ).save()
+                Collection.TABLE_NAME = collection_name # type: ignore
+                Collection.create_table()
+            flash(request, 'Project created successfully', category='success')
+            response['project'] = Project.get(project_id).json() # type: ignore
     except Exception as e:
         logging.exception(e)
         response['status'] = 'error'
@@ -128,7 +133,7 @@ async def api_create_user_project(
     finally:
         return JSONResponse(
             response,
-            status_code=status.HTTP_201_CREATED if response['status'] == 'success' else status.HTTP_500_INTERNAL_SERVER_ERROR
+            status_code=status.HTTP_201_CREATED if response['status'] == 'success' else status.HTTP_200_OK
         )
 
 @projects_api.post('/publish')
@@ -313,29 +318,30 @@ async def api_get_project_details(
         
     return JSONResponse(response)
 
-@projects_api.get('/delete/{project_id}')
+@projects_api.delete('/{project_ids}')
+@projects_api.delete('/{project_ids}/')
 async def api_delete_user_project(
     user: Annotated[User, Depends(get_current_user)],
-    project_id, 
+    project_ids, 
     background_task: BackgroundTasks):
+    project_ids = project_ids.split(',')
+    
     response = {
             'status': 'success',
-            'message': 'Project deleted successfully'
-        }
+            'message': f"Project{'' if len(project_ids) == 1 else 's'} deleted successfully"
+    }
     try:
         user_id = user.id
-        project = Project.find_one({
-            'id': project_id,
-            'user_id': user_id
-        })
         
-        if project:
-            Project.remove({'_id': project_id, 'user_id': user_id})
-            background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)).resolve())
+        for project_id in project_ids:
+            project = Project.find_one({
+                'id': project_id,
+                'user_id': user_id
+            })
             
-        else:
-            response['status'] = 'error'
-            response['message'] = 'Project was not found. Operation not successful'
+            if project:
+                Project.remove({'_id': project_id, 'user_id': user_id})
+                background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)).resolve())
 
     except Exception:
         response['status'] = 'error'
