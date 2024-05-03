@@ -2,9 +2,9 @@
     <div class="modal-dialog modal-dialog-centered" role="dialog">
         <div class="modal-content rounded-0">
             <form action="{{ url_for('create_user_database') }}" method="post">
-                <div class="modal-header text-bg-dark rounded-0">
+                <div class="modal-header text-secondary rounded-0">
                     <h5 class="modal-title fw-bolder" id="databaseModalLabel">New Document</h5>
-                    <button type="button" class="btn-close bg-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     {% for key, value in database.schema.items() %}
@@ -12,7 +12,7 @@
                         <div class="{{ 'form-check form-switch' if value == 'bool' else  'form-group' }} mb-2">
                             <label class="{{'form-check-label' if value == 'bool' else 'form-label'}} mb-0 text-muted" for="{{id}}">{{key | title}}</label>
                             {% if value == 'text' %}
-                            <textarea name="{{key}}" id="{{id}}" rows="3" class="form-control form-control-sm"></textarea>
+                            <textarea name="{{key}}" id="{{id}}" rows="3" class="form-control form-control-sm bg-light border-0 text-secondary hover:shadow-sm py-0"></textarea>
                             {% else %}
                             <input type="{{inputTypes[value]}}" name="{{key}}" class="{{'form-check-input' if value == 'bool' else 'form-control form-control-sm'}}" id="{{id}}" required>
                             {% endif %}
