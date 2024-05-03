@@ -81,7 +81,7 @@ async def api_create_user_project(
         
         project = Project(str(user.id), **config)
         saved_project = project.save()
-        project_id = saved_project.inserted_id if DBMS.Database.dbms == 'mongodb' else saved_project # type: ignore
+        project_id = saved_project
         
         if not project_id:
             response['status'] = 'error'
@@ -163,7 +163,7 @@ async def api_publish_user_project(
             
             project = Project(user_id=user.id, **data)      # type: ignore
             saved_project = project.save()
-            project_id = saved_project.inserted_id if DBMS.Database.dbms == 'mongodb' else saved_project # type: ignore
+            project_id = saved_project
             project_id = str(project_id)
             project.id = project_id
             homepage = f"{request.base_url}{project_id}"

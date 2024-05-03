@@ -66,6 +66,26 @@ BASE_HEADERS = {
     'Content-Type': 'application/json'
 }
 
+SCHEMA_MAPPING = {
+        'str': 'text',
+        'text': 'textarea',
+        'int': 'number',
+        'float': 'number',
+        'bool': 'checkbox',
+        'list': 'text',
+        'dict': 'textarea'
+    }
+
+TYPE_MAPPING = {
+    'str': str,
+    'int': int,
+    'float': float,
+    'text': str,
+    'bool': bool,
+    'list': list,
+    'dict': dict
+}
+
 class Language(Enum):
     php = 'php'
     multi = 'multi'

@@ -22,7 +22,9 @@ from odbms import DBMS
 from ..constants import (
     API_VERSION,
     RUNIT_HOMEDIR,
-    LANGUAGE_TO_ICONS
+    LANGUAGE_TO_ICONS,
+    TYPE_MAPPING,
+    SCHEMA_MAPPING
 )
 
 load_dotenv()
@@ -71,14 +73,19 @@ async def create_user_database(
         data = {'name': name, 'collection_name': collection_name,
                 'project_id': project_id,'user_id': user_id}
         
-        Database(**data).save()
-        Collection.TABLE_NAME = collection_name # type: ignore
-        Collection.create_table()
-        flash(request, 'Database Created Successfully.', category='success')
+        result = Database(**data).save()
+
+        if result:
+            Collection.TABLE_NAME = collection_name # type: ignore
+            Collection.create_table()
+            flash(request, 'Database Created Successfully.', category='success')
+        else:
+            flash(request, 'Error creating database', category='danger')
     else:
         flash(request, 'Missing required fields.', category='danger')
     return RedirectResponse(request.url_for(DATABASE_INDEX), status_code=status.HTTP_303_SEE_OTHER)
 
+@database.get('/{database_id}')
 @database.get('/{database_id}/')
 async def user_database_details(request: Request, database_id):
     database = Database.get(database_id)
@@ -91,34 +98,40 @@ async def user_database_details(request: Request, database_id):
         for col in collections:
             result.append(col.json())
         
-        schema_names_to_input_types = {
-            'str': 'text',
-            'text': 'textarea',
-            'int': 'number',
-            'float': 'number',
-            'bool': 'checkbox'
-        }
-        
         return templates.TemplateResponse('databases/details.html', context={
                 'request': request, 'page':'databases',
                 'database': database.json(), 'collections': result,
                 'api_version': API_VERSION,
-                'inputTypes': schema_names_to_input_types})
+                'inputTypes': SCHEMA_MAPPING})
     else:
         flash(request, 'Database does not exist', 'danger')
         return RedirectResponse(request.url_for(DATABASE_INDEX))
 
+@database.post('/schema/{database_id}')
 @database.post('/schema/{database_id}/')
 async def user_database_schema(request: Request, database_id: str):
     try:
-        data = await request.form()
-        Database.update({'id': database_id}, {'schema': data})
+        form = await request.form()
+        data = form._dict.copy()
+        schema = form._dict.copy()
         
-        flash(request, 'Schema updated successfully', category='success')
+        for key, value in data.items():
+            data[key] = TYPE_MAPPING.get(str(value), str)
+        
+        database = Database.get(database_id)
+        if database:
+            Collection.TABLE_NAME = database.collection_name
+            update = Collection.alter_table(data)
+            Database.update({'id': database_id}, {'schema': schema})
+            
+                
+            flash(request, 'Schema updated successfully', category='success')
+        else:
+            flash(request, 'Error updating schema', category='danger')
     except Exception as e:
-        logging.error(str(e))
+        logging.exception(e)
         flash(request, 'Error updating database schema', category='danger')
-    return RedirectResponse(request.url_for('user_database_details', database_id=database_id))
+    return RedirectResponse(request.url_for('user_database_details', database_id=database_id), status_code=status.HTTP_303_SEE_OTHER)
 
 @database.patch('/')
 async def update_user_database(request: Request):

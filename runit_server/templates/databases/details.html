@@ -16,25 +16,6 @@
 
 {% block content %}
 {% include 'databases/modal.html' %}
-<style>
-    #database,
-    #initialization { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        font-size: 1rem;
-    }
-
-    #database {
-        height: 390px !important;
-    }
-
-    #initialization {
-        height: 150px !important;
-    }
-</style>
 <div class="container">
     {% for (category, message) in get_flashed_messages(request) %}
     <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
@@ -44,124 +25,147 @@
     {% endfor %}
 
     <div class="tools d-flex justify-content-end">
-        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{ url_for('list_user_databases')}}" role="button" class="btn btn-outline-secondary bg-gradient hover:shadow-sm mb-2" title="Disable Database">
+        <div class="btn-group hover:shadow-sm" role="group" aria-label="tool buttons">
+            <a href="{{ url_for('list_user_databases')}}" role="button" class="btn btn-outline-secondary bg-gradient" title="Disable Database">
                 <i class="fas fa-eye-slash"></i>
             </a>
-            <a href="{{ url_for('list_user_databases')}}" role="button" class="btn btn-outline-danger bg-gradient hover:shadow-sm mb-2" title="Delete Database">
+            <a href="{{ url_for('list_user_databases')}}" role="button" class="btn btn-outline-danger bg-gradient" title="Delete Database">
                 <i class="fas fa-trash-alt"></i>
             </a>
         </div>
     </div>
 
-    <div class="card rounded-0 border-0">
-        <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    <span>Documents</span>
-                </button>
-                <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
-                    <span>Schema</span>
-                </button>
-				<button class="nav-link" id="nav-initialization-tab" data-bs-toggle="tab" data-bs-target="#nav-initialization" type="button" role="tab" aria-controls="nav-initialization" aria-selected="false">
-                    <span>Initialization</span>
-                </button>
-            </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
-                <div class="card rounded-0 border-0 shadow-sm my-2">
-                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
-                        <small class="fw-bold"></small>
-                        <div class="btn-group">
-                            <button type="submit" class="btn btn-outline-dark bg-gradient border-0" data-bs-toggle="modal" data-bs-target="#databaseModal">
-                                <i class="fas fa-folder-plus fa-fw" style="font-size: 16px;"></i> Insert
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body pb-0 position-relative">
-						<pre id="database">
-                        </pre>
+    <nav class="my-2">
+        <div class="nav nav-pills" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                <span>Details</span>
+            </button>
+            <button class="nav-link" id="nav-documents-tab" data-bs-toggle="tab" data-bs-target="#nav-documents" type="button" role="tab" aria-controls="nav-documents" aria-selected="true">
+                <span>Documents</span>
+            </button>
+            <button class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" data-bs-target="#nav-settings" type="button" role="tab" aria-controls="nav-settings" aria-selected="false">
+                <span>Schema</span>
+            </button>
+            <button class="nav-link" id="nav-initialization-tab" data-bs-toggle="tab" data-bs-target="#nav-initialization" type="button" role="tab" aria-controls="nav-initialization" aria-selected="false">
+                <span>Initialization</span>
+            </button>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+            <div class="card bg-white text-success border-0 shadow-sm hover:shadow my-2">
+                <div class="card-header bg-white p-0 p-2 d-flex justify-content-between aling-items-center">
+                    <small class="fw-bold"></small>
+                    <div class="btn-group hover:shadow-sm">
+                        <button type="submit" class="btn btn-outline-dark bg-gradient border-0" data-bs-toggle="modal" data-bs-target="#databaseModal">
+                            <i class="fas fa-folder-plus fa-fw" style="font-size: 16px;"></i> Insert
+                        </button>
                     </div>
                 </div>
+                <div class="card-body pb-0 position-relative">
+                    <code>
+                        <pre id="database" class="bg-dark text-warning py-2 px-3">
+                        </pre>
+                    </code>
+                </div>
             </div>
-            <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card rounded-0 border-0 shadow-sm my-2">
-                            <div class="card-header p-0 p-2 d-flex justify-content-end aling-items-center">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-dark" onclick="createSchema()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                    <button type="submit" class="btn btn-sm btn-outline-primary border-primary" onclick="updateSchemas()">
-                                        <i class="fas fa-save fa-fw"></i> Save
-                                    </button>
-                                </div>
+        </div>
+        <div class="tab-pane fade" id="nav-documents" role="tabpanel" aria-labelledby="nav-documents-tab" tabindex="0">
+            <div class="card bg-white text-success border-0 shadow-sm hover:shadow my-2">
+                <div class="card-header bg-white p-0 p-2 d-flex justify-content-between aling-items-center">
+                    <small class="fw-bold"></small>
+                    <div class="btn-group hover:shadow-sm">
+                        <button type="submit" class="btn btn-outline-dark bg-gradient border-0" data-bs-toggle="modal" data-bs-target="#databaseModal">
+                            <i class="fas fa-folder-plus fa-fw" style="font-size: 16px;"></i> Insert
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body pb-0 position-relative">
+                    <code>
+                        <pre id="database" class="bg-dark text-warning py-2 px-3">
+                        </pre>
+                    </code>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab" tabindex="0">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-white text-success border-0 shadow-sm hover:shadow my-2">
+                        <div class="card-header bg-white p-2 d-flex justify-content-end aling-items-center">
+                            <div class="btn-group hover:shadow-sm">
+                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="createSchema()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary border-primary" onclick="updateSchemas()">
+                                    <i class="fas fa-save fa-fw"></i> Save
+                                </button>
                             </div>
                         </div>
-                        <form action="{{url_for('user_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
-                            {% for key, value in database.schema.items() %}
-                            {% set id = 'schema'+(loop.index | string) %}
-                            {% set schemaKey = 'schemaKey'+(loop.index | string) %}
-                                <div class="form-group row align-items-center mb-2" id="{{id}}">
-                                    <div class="col-5">
-                                        <input type="text" value="{{key}}" placeholder="key" class="form-control form-control-lg key-input text-secondary rounded-0 shadow-sm" data-name="{{schemaKey}}" required onkeyup="setSchemaKey(this)">
-                                    </div>
-                                    <div class="col-1 text-center">
+                        <div class="card-body">
+                            <form action="{{url_for('user_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
+                                {% for key, value in database.schema.items() %}
+                                {% set id = 'schema'+(loop.index | string) %}
+                                {% set schemaKey = 'schemaKey'+(loop.index | string) %}
+                                    <div class="form-group d-flex gap-3 justify-content-between align-items-center pb-2" id="{{id}}">
+                                        <input 
+                                            type="text" 
+                                            value="{{key}}" 
+                                            placeholder="key" 
+                                            class="form-control form-control-sm key-input bg-light text-secondary border-0 hover:shadow-sm" 
+                                            data-name="{{schemaKey}}" 
+                                            required 
+                                            onkeyup="setSchemaKey(this)"/>
                                         <span>=</span>
-                                    </div>
-                                    <div class="col-5">
-                                        <select name="{{key}}" id="{{schemaKey}}" class="form-select form-select-lg text-secondary rounded-0 shadow-sm" required>
-                                            <option disabled>Type</option>
+                                        <select name="{{key}}" id="{{schemaKey}}" class="form-select form-select-sm bg-light text-secondary border-0 hover:shadow-sm py-2" required>
+                                            <option disabled class="text-secondary">Type</option>
                                             <option value="str">String</option>
-                                            <option value="text" {{'selected' if value == 'text' else ''}}>Text</option>
-                                            <option value="int" {{'selected' if value == 'int' else ''}}>Integer</option>
-                                            <option value="float" {{'selected' if value == 'float' else ''}}>Float</option>
-                                            <option value="bool" {{'selected' if value == 'bool' else ''}}>Boolean</option>
+                                            <option value="text" {{'selected' if value == 'text' else ''}} class="text-secondary">Text</option>
+                                            <option value="int" {{'selected' if value == 'int' else ''}} class="text-secondary">Integer</option>
+                                            <option value="float" {{'selected' if value == 'float' else ''}} class="text-secondary">Float</option>
+                                            <option value="bool" {{'selected' if value == 'bool' else ''}} class="text-secondary">Boolean</option>
                                         </select>
-                                    </div>
-                                    <div class="col-1">
                                         <a href="javascript: deleteElem('{{id}}')" class="nav-link">
-                                            <i class="fas fa-trash-alt text-danger"></i>
+                                            <i class="fas fa-times text-danger"></i>
                                         </a>
                                     </div>
-                                </div>
-                            {% endfor %}
-                        </form>
-                    </div>
-                </div>
-            </div>
-			<div class="tab-pane fade" id="nav-initialization" role="tabpanel" aria-labelledby="nav-initialization-tab" tabindex="0">
-                <div class="card rounded-0 border-0 shadow-sm my-2">
-                    <div class="card-header p-0 p-2 d-flex justify-content-between aling-items-center">
-                        <small class="fw-bold text-secondary font-roboto fs-6">Python Initialization</small>
-                    </div>
-                    <div class="card-body pb-0">
-						<code>
-                            <pre>
-from runit_database import Document
-
-Document.initialize(
-    '{{request.base_url}}api/{{api_version}}',
-    '{{request.session["access_token"]}}',
-    '{{database.project_id}}'
-)
-                            </pre>
-                        </code>
+                                {% endfor %}
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="tab-pane fade" id="nav-initialization" role="tabpanel" aria-labelledby="nav-initialization-tab" tabindex="0">
+            <div class="card bg-white text-success border-0 shadow-sm hover:shadow my-2">
+                <div class="card-header bg-white p-2 d-flex justify-content-between aling-items-center">
+                    <small class="fw-bold text-secondary font-roboto fs-6">Python Initialization</small>
+                </div>
+                <div class="card-body pb-0">
+                    <code>
+                        <pre class="p-3 bg-dark">
+from runit_database import Document
+
+Document.initialize(
+'{{request.base_url}}api/{{api_version}}',
+'{{request.session["access_token"]}}',
+'{{database.project_id}}'
+)
+                        </pre>
+                    </code>
+                </div>
+            </div>
+        </div>
     </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %} 
-<!-- <script>
-let db = JSON.parse({{ database | tojson }})
+<script>
+let db = {{ database | tojson }}
 document.getElementById("database").textContent = JSON.stringify(db, null, 4);
-</script> -->
+</script>
 {{super()}}
 <script src="/static/js/databases.js"></script>
 {% endblock %}

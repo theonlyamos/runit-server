@@ -3,7 +3,7 @@ from odbms import DBMS, Model
 class Database(Model):
     TABLE_NAME = 'databases'
 
-    def __init__(self, name: str, collection_name: str, user_id: str, project_id: str = '', schema: str = '{}', created_at=None, updated_at=None, id=None, **kwargs):
+    def __init__(self, name: str, collection_name: str, user_id: str, project_id: str = '', schema: dict = {}, created_at=None, updated_at=None, id=None, **kwargs):
         super().__init__(created_at, updated_at, id)
         self.name = name
         self.collection_name = collection_name
@@ -49,13 +49,3 @@ class Database(Model):
         databases = DBMS.Database.find(Database.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
         
         return [cls(**Model.normalise(elem)) for elem in databases]
-
-    def json(self)-> dict:
-        '''
-        Instance Method for converting instance to Dict
-
-        @paramas None
-        @return Dict() format of Database instance
-        '''
-        
-        return self.__dict__
