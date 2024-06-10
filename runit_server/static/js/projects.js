@@ -47,11 +47,8 @@ const createEnv = ()=>{
     envValueInput.classList.add('form-control', 'form-control-sm', 'text-secondary')
     envValueInput.classList.add('border-0', 'bg-light', 'hover:shadow-sm', 'py-2')
 
-    envNameInput.addEventListener('keydown', e => {
-        const regex = /[^A-Za-z0-9]/g
-        if (e.key.replace(regex, '') && e.key.length == 1){
-            envValueInput.setAttribute('name', envNameInput.value + e.key)
-        }
+    envNameInput.addEventListener('change', e => {
+        envValueInput.setAttribute('name', envNameInput.value)
     })
 
     let equalSign = document.createElement('span')

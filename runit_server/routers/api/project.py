@@ -212,7 +212,7 @@ async def api_publish_user_project(
         
         funcs = []
         for func in runit.get_functions():
-            funcs.append(f"{request.base_url}{project_id}/{func}/")
+            funcs.append(f"{request.base_url}{project_id}/{func}")
         
         result['functions'] = funcs                                                         # type: ignore
         result['homepage'] = funcs[0] if len(funcs) else ''

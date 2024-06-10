@@ -1,4 +1,5 @@
 
+import json
 import logging
 from typing import Annotated, Optional
 
@@ -102,7 +103,7 @@ async def api_list_user_documents(
     
     try:
         data = request.query_params._dict
-
+        
         user_id = user.id
         params = {'user_id': user_id}
         params['name'] = collection
@@ -115,23 +116,28 @@ async def api_list_user_documents(
 
         Collection.TABLE_NAME = db.collection_name
         
-        _filter = data['filter'] if 'filter' in data.keys() else {}
-        projection = data['columns'] if 'columns' in data.keys() else []
-        
+        _filter = json.loads(data['_filter']) if '_filter' in data.keys() else {}
+        projection: Union[Dict, List] = json.loads(data['projection']) if 'projection' in data.keys() else [] # type: ignore
+
         if not document_id:
-            results = Collection.find(_filter, projection)
+            results = Collection.find(_filter, projection) # type: ignore
             documents = [result.json() for result in results]
-            response['data'] = documents
+            response['data'] = documents # type: ignore
         else:
-            document = Collection.find_one(_filter, projection)
-            response['data'] = document.json()
+            document = Collection.find_one({'id': document_id}, projection)
+            json_document = document.json() if document else {} # type: ignore
+            projection = projection if isinstance(projection, list) else projection.keys()
+            if len(projection):
+                json_document = {key: json_document[key] for key in projection if key in json_document}
+            
+            response['data'] = json_document # type: ignore
             
     except Exception as e:
         logging.exception(e)
         response['status'] = 'error'
-        response['message'] = 'Error fetching document(s)'
-    
-    return JSONResponse(response)
+        response['message'] = 'Error fetching documents'
+    finally:
+        return JSONResponse(response)
 
 @database_api.post('/{project_id}')
 @database_api.post('/{project_id}/')

@@ -9,24 +9,6 @@ class Collection(Model):
         for key, value in kwargs.items():
             self.__setattr__(key, value)
 
-    def save(self):
-        '''
-        Instance Method for saving Database instance to database
-
-        @params None
-        @return None
-        '''
-
-        data = self.__dict__.copy()
-        
-        del data['id']
-
-        if DBMS.Database.dbms != 'mongodb':
-            del data["created_at"]
-            del data["updated_at"]
-
-        return DBMS.Database.insert(self.TABLE_NAME, Model.normalise(data, 'params'))
-
     @classmethod
     def get_by_user(cls, user_id: str)-> list:
         '''

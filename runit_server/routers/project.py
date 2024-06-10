@@ -288,9 +288,9 @@ async def user_project_environ(request: Request, project_id):
     
     form = await request.form()
     data = form._dict
-
+    print(data)
     
-    secret.variables = form._dict
+    secret.variables = data
     secret.save()
 
     # project = Project.get(project_id)

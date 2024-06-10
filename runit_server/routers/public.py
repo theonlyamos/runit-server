@@ -19,7 +19,7 @@ from ..common import Utils
 
 from runit import RunIt
 
-from dotenv import load_dotenv, find_dotenv, dotenv_values
+from dotenv import find_dotenv, dotenv_values
 
 from ..constants import (
     DOTENV_FILE,
@@ -132,6 +132,7 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     if not user:
         flash(request, 'Invalid Login Credentials', 'danger')
         return templates.TemplateResponse('login.html', context={'request': request})
+
     access_token = create_access_token(user.json())
     request.session['user_id'] = user.id
     request.session['user_name'] = user.name
@@ -151,47 +152,48 @@ def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     admin = Admin.get_by_username(form_data.username)
 
     if admin and Utils.check_hashed_password(form_data.password, admin.password):
-            access_token = create_access_token(admin.json())
-            request.session['admin_id'] = admin.id
-            request.session['admin_name'] = admin.name
-            request.session['admin_username'] = admin.email
-            request.session['access_token'] = access_token
+        access_token = create_access_token(admin.json())
+        request.session['admin_id'] = admin.id
+        request.session['admin_name'] = admin.name
+        request.session['admin_username'] = admin.email
+        request.session['access_token'] = access_token
 
-            return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
     flash(request, 'Invalid Login Credentials', 'danger')
     return RedirectResponse(request.url_for('admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 @public.get('/{project_id}')
 @public.get('/{project_id}/{function}')
 async def run_project(request: Request, project_id: str, function: Optional[str] = None):
-    t0 = time.perf_counter()
-    excluded = ['favicon.ico']
-    if project_id in excluded:
-        return None
-    project = Project.get(project_id)
-    if not project:
-        logging.warning('Project not found')
+    try:
+        t0 = time.perf_counter()
+        excluded = ['favicon.ico']
+        if project_id in excluded:
+            return None
+        project = Project.get(project_id)
+        if not project:
+            logging.warning('Project not found')
+            return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
+        # elif project.private and request.session.get('user_id') != project.user_id:
+        #     logging.warning('Project is private')
+        #     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
+        
+        secret = Secret.find_one({'project_id': project_id})
+        if secret and secret.variables:
+            environs = secret.variables
+            for key, value in environs.items():
+                os.environ[key] = value
+        
+        current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
+        function = function if function else 'index'
+        if current_project_dir.is_dir():
+            result = await RunIt.start(project_id, function, PROJECTS_DIR, request.query_params._dict)
+            os.chdir(RUNIT_HOMEDIR)
+            response = await jsonify(result)
+            t1 = time.perf_counter() # Record the stop time
+            elapsed_time = t1 - t0 # Calculate elapsed time
+            print(f'Time taken: {elapsed_time:.8f} seconds')
+            return JSONResponse(response) if type(response) is dict else response
+    except Exception as e:
+        logging.exception(e)
         return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
-    # elif project.private and request.session.get('user_id') != project.user_id:
-    #     logging.warning('Project is private')
-    #     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
-    secret = Secret.find_one({'project_id': project_id})
-    if secret and secret.variables:
-        environs = secret.variables
-        for key, value in environs.items():
-            os.environ[key] = value
-    
-    current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
-    function = function if function else 'index'
-    if current_project_dir.is_dir():
-        result = RunIt.start(project_id, function, PROJECTS_DIR, request.query_params._dict)
-        os.chdir(RUNIT_HOMEDIR)
-        response = await jsonify(result)
-        t1 = time.perf_counter() # Record the stop time
-        elapsed_time = t1 - t0 # Calculate elapsed time
-        print(f'Time taken: {elapsed_time:.8f} seconds')
-        return JSONResponse(response) if type(response) is dict else response
-    
-    logging.warning('Project directory not found')
-    
-    return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)

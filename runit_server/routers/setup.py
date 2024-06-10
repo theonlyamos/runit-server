@@ -4,7 +4,7 @@ from odbms import DBMS
     
 from ..models import Admin, User, Role, Permission, Project, Database, Secret
 from ..core import flash, templates
-from ..constants import  DOTENV_FILE
+from ..constants import  DOTENV_FILE, RUNIT_HOMEDIR, RUNIT_WORKDIR
 
 import os
 from dotenv import load_dotenv, dotenv_values, set_key, find_dotenv
@@ -64,6 +64,9 @@ async def initsetup(request: Request):
     settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
     
     if 'SETUP' in settings.keys() and settings['SETUP'] == 'completed':
+        os.chdir(RUNIT_HOMEDIR)
+        if settings['DBMS'] == 'sqlite':
+            settings['DATABASE_NAME'] = str(settings.get('DATABASE_NAME', 'runit'))+'.db'
         DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], settings['DATABASE_PORT'], # type: ignore
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
                     settings['DATABASE_NAME']) # type: ignore

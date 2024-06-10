@@ -1,0 +1,12 @@
+<div class="card border-0 shadow-sm hover:shadow">
+    <div class="card-body pb-0 position-relative">
+        <code>
+            <pre class="bg-dark text-warning py-2 px-3" id="jsonDocument" style="max-height: 500px;">
+            </pre>
+        </code>
+    </div>
+</div>
+<script>
+    let doc = {{ documents | tojson}}
+    document.getElementById('jsonDocument').textContent = JSON.stringify(doc, false, 4).trim()
+</script>

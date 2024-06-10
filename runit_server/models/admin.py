@@ -61,7 +61,7 @@ class Admin(Model):
         
         data = super().json()
         data['id'] = str(self.id)
-        data['role'] = self.normalise(self.get_role(), 'params') # type: ignore
+        data['role'] = self.normalise(self.get_role()) # type: ignore
 
         return data
     

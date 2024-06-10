@@ -18,7 +18,7 @@ JWT_ALGORITHM = 'HS256'
 API_VERSION = 'v1'
 SUBSCRIPTION_EVENTS = Literal['all', 'create', 'update', 'delete']
 
-RUNIT_WORKDIR = Path(os.path.expanduser('~')).joinpath('RUNIT_WORKDIR')
+RUNIT_WORKDIR = Path.home().joinpath('RUNIT_WORKDIR')
 
 RUNIT_HOMEDIR = Path(__file__).resolve().parent
 

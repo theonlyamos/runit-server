@@ -87,21 +87,26 @@ async def create_user_database(
 
 @database.get('/{database_id}')
 @database.get('/{database_id}/')
-async def user_database_details(request: Request, database_id):
+async def user_database_details(request: Request, database_id: str, view: Optional[str] = None):
     database = Database.get(database_id)
     
     if database:
         Collection.TABLE_NAME = database.collection_name                # type: ignore
-        collections = Collection.find({})
+        results = Collection.all()
+
+        documents = [doc.json() for doc in results]
         
-        result = []
-        for col in collections:
-            result.append(col.json())
+        table_names = documents[0].keys() if len(documents) else database.schema.values()
         
+        if view:
+            request.session['view'] = view
+        elif 'view' not in request.session.keys():
+            request.session['view'] = 'grid'
+
         return templates.TemplateResponse('databases/details.html', context={
                 'request': request, 'page':'databases',
-                'database': database.json(), 'collections': result,
-                'api_version': API_VERSION,
+                'database': database.json(), 'documents': documents,
+                'api_version': API_VERSION, 'table_names': table_names,
                 'inputTypes': SCHEMA_MAPPING})
     else:
         flash(request, 'Database does not exist', 'danger')
@@ -149,3 +154,24 @@ async def delete_user_database(request: Request, database_id):
     else:
         flash(request, 'Database was not found. Operation not successful.', category='danger')
     return RedirectResponse(request.url_for(DATABASE_INDEX))
+
+@database.post('/documents/{database_id}')
+@database.post('/documents/{database_id}/')
+async def create_user_document(request: Request, database_id: str):
+    user_id = request.session['user_id']
+    db = Database.get(database_id)
+    if db and db.user_id == user_id:
+        form = await request.form()
+        data = form._dict
+        
+        Collection.TABLE_NAME = db.collection_name
+        document = Collection(**data)
+        result = document.save()
+        
+        if result:
+            flash(request, 'Document Created Successfully.', category='success')
+        else:
+            flash(request, 'Error creating document', category='danger')
+    else:
+        flash(request, 'Error performing operation', category='danger')
+    return RedirectResponse(request.url_for('user_database_details', database_id=database_id), status_code=status.HTTP_303_SEE_OTHER)
