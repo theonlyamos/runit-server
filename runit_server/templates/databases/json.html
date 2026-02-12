@@ -1,12 +1,40 @@
-<div class="card border-0 shadow-sm hover:shadow">
-    <div class="card-body pb-0 position-relative">
-        <code>
-            <pre class="bg-dark text-warning py-2 px-3" id="jsonDocument" style="max-height: 500px;">
-            </pre>
-        </code>
+<div class="code-editor">
+    <div class="code-editor-header">
+        <div class="code-editor-tabs">
+            <span class="code-editor-tab active">
+                <i class="fas fa-code fa-fw me-1"></i>documents.json
+            </span>
+        </div>
+        <div class="code-editor-dots">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+    <div class="code-editor-body code-editor-no-gutter">
+        <pre class="code-editor-content" id="jsonDocument"></pre>
     </div>
 </div>
 <script>
-    let doc = {{ documents | tojson}}
-    document.getElementById('jsonDocument').textContent = JSON.stringify(doc, false, 4).trim()
+    let doc = {{ documents | tojson }};
+    let jsonStr = JSON.stringify(doc, null, 2);
+    
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'code-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'code-key';
+                } else {
+                    cls = 'code-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'code-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'code-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+    
+    document.getElementById('jsonDocument').innerHTML = '<code>' + syntaxHighlight(jsonStr) + '</code>';
 </script>

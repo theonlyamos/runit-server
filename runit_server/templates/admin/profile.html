@@ -1,5 +1,5 @@
-{% extends "account/layout.html" %}
-{% block title %}{{ super() }} - {{ page | capitalize }} - {{ user.name }}{% endblock %}
+{% extends "admin/layout.html" %}
+{% block title %}{{ super() }} - {{ page | capitalize }}{% endblock %}
 {% block pagetitle %}PROFILE{% endblock %}
 {% block content %}
 {% for (category, message) in get_flashed_messages(request) %}
@@ -17,42 +17,35 @@
         <div class="row g-0">
             <div class="col-lg-3 border-end">
                 <div class="p-4 text-center">
-                    <a href="javascript:fileInput.click()" class="d-inline-block position-relative" id="image-container" style="cursor: pointer;">
-                        {% if user.image %}
-                        <img src="{{ url_for('uploads', path=user.id+'/'+user.image) }}" 
-                             class="rounded-circle" 
-                             id="image-preview" 
-                             alt="Profile Image" 
-                             style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--accent);">
-                        {% else %}
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                             id="image-placeholder" 
-                             style="width: 100px; height: 100px; background: var(--bg-tertiary); border: 3px solid var(--border-color); margin: 0 auto;">
-                            <i class="fas fa-user fa-2x text-muted"></i>
-                        </div>
-                        {% endif %}
-                        <div class="position-absolute bottom-0 end-0 badge badge-accent rounded-circle p-2">
-                            <i class="fas fa-camera fa-sm"></i>
-                        </div>
-                    </a>
-                    <form action="" id="image-form" enctype="multipart/form-data">
-                        <input type="file" class="d-none" id="profile-image" accept="image/*"/>
-                    </form>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                         style="width: 100px; height: 100px; background: var(--accent-glow); border: 3px solid var(--accent);">
+                        <i class="fas fa-shield-alt fa-3x text-accent"></i>
+                    </div>
                     
                     <h4 class="text-mono mt-3 mb-1">{{ user.name }}</h4>
-                    <p class="text-muted mb-3" style="font-size: 0.875rem;">{{ user.email }}</p>
+                    <p class="text-muted mb-2" style="font-size: 0.875rem;">{{ user.email }}</p>
+                    <span class="badge badge-accent mb-3">
+                        <i class="fas fa-crown fa-fw me-1"></i>
+                        {{ user.role.name | default('Admin') | upper }}
+                    </span>
                     
                     <div class="d-flex justify-content-center gap-4 text-center">
                         <div>
-                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ user.projects | default(0) }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Projects</div>
+                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">
+                                {{ user.role.permissions | default([]) | length }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Permissions</div>
                         </div>
                         <div>
-                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ user.databases | default(0) }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Databases</div>
+                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">
+                                {{ user.role.priority | default(0) }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Priority</div>
                         </div>
                     </div>
                 </div>
+                
+                <hr class="my-0" style="border-color: var(--border-color);">
                 
                 <div class="nav flex-column nav-pills" id="profile-tabs" role="tablist">
                     <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-overview" type="button" role="tab">
@@ -82,30 +75,41 @@
                 <div class="tab-content p-4" id="profile-tab-content">
                     <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
                         <h5 class="text-mono mb-4">
-                            <i class="fas fa-user fa-fw text-accent me-2"></i>
-                            Profile Overview
+                            <i class="fas fa-shield-alt fa-fw text-accent me-2"></i>
+                            Admin Profile Overview
                         </h5>
                         
                         <div class="row g-4 mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="stat-card">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="stat-label">Total Projects</div>
-                                            <div class="stat-value">{{ user.projects | default(0) }}</div>
+                                            <div class="stat-label">Role</div>
+                                            <div class="stat-value" style="font-size: 1.25rem;">{{ user.role.name | default('Admin') }}</div>
                                         </div>
-                                        <i class="fas fa-sitemap fa-2x text-accent" style="opacity: 0.5;"></i>
+                                        <i class="fas fa-user-tag fa-2x text-accent" style="opacity: 0.5;"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="stat-card">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="stat-label">Total Databases</div>
-                                            <div class="stat-value">{{ user.databases | default(0) }}</div>
+                                            <div class="stat-label">Priority Level</div>
+                                            <div class="stat-value">{{ user.role.priority | default(0) }}</div>
                                         </div>
-                                        <i class="fas fa-database fa-2x text-accent" style="opacity: 0.5;"></i>
+                                        <i class="fas fa-layer-group fa-2x text-accent" style="opacity: 0.5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-label">Permissions</div>
+                                            <div class="stat-value">{{ user.role.permissions | default([]) | length }}</div>
+                                        </div>
+                                        <i class="fas fa-key fa-2x text-accent" style="opacity: 0.5;"></i>
                                     </div>
                                 </div>
                             </div>
@@ -126,14 +130,28 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
+                                            <label class="form-label text-muted">Username</label>
+                                            <div class="text-mono">{{ user.username }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
                                             <label class="form-label text-muted">Email Address</label>
                                             <div class="text-mono">{{ user.email }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label text-muted">Account ID</label>
+                                            <label class="form-label text-muted">Admin ID</label>
                                             <div class="text-mono" style="font-size: 0.875rem;">{{ user.id }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Role</label>
+                                            <div>
+                                                <span class="badge badge-accent">{{ user.role.name | default('Admin') }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -146,34 +164,24 @@
                             </div>
                         </div>
                         
+                        {% if user.role.permissions %}
                         <div class="card">
                             <div class="card-header">
-                                <i class="fas fa-bolt fa-fw text-accent me-2"></i>
-                                Quick Actions
+                                <i class="fas fa-lock fa-fw text-accent me-2"></i>
+                                Role Permissions
                             </div>
                             <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <a href="{{ url_for('list_user_projects') }}" class="btn btn-outline-secondary w-100">
-                                            <i class="fas fa-plus fa-fw me-1"></i>
-                                            New Project
-                                        </a>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <a href="{{ url_for('list_user_databases') }}" class="btn btn-outline-secondary w-100">
-                                            <i class="fas fa-database fa-fw me-1"></i>
-                                            New Database
-                                        </a>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <a href="https://github.com/login/oauth/authorize?client_id={{ git_client_id }}" class="btn btn-outline-secondary w-100">
-                                            <i class="fab fa-github fa-fw me-1"></i>
-                                            Link GitHub
-                                        </a>
-                                    </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for permission in user.role.permissions %}
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-check fa-fw me-1"></i>
+                                        {{ permission }}
+                                    </span>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                     
                     <div class="tab-pane fade" id="tab-account" role="tabpanel">
@@ -188,7 +196,7 @@
                                 Edit Profile
                             </div>
                             <div class="card-body">
-                                <form action="{{ url_for('update_user_profile') }}" method="post">
+                                <form id="update-profile-form">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
@@ -198,34 +206,22 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
+                                                <label for="username" class="form-label">Username</label>
+                                                <input type="text" value="{{ user.username }}" class="form-control form-control-mono" id="username" name="username" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="form-group">
                                                 <label for="email" class="form-label">Email Address</label>
                                                 <input type="email" value="{{ user.email }}" class="form-control form-control-mono" id="email" name="email" required>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="password" class="form-label">Confirm Password to Save</label>
-                                        <input type="password" name="password" class="form-control" placeholder="Enter your current password" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-accent">
+                                    <button type="button" class="btn btn-accent" onclick="updateProfile()">
                                         <i class="fas fa-save fa-fw me-1"></i>
                                         Save Changes
                                     </button>
                                 </form>
-                            </div>
-                        </div>
-                        
-                        <div class="card border-danger">
-                            <div class="card-header text-danger">
-                                <i class="fas fa-exclamation-triangle fa-fw me-2"></i>
-                                Danger Zone
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-3">Once you delete your account, there is no going back. Please be certain.</p>
-                                <button class="btn btn-outline-danger" disabled>
-                                    <i class="fas fa-trash-alt fa-fw me-1"></i>
-                                    Delete Account
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -242,10 +238,10 @@
                                 Change Password
                             </div>
                             <div class="card-body">
-                                <form action="{{ url_for('update_user_password') }}" method="post">
+                                <form id="change-password-form">
                                     <div class="form-group">
                                         <label for="current_password" class="form-label">Current Password</label>
-                                        <input type="password" name="password" class="form-control" placeholder="Enter current password" required>
+                                        <input type="password" name="current_password" class="form-control" placeholder="Enter current password" required>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
@@ -261,7 +257,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-accent">
+                                    <button type="button" class="btn btn-accent" onclick="changePassword()">
                                         <i class="fas fa-key fa-fw me-1"></i>
                                         Update Password
                                     </button>
@@ -275,7 +271,7 @@
                                 API Access Token
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Use this token to authenticate API requests.</p>
+                                <p class="text-muted mb-3">Use this token to authenticate admin API requests.</p>
                                 <div class="input-group">
                                     <input type="text" class="form-control form-control-mono" value="{{ request.session['access_token'] }}" readonly id="api-token">
                                     <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
@@ -296,10 +292,20 @@
                                         <i class="fas fa-desktop fa-lg text-accent"></i>
                                         <div>
                                             <div class="text-mono">Current Session</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ request.headers.get('user-agent', 'Unknown')[:50] }}...</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ request.headers.get('user-agent', 'Unknown')[:60] }}...</div>
                                         </div>
                                     </div>
                                     <span class="badge badge-success">Active</span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between py-2">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <i class="fas fa-clock fa-lg text-muted"></i>
+                                        <div>
+                                            <div class="text-mono">Last Login</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.updated_at | default('Recently') }}</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-secondary">System</span>
                                 </div>
                             </div>
                         </div>
@@ -338,22 +344,35 @@
                         
                         <div class="card mb-4">
                             <div class="card-header">
-                                <i class="fas fa-th fa-fw text-accent me-2"></i>
-                                Default View
+                                <i class="fas fa-bell fa-fw text-accent me-2"></i>
+                                Notifications
                             </div>
                             <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                    <div>
+                                        <div class="text-mono">System Alerts</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Receive alerts for system events</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="system-alerts" checked>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                    <div>
+                                        <div class="text-mono">User Activity</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Get notified about user actions</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="user-activity" checked>
+                                    </div>
+                                </div>
                                 <div class="d-flex align-items-center justify-content-between py-2">
                                     <div>
-                                        <div class="text-mono">Projects View</div>
-                                        <div class="text-muted" style="font-size: 0.875rem;">Default layout for projects list</div>
+                                        <div class="text-mono">Security Alerts</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Critical security notifications</div>
                                     </div>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-outline-secondary">
-                                            <i class="fas fa-th-large fa-fw"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-accent">
-                                            <i class="fas fa-th-list fa-fw"></i>
-                                        </button>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="security-alerts" checked>
                                     </div>
                                 </div>
                             </div>
@@ -361,32 +380,32 @@
                         
                         <div class="card">
                             <div class="card-header">
-                                <i class="fab fa-github fa-fw text-accent me-2"></i>
-                                GitHub Integration
+                                <i class="fas fa-sliders-h fa-fw text-accent me-2"></i>
+                                Admin Preferences
                             </div>
                             <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                    <div>
+                                        <div class="text-mono">Default Users View</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Default layout for users list</div>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-accent">
+                                            <i class="fas fa-th-large fa-fw"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary">
+                                            <i class="fas fa-th-list fa-fw"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="d-flex align-items-center justify-content-between py-2">
                                     <div>
-                                        <div class="text-mono">GitHub Account</div>
-                                        <div class="text-muted" style="font-size: 0.875rem;">
-                                            {% if user.gat %}
-                                            Connected
-                                            {% else %}
-                                            Not connected
-                                            {% endif %}
-                                        </div>
+                                        <div class="text-mono">Auto-refresh Dashboard</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Automatically refresh statistics</div>
                                     </div>
-                                    {% if user.gat %}
-                                    <span class="badge badge-success">
-                                        <i class="fas fa-check fa-fw me-1"></i>
-                                        Connected
-                                    </span>
-                                    {% else %}
-                                    <a href="https://github.com/login/oauth/authorize?client_id={{ git_client_id }}" class="btn btn-outline-secondary">
-                                        <i class="fab fa-github fa-fw me-1"></i>
-                                        Connect GitHub
-                                    </a>
-                                    {% endif %}
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="auto-refresh">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -410,18 +429,30 @@
                                             <i class="fas fa-sign-in-alt"></i>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="text-mono">Logged in</div>
+                                            <div class="text-mono">Admin login</div>
                                             <div class="text-muted" style="font-size: 0.75rem;">{{ user.updated_at | default('Recently') }}</div>
                                         </div>
+                                        <span class="badge badge-success">Success</span>
                                     </div>
                                     <div class="list-group-item d-flex align-items-center gap-3 py-3">
                                         <div class="badge badge-secondary rounded-circle p-2">
-                                            <i class="fas fa-user-plus"></i>
+                                            <i class="fas fa-user-shield"></i>
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="text-mono">Account created</div>
                                             <div class="text-muted" style="font-size: 0.75rem;">{{ user.created_at | default('N/A') }}</div>
                                         </div>
+                                        <span class="badge badge-secondary">System</span>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center gap-3 py-3">
+                                        <div class="badge badge-info rounded-circle p-2">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="text-mono">Role assigned: {{ user.role.name | default('Admin') }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.created_at | default('N/A') }}</div>
+                                        </div>
+                                        <span class="badge badge-info">Role</span>
                                     </div>
                                 </div>
                             </div>
@@ -461,7 +492,6 @@
 
 {% block scripts %} 
 {{ super() }}
-<script src="/static/js/profile.js"></script>
 <script>
 function copyToken() {
     const token = document.getElementById('api-token').value;
@@ -476,7 +506,75 @@ function copyToken() {
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('runit-theme', theme);
-    location.reload();
+}
+
+function updateProfile() {
+    const form = document.getElementById('update-profile-form');
+    const formData = new FormData(form);
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Saving...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin_update_profile") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to update profile');
+        }
+    })
+    .catch(err => {
+        alert('An error occurred. Please try again.');
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function changePassword() {
+    const form = document.getElementById('change-password-form');
+    const formData = new FormData(form);
+    const newPass = formData.get('new_password');
+    const confirmPass = formData.get('confirm_password');
+    
+    if (newPass !== confirmPass) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Updating...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin_change_password") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Password changed successfully');
+            form.reset();
+        } else {
+            alert(data.message || 'Failed to change password');
+        }
+    })
+    .catch(err => {
+        alert('An error occurred. Please try again.');
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
 }
 </script>
 {% endblock %}

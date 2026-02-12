@@ -1,40 +1,117 @@
-<!doctype html>
-<html>
-    <head>
-        <title>Error Page</title>
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
-        <link href="https://fonts.googleapis.com/css?family=Pacifico&display=swap" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
-        <style>
-            h1 {
-                font-family: Pacifico, sans-serif;
-                font-size: 4em;
-                color: #3eb5f1;
-                margin: 0;
-            }
-
-            h2 {
-                font-weight: 300;
-                font-family: sans-serif;
-            }
-
-            .centered {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                text-align: center;
-            }
-
-            #ferris {
-                width: 75%;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="centered">
-            <h1>404 Not Found</h1>
-            <h2>Oh dang! We couldn't find that page.</h2>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Runit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/images/dark-terminal.svg">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a3a3a3;
+            --text-tertiary: #737373;
+            --accent: #ffb000;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'DM Sans', sans-serif;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-family: var(--font-mono);
+            font-size: 8rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .error-code::before {
+            content: '>';
+            position: absolute;
+            left: -1.5rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            font-size: 4rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .error-title {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .error-message {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: #000;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 176, 0, 0.3);
+        }
+        
+        .terminal-line {
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+        
+        .terminal-line span {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="error-code">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-message">The page you're looking for doesn't exist or has been moved.</p>
+        <div class="terminal-line">
+            <span>$</span> cd / && ls -la<br>
+            <span style="color: var(--text-tertiary);">error: path not found</span>
         </div>
-    </body>
+        <a href="/" class="btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Home
+        </a>
+    </div>
+</body>
 </html>

@@ -1,161 +1,636 @@
 {% extends "account/layout.html" %}
-{% block title %} 
-{{super()}} - {{page | capitalize}} - {{project.name}}
-{% endblock %}
-
+{% block title %}{{ super() }} - {{ page | capitalize }} - {{ project.name }}{% endblock %}
 {% block pagetitle %}
-<div class="d-flex align-items center custom-flex-wrap white-space-nowrap">
-    <a href="{{url_for('list_user_projects')}}" class="nav-link p-0 text-black-50 hover:text-dark">
-        <i class="fas fa-arrow-left fa-fw"></i> 
-        <span class="d-none d-sm-inline">{{ super() }}</span>
+<div class="d-flex align-items-center gap-2">
+    <a href="{{ url_for('list_user_projects') }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-arrow-left"></i>
     </a>
-    <span class="d-none d-sm-inline">/</span>
-    <span>{{ project.name | upper}}</span>
+    <span class="text-muted">/</span>
+    <span>{{ project.name | upper }}</span>
 </div>
 {% endblock %}
 
 {% block content %}
 {% include 'modals/confirm.html' %}
 {% include 'projects/modal.html' %}
-<div class="container">
-    {% for (category, message) in get_flashed_messages(request) %}
-    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
-        <strong>{{message}}</strong>
-        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
 
-    <input 
-        class="form-check-input d-none" 
-        type="checkbox"
-        data-project-id="{{project.id}}"
-        data-project-name="{{project.name}}"
-        id="input_{{project.id}}"
-    >
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
+</div>
+{% endfor %}
 
-    <div class="tools d-flex justify-content-end">
-        <div class="btn-group hover:shadow-sm pb-0" role="group" aria-label="tool buttons">
-            <nav class="nav-item dropdown" aria-label="Functions">
-                <a href="#" class="btn btn-outline-dark rounded-0 rounded-start" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Run Functions">
-                    <i class="fas fa-terminal"></i>
-                </a>
-                <ul class="dropdown-menu rounded-0 shadow border-0">
-                    {% for func in funcs %}
-                    <li>
-                        <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="dropdown-item small border-bottom" target="_blank">
-                            <i class="fas fa-terminal fa-fw text-dark me-2"></i> {{func.name}}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-            <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id)}}" role="button" class="btn btn-outline-success" title="Reinstall Dependencies">
-                <i class="fas fa-wrench"></i>
-            </a>
-            {% if project.private %}
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary" title="Make project public">
-                <i class="fas fa-eye"></i>
-            </a>
-            {% else %}
-            <a href="{{ url_for('list_user_projects')}}" role="button" class="btn btn-outline-secondary" title="Make project private">
-                <i class="fas fa-eye-slash"></i>
-            </a>
-            {% endif %}
-            <a href="javascript:onDeleteProject('{{project.id}}')" class="btn btn-outline-danger" title="Delete Project">
-                <i class="fas fa-trash-alt"></i>
-            </a>
-        </div>
-    </div>
+<input class="form-check-input d-none" type="checkbox"
+       data-project-id="{{ project.id }}"
+       data-project-name="{{ project.name }}"
+       id="input_{{ project.id }}">
 
-    <div class="row mb-4">
-        <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
-                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
-                    <small class="fw-bold">Project Details</small>
+<div class="row g-4">
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                     style="width: 80px; height: 80px; background: var(--accent-glow); border: 2px solid var(--accent);">
+                    {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(project.language | lower, 'code') %}
+                    <i class="fab fa-{{ lang_icon }} fa-2x text-accent"></i>
                 </div>
-                <div class="card-body pb-0 d-flex flex-column gap-3">
-                    {% for key, value in project.items() %}
-                        <div class="border-bottom pb-2">
-                            <small class="text-center pe-2">{{key | capitalize}}:</small>
-                            <small class="text-secondary">{{value}}</small>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
-                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
-                    <small class="fw-bold">Functions</small>
-                </div>
-                <div class="card-body pb-0 d-flex flex-column gap-3">
-                    {% for func in funcs %}
-                        <div class="border-bottom pb-2">
-                            <small class="text-center pe-2">{{func.name | title}}</small>
-                            <a href="{{url_for('run_project', project_id=project.id, function=func.name) }}" class="nav-link p-0" target="_blank">
-                                <small class="text-secondary">
-                                    {{url_for('run_project', project_id=project.id, function=func.name) }}
-                                </small>
-                            </a>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mt-4">
-            <div class="card rounded-0 border-0 shadow-sm hover:shadow">
-                <div class="p-0 p-2 d-flex justify-content-between aling-items-center border-bottom">
-                    <small class="fw-bold">Environment Variables</small>
-                    <div class="btn-group hover:shadow-sm">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="createEnv()">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button type="submit" class="btn btn-sm btn-outline-dark" onclick="updateEnvs()">
-                            <i class="fas fa-save fa-fw"></i> Update
-                        </button>
+                <h4 class="text-mono mb-1">{{ project.name | title }}</h4>
+                <span class="badge badge-accent">{{ project.language | title }}</span>
+                
+                <div class="d-flex justify-content-center gap-4 mt-4">
+                    <div>
+                        <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ funcs | length }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">Functions</div>
+                    </div>
+                    <div>
+                        <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ environs | length }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">Env Vars</div>
                     </div>
                 </div>
-                <div class="card-body pb-0 d-flex flex-column gap-3">
-                    <form action="{{url_for('user_project_environ', project_id=project.id)}}" method="post" class="env-form">
-                        {% for key, value in environs.items() %}
-                        {% set id = 'env'+(loop.index | string) %}
-                        {% set envKey = 'envKey'+(loop.index | string) %}
-                            <div class="form-group d-flex justify-content-between align-items-center gap-3 pb-2" id="{{id}}">
-                                <input 
-                                    type="text" 
-                                    value="{{key}}" 
-                                    placeholder="key" 
-                                    class="form-control form-control-sm key-input text-secondary border-0 bg-light hover:shadow-sm py-2"
-                                    data-name="{{envKey}}" 
-                                    required 
-                                    onkeyup="setEnvKey(this)">
-                                <span>=</span>
-                                <input 
-                                    type="text" 
-                                    name="{{key}}" 
-                                    value="{{value}}" 
-                                    placeholder="value" 
-                                    id="{{envKey}}" 
-                                    class="form-control form-control-sm text-secondary border-0 bg-light hover:shadow-sm py-2" 
-                                    required>
-                                <a href="javascript: deleteElem('{{id}}')" class="nav-link">
-                                    <i class="fas fa-times text-danger"></i>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-bolt fa-fw text-accent me-2"></i>
+                Quick Actions
+            </div>
+            <div class="card-body p-2">
+                <div class="d-grid gap-1">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="btn btn-outline-secondary w-100 text-start" data-bs-toggle="dropdown">
+                            <i class="fas fa-play fa-fw me-2"></i>
+                            Run Function
+                        </a>
+                        <ul class="dropdown-menu w-100">
+                            {% for func in funcs %}
+                            <li>
+                                <a href="{{ url_for('run_project', project_id=project.id, function=func.name) }}" 
+                                   class="dropdown-item" target="_blank">
+                                    <i class="fas fa-terminal fa-fw me-2 text-accent"></i>
+                                    <span class="text-mono">{{ func.name }}</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li><span class="dropdown-item text-muted">No functions available</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id) }}" 
+                       class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-wrench fa-fw me-2"></i>
+                        Reinstall Dependencies
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary text-start" onclick="copyProjectId()">
+                        <i class="fas fa-copy fa-fw me-2"></i>
+                        Copy Project ID
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-danger">
+            <div class="card-header text-danger">
+                <i class="fas fa-exclamation-triangle fa-fw me-2"></i>
+                Danger Zone
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-danger btn-sm w-100" onclick="onDeleteProject('{{ project.id }}')">
+                    <i class="fas fa-trash-alt fa-fw me-1"></i>
+                    Delete Project
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="card">
+            <nav>
+                <div class="nav nav-tabs" role="tablist">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button" role="tab">
+                        <i class="fas fa-home fa-fw me-1"></i>
+                        Overview
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-functions" type="button" role="tab">
+                        <i class="fas fa-code fa-fw me-1"></i>
+                        Functions
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-environment" type="button" role="tab">
+                        <i class="fas fa-key fa-fw me-1"></i>
+                        Environment
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings" type="button" role="tab">
+                        <i class="fas fa-cog fa-fw me-1"></i>
+                        Settings
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-code" type="button" role="tab">
+                        <i class="fas fa-terminal fa-fw me-1"></i>
+                        API Usage
+                    </button>
+                </div>
+            </nav>
+            
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+                    <h5 class="text-mono mb-4">
+                        <i class="fas fa-info-circle fa-fw text-accent me-2"></i>
+                        Project Overview
+                    </h5>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="stat-label">Functions</div>
+                                        <div class="stat-value">{{ funcs | length }}</div>
+                                    </div>
+                                    <i class="fas fa-code fa-2x text-accent" style="opacity: 0.5;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="stat-label">Environment Vars</div>
+                                        <div class="stat-value">{{ environs | length }}</div>
+                                    </div>
+                                    <i class="fas fa-key fa-2x text-accent" style="opacity: 0.5;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="stat-label">Visibility</div>
+                                        <div class="stat-value" style="font-size: 1rem;">
+                                            {% if project.private %}
+                                            <span class="badge badge-secondary"><i class="fas fa-lock fa-fw me-1"></i>Private</span>
+                                            {% else %}
+                                            <span class="badge badge-success"><i class="fas fa-globe fa-fw me-1"></i>Public</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-eye fa-2x text-accent" style="opacity: 0.5;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <i class="fas fa-info-circle fa-fw text-accent me-2"></i>
+                                    Project Details
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Project ID</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <code class="text-mono" style="font-size: 0.8125rem;">{{ project.id }}</code>
+                                            <button class="btn btn-ghost btn-sm" onclick="copyText('{{ project.id }}')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Language</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(project.language | lower, 'code') %}
+                                            <i class="fab fa-{{ lang_icon }} text-accent"></i>
+                                            <span class="text-mono">{{ project.language | title }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Created</label>
+                                        <div class="text-mono">{{ project.created_at | default('N/A') }}</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label text-muted">Last Updated</label>
+                                        <div class="text-mono">{{ project.updated_at | default('N/A') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <i class="fas fa-link fa-fw text-accent me-2"></i>
+                                    Endpoints
+                                </div>
+                                <div class="card-body">
+                                    {% for func in funcs[:5] %}
+                                    <div class="d-flex align-items-center justify-content-between py-2 {% if not loop.last %}border-bottom{% endif %}">
+                                        <div>
+                                            <span class="text-mono">{{ func.name }}</span>
+                                            <div class="text-muted" style="font-size: 0.75rem;">/run/{{ project.id }}/{{ func.name }}</div>
+                                        </div>
+                                        <a href="{{ url_for('run_project', project_id=project.id, function=func.name) }}" 
+                                           class="btn btn-ghost btn-sm" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">No functions defined</p>
+                                    {% endfor %}
+                                    {% if funcs | length > 5 %}
+                                    <div class="text-center mt-2">
+                                        <a href="#tab-functions" class="text-accent" data-bs-toggle="tab">View all {{ funcs | length }} functions</a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="tab-functions" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="text-mono mb-0">
+                            <i class="fas fa-code fa-fw text-accent me-2"></i>
+                            Functions
+                        </h5>
+                        <span class="badge badge-secondary">{{ funcs | length }} total</span>
+                    </div>
+                    
+                    {% if funcs %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Endpoint</th>
+                                    <th>Method</th>
+                                    <th style="width: 100px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for func in funcs %}
+                                <tr>
+                                    <td>
+                                        <span class="text-mono">{{ func.name }}</span>
+                                    </td>
+                                    <td>
+                                        <code class="text-muted" style="font-size: 0.75rem;">/run/{{ project.id }}/{{ func.name }}</code>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-secondary">GET/POST</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ url_for('run_project', project_id=project.id, function=func.name) }}" 
+                                               class="btn btn-ghost btn-sm" target="_blank" title="Run">
+                                                <i class="fas fa-play text-accent"></i>
+                                            </a>
+                                            <button class="btn btn-ghost btn-sm" onclick="copyEndpoint('{{ project.id }}', '{{ func.name }}')" title="Copy URL">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-code"></i>
+                        <div class="empty-state-title">No functions defined</div>
+                        <p class="empty-state-text">Add functions to your project code to expose them as endpoints</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="tab-pane fade" id="tab-environment" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="text-mono mb-0">
+                            <i class="fas fa-key fa-fw text-accent me-2"></i>
+                            Environment Variables
+                        </h5>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="createEnv()">
+                                <i class="fas fa-plus fa-fw me-1"></i>
+                                Add Variable
+                            </button>
+                            <button type="button" class="btn btn-accent" onclick="updateEnvs()">
+                                <i class="fas fa-save fa-fw me-1"></i>
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form action="{{ url_for('user_project_environ', project_id=project.id) }}" method="post" class="env-form" id="env-form">
+                        {% if environs %}
+                        <div class="card">
+                            <div class="card-body p-0">
+                                {% for key, value in environs.items() %}
+                                {% set id = 'env' + (loop.index | string) %}
+                                {% set envKey = 'envKey' + (loop.index | string) %}
+                                <div class="d-flex align-items-center gap-3 p-3 {% if not loop.last %}border-bottom{% endif %}" id="{{ id }}">
+                                    <div class="flex-grow-1">
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" value="{{ key }}" placeholder="KEY"
+                                                       class="form-control form-control-mono"
+                                                       data-name="{{ envKey }}" required onkeyup="setEnvKey(this)">
+                                            </div>
+                                            <div class="col-md-7">
+                                                <div class="input-group">
+                                                    <input type="password" name="{{ key }}" value="{{ value }}" placeholder="value"
+                                                           id="{{ envKey }}" class="form-control form-control-mono env-value" required>
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleEnvVisibility(this)">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-ghost btn-sm text-danger" onclick="deleteElem('{{ id }}')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state" id="no-env-vars">
+                            <i class="fas fa-key"></i>
+                            <div class="empty-state-title">No environment variables</div>
+                            <p class="empty-state-text">Add environment variables to configure your project</p>
+                            <button type="button" class="btn btn-accent" onclick="createEnv()">
+                                <i class="fas fa-plus fa-fw me-1"></i>
+                                Add Variable
+                            </button>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+                
+                <div class="tab-pane fade" id="tab-settings" role="tabpanel">
+                    <h5 class="text-mono mb-4">
+                        <i class="fas fa-cog fa-fw text-accent me-2"></i>
+                        Project Settings
+                    </h5>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-eye fa-fw text-accent me-2"></i>
+                            Visibility
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-mono">Project Visibility</div>
+                                    <div class="text-muted" style="font-size: 0.875rem;">
+                                        {% if project.private %}
+                                        This project is private and only accessible to you.
+                                        {% else %}
+                                        This project is public and accessible to everyone.
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn {% if not project.private %}btn-accent{% else %}btn-outline-secondary{% endif %}">
+                                        <i class="fas fa-globe fa-fw me-1"></i>
+                                        Public
+                                    </button>
+                                    <button type="button" class="btn {% if project.private %}btn-accent{% else %}btn-outline-secondary{% endif %}">
+                                        <i class="fas fa-lock fa-fw me-1"></i>
+                                        Private
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-sync fa-fw text-accent me-2"></i>
+                            Dependencies
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-mono">Reinstall Dependencies</div>
+                                    <div class="text-muted" style="font-size: 0.875rem;">Reinstall all project dependencies from requirements.txt or package.json</div>
+                                </div>
+                                <a href="{{ url_for('reinstall_project_dependencies', project_id=project.id) }}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-wrench fa-fw me-1"></i>
+                                    Reinstall
                                 </a>
                             </div>
-                        {% endfor %}
-                    </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-database fa-fw text-accent me-2"></i>
+                            Linked Database
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-mono">Database Connection</div>
+                                    <div class="text-muted" style="font-size: 0.875rem;">
+                                        {% if project.database_id %}
+                                        Connected to database
+                                        {% else %}
+                                        No database linked to this project
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if project.database_id %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check fa-fw me-1"></i>
+                                    Connected
+                                </span>
+                                {% else %}
+                                <a href="{{ url_for('list_user_databases') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-plus fa-fw me-1"></i>
+                                    Create Database
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="tab-code" role="tabpanel">
+                    <h5 class="text-mono mb-4">
+                        <i class="fas fa-terminal fa-fw text-accent me-2"></i>
+                        API Usage
+                    </h5>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-code fa-fw text-accent me-2"></i>cURL Example</span>
+                            <button class="btn btn-ghost btn-sm" onclick="copyCurl()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="code-editor">
+                                <div class="code-editor-header">
+                                    <div class="code-editor-tabs">
+                                        <span class="code-editor-tab active">
+                                            <i class="fas fa-terminal fa-fw me-1"></i>curl
+                                        </span>
+                                    </div>
+                                    <div class="code-editor-dots">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="code-editor-body code-editor-no-gutter">
+                                    <pre class="code-editor-content"><code><span class="code-keyword">curl</span> -X POST <span class="code-string">"{{ request.base_url }}run/{{ project.id }}/index"</span> \
+  -H <span class="code-string">"Authorization: Bearer {{ request.session['access_token'] }}"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d <span class="code-string">'{"key": "value"}'</span></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fab fa-python fa-fw text-accent me-2"></i>
+                                    Python
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="code-editor">
+                                        <div class="code-editor-header">
+                                            <div class="code-editor-tabs">
+                                                <span class="code-editor-tab active">
+                                                    <i class="fab fa-python fa-fw me-1"></i>python
+                                                </span>
+                                            </div>
+                                            <div class="code-editor-dots">
+                                                <span></span><span></span><span></span>
+                                            </div>
+                                        </div>
+                                        <div class="code-editor-body code-editor-no-gutter">
+                                            <pre class="code-editor-content" style="font-size: 0.75rem;"><code><span class="code-keyword">import</span> <span class="code-module">requests</span>
+
+<span class="code-class">response</span> = <span class="code-module">requests</span>.<span class="code-func">post</span>(
+    <span class="code-string">"{{ request.base_url }}run/{{ project.id }}/index"</span>,
+    <span class="code-class">headers</span>={
+        <span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer {{ request.session['access_token'] }}"</span>
+    },
+    <span class="code-class">json</span>={<span class="code-string">"key"</span>: <span class="code-string">"value"</span>}
+)
+<span class="code-func">print</span>(<span class="code-class">response</span>.<span class="code-func">json</span>())</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fab fa-js fa-fw text-accent me-2"></i>
+                                    JavaScript
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="code-editor">
+                                        <div class="code-editor-header">
+                                            <div class="code-editor-tabs">
+                                                <span class="code-editor-tab active">
+                                                    <i class="fab fa-js fa-fw me-1"></i>javascript
+                                                </span>
+                                            </div>
+                                            <div class="code-editor-dots">
+                                                <span></span><span></span><span></span>
+                                            </div>
+                                        </div>
+                                        <div class="code-editor-body code-editor-no-gutter">
+                                            <pre class="code-editor-content" style="font-size: 0.75rem;"><code><span class="code-keyword">const</span> <span class="code-class">response</span> = <span class="code-keyword">await</span> <span class="code-func">fetch</span>(
+  <span class="code-string">"{{ request.base_url }}run/{{ project.id }}/index"</span>,
+  {
+    <span class="code-class">method</span>: <span class="code-string">"POST"</span>,
+    <span class="code-class">headers</span>: {
+      <span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer {{ request.session['access_token'] }}"</span>
+    },
+    <span class="code-class">body</span>: <span class="code-class">JSON</span>.<span class="code-func">stringify</span>({<span class="code-class">key</span>: <span class="code-string">"value"</span>})
+  }
+);</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="d-none" id="accessToken">
-        {{request.session['access_token']}}
-    </div>
 </div>
+
+<div class="d-none" id="accessToken">{{ request.session['access_token'] }}</div>
+
+<style>
+.env-value {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+}
+</style>
 {% endblock %}
 
-{% block scripts %} 
-{{super()}}
+{% block scripts %}
+{{ super() }}
 <script src="/static/js/github.js"></script>
 <script src="/static/js/projects.js"></script>
+<script>
+function copyProjectId() {
+    copyText('{{ project.id }}');
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Copied to clipboard');
+    });
+}
+
+function copyEndpoint(projectId, funcName) {
+    const url = '{{ request.base_url }}run/' + projectId + '/' + funcName;
+    copyText(url);
+}
+
+function copyCurl() {
+    const curl = `curl -X POST "{{ request.base_url }}run/{{ project.id }}/index" \\
+  -H "Authorization: Bearer {{ request.session['access_token'] }}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"key": "value"}'`;
+    copyText(curl);
+}
+
+function toggleEnvVisibility(btn) {
+    const input = btn.parentElement.querySelector('input');
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-success position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+    notification.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+</script>
 {% endblock %}

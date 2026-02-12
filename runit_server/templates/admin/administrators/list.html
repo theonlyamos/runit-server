@@ -2,41 +2,31 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th style="width: 40px;">
-                    <input class="form-check-input" type="checkbox" id="selectAll">
-                </th>
                 <th>Name</th>
+                <th>Username</th>
                 <th>Email</th>
-                <th>Registered</th>
+                <th>Role</th>
                 <th style="width: 120px;">Actions</th>
             </tr>
         </thead>
         <tbody>
-        {% for user in users %}
+        {% for admin in admins %}
             <tr class="fade-in stagger-{{ loop.index % 6 + 1 }}">
                 <td>
-                    <input class="form-check-input" type="checkbox">
-                </td>
-                <td>
                     <div class="d-flex align-items-center gap-2">
-                        {% if user.image %}
-                        <img src="{{ url_for('uploads', path=user.id+'/'+user.image) }}" 
-                             class="rounded-circle" 
-                             style="width: 32px; height: 32px; object-fit: cover;">
-                        {% else %}
                         <div class="rounded-circle d-flex align-items-center justify-content-center" 
                              style="width: 32px; height: 32px; background: var(--bg-tertiary);">
-                            <i class="fas fa-user fa-sm text-muted"></i>
+                            <i class="fas fa-shield-alt fa-sm text-accent"></i>
                         </div>
-                        {% endif %}
-                        <a href="{{ url_for('admin_get_user', user_id=user.id) }}" class="text-accent fw-medium">
-                            {{ user.name }}
+                        <a href="{{ url_for('admin_get_administrator', admin_id=admin.id) }}" class="text-accent fw-medium">
+                            {{ admin.name }}
                         </a>
                     </div>
                 </td>
-                <td class="text-mono" style="font-size: 0.8125rem;">{{ user.email }}</td>
-                <td class="text-mono" style="font-size: 0.8125rem; color: var(--text-tertiary);">
-                    {{ user.created_at }}
+                <td class="text-mono" style="font-size: 0.8125rem;">{{ admin.username }}</td>
+                <td class="text-mono" style="font-size: 0.8125rem;">{{ admin.email }}</td>
+                <td>
+                    <span class="badge badge-secondary">{{ admin.role.get('name', admin.role) if admin.role else 'subadmin' }}</span>
                 </td>
                 <td>
                     <div class="dropdown">
@@ -45,13 +35,13 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a href="{{ url_for('admin_get_user', user_id=user.id) }}" class="dropdown-item">
+                                <a href="{{ url_for('admin_get_administrator', admin_id=admin.id) }}" class="dropdown-item">
                                     <i class="fas fa-info-circle fa-fw me-2 text-muted"></i> View
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item text-danger" href="#">
+                                <a href="{{ url_for('admin_get_administrator', admin_id=admin.id) }}" class="dropdown-item text-danger" onclick="event.preventDefault(); if(confirm('Delete {{ admin.name }}?')) { fetch('{{ url_for("admin_delete_administrator", admin_id=admin.id) }}', {method:'POST'}).then(r=>r.json()).then(d=>{if(d.success) location.reload(); else alert(d.message);}); }">
                                     <i class="fas fa-trash-alt fa-fw me-2"></i> Delete
                                 </a>
                             </li>

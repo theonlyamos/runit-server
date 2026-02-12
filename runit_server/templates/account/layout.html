@@ -1,43 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="s
-tylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900" rel="styles
-heet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700" rel="st
-ylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Josefin+Sans:300,300i,400,400i,700,700i" rel="stylesheet">
-
     <title>{% block title %}Runit{% endblock %}</title>
-    <meta name='viewport'
-        content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no' />
-    <meta name="description" content="">
-    <meta name="keywords" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="description" content="Runit Server - Deploy and manage your projects">
+    <meta name="keywords" content="runit, server, deploy, python, javascript, php">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/all.min.css" rel="stylesheet">
     <link href="/static/css/styles.css" rel="stylesheet">
+    <link rel="icon" href="/static/images/dark-terminal.svg">
 
-    <link rel='icon' href="/static/images/dark-terminal.svg">
-
-    <meta name="msapplication-TileColor" content="#ffff00">
-    
-    <meta name="theme-color" content="#ffff00">
+    <meta name="msapplication-TileColor" content="#ffb000">
+    <meta name="theme-color" content="#ffb000">
 </head>
 
-<body class="bg-light bg-gradient">
-    <div class="d-none" id="accessToken">
-        {{request.session['access_token']}}
-    </div>
+<body>
+    <div class="d-none" id="accessToken">{{request.session['access_token']}}</div>
+    
     <div class="offcanvas offcanvas-start w-auto" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasMenuLabel">Menu</h5>
-            <!--<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>-->
+            <h5 class="offcanvas-title" id="offcanvasMenuLabel">
+                <span class="text-accent">></span> Menu
+            </h5>
         </div>
         {% set menu = [
             {'name': 'home', 'icon': 'home', 'url': 'user_home'},
@@ -45,44 +37,66 @@ ylesheet">
             {'name': 'databases', 'icon': 'database', 'url': 'list_user_databases'},
             {'name': 'profile', 'icon': 'user', 'url': 'user_profile'}
         ] %}
-        <div class="offcanvas-body d-flex flex-column text-bg-light">
+        <div class="offcanvas-body d-flex flex-column">
             {% for item in menu %}
             <a href="{{ url_for(item['url']) }}" 
-                class="nav-link p-2 py-3 text-secondary {% if item['name'] == page %}text-dark{% endif %}"
-                title="{{ item['name'] | capitalize }}">
-                <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
+               class="nav-link {% if item['name'] == page %}active{% endif %}"
+               title="{{ item['name'] | capitalize }}">
+                <i class="fas fa-{{ item['icon']}} fa-fw me-2"></i>
+                <span>{{ item['name'] | capitalize }}</span>
             </a>
             {% endfor %}
-            <a href="{{ url_for('user_logout') }}" class="nav-link p-2 py-3 text-danger position-absolute bottom-0">
-                <i class="fas fa-sign-out-alt fa-fw fa-2x"></i>
-            </a>
+            <div class="mt-auto pt-3 border-top border-color: var(--border-color)">
+                <a href="{{ url_for('user_logout') }}" class="nav-link text-danger">
+                    <i class="fas fa-sign-out-alt fa-fw me-2"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
     </div>
 
-    <main class="vh-100 vw-100 d-flex justify-content-center align-items-center">
+    <main class="vh-100 vw-100 d-flex">
         {% include 'sidebar.html' %}
-        <div class="main-content w-100 vh-100 position-relative">
+        <div class="main-content w-100 position-relative">
             {% if not fullscreen %}
-            <nav class="d-flex justify-content-between p-4">
-                <a href="#offcanvasMenu" class="nav-link text-dark d-sm-none" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvasMenu">
-                    <i class="fas fa-bars fa-2x fa-fw"></i>
-                </a>
-                <div class="h5">
-                    <strong>
-                        {% block pagetitle %}
-                        {{ page | upper }}
-                        {% endblock %}
-                    </strong>
+            <nav class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="#offcanvasMenu" class="nav-link mobile-menu-btn text-secondary p-2" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvasMenu">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </a>
+                    <h1 class="page-title mb-0">
+                        {% block pagetitle %}{{ page | upper }}{% endblock %}
+                    </h1>
                 </div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon"></i>
+                </button>
             </nav>
             {% endif %}
-            {% block content %}
-            {% endblock %}
+            <div class="p-4">
+                {% block content %}{% endblock %}
+            </div>
         </div>
     </main>
+
     {% block scripts %}
     <script src="/static/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/components.js"></script>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('runit-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('runit-theme', newTheme);
+        }
+    </script>
     {% endblock %}
 </body>
 </html>

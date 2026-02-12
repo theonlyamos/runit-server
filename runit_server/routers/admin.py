@@ -20,6 +20,7 @@ from ..common import Utils
 from ..models import User
 from ..models import Project
 from ..models import Admin
+from ..models import Role
 from ..models import Function
 from ..models import Database
 from ..models import Collection
@@ -34,6 +35,7 @@ from ..constants import (
 ADMIN_LOGIN_PAGE = 'admin_login_page'
 ADMIN_DATABASE_INDEX = 'admin_list_databases'
 ADMIN_PROJECTS_INDEX = 'admin_list_projects'
+ADMIN_ADMINISTRATORS_INDEX = 'admin_list_administrators'
 
 from runit import RunIt
 
@@ -53,14 +55,21 @@ async def admin_dashboard(request: Request):
 @admin.get('/users/')
 async def admin_list_users(request: Request, view: Optional[str] = None):
     users = await User.all()
-    
+
+    users_data = []
+    for user in users:
+        projects = await user.count_projects()
+        user_data = user.json()
+        user_data['projects'] = projects
+        users_data.append(user_data)
+
     if view:
         request.session['view'] = view
     elif 'view' not in request.session.keys():
         request.session['view'] = 'grid'
 
     return templates.TemplateResponse('admin/users/index.html', context={
-        'request': request, 'page': 'users', 'users': users, 
+        'request': request, 'page': 'users', 'users': users_data,
         'icons': LANGUAGE_TO_ICONS})
 
 @admin.get('/users/{user_id}')
@@ -72,13 +81,322 @@ async def admin_get_user(request: Request, user_id: str):
             raise Exception('User not found')
         
         projects = await Project.get_by_user(str(user.id))
+        databases = await Database.get_by_user(str(user.id))
+        admin_record = await Admin.find_one({'email': user.email})
+        
+        user_data = user.json()
+        user_data['projects'] = len(projects)
+        user_data['databases'] = len(databases)
+        user_data['is_admin'] = admin_record is not None
         
         return templates.TemplateResponse('admin/users/details.html', context={
-            'request': request, 'page': 'users', 'user': user.json(),
+            'request': request, 'page': 'users', 'user': user_data,
             'projects': projects, 'icons': LANGUAGE_TO_ICONS})
     except Exception as e:
         flash(request, str(e), 'danger')
         return RedirectResponse(request.url_for('admin_list_users'))
+    
+@admin.put('/users/{user_id}')
+@admin.put('/users/{user_id}/')
+@admin.post('/users/{user_id}')
+@admin.post('/users/{user_id}/')
+async def admin_update_user(
+    request: Request,
+    user_id: str,
+    name: Annotated[str, Form()] = '',
+    email: Annotated[str, Form()] = '',
+    is_admin: Annotated[Optional[str], Form()] = None
+):
+    try:
+        user = await User.get(user_id)  # type: ignore
+        if not user:
+            return JSONResponse(
+                {'success': False, 'message': 'User not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not name or not email:
+            return JSONResponse(
+                {'success': False, 'message': 'Name and email are required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        old_email = user.email
+
+        existing_user = await User.get_by_email(email)
+        if existing_user and str(existing_user.id) != str(user_id):
+            return JSONResponse(
+                {'success': False, 'message': 'Email is already in use by another user'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await user.update({'name': name, 'email': email})
+
+        return JSONResponse({'success': True, 'message': 'User updated successfully'})
+    except Exception as e:
+        logging.exception('Error updating user')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@admin.post('/users/{user_id}/reset-password')
+@admin.post('/users/{user_id}/reset-password/')
+async def admin_reset_user_password(
+    request: Request,
+    user_id: str,
+    new_password: Annotated[str, Form()] = '',
+    confirm_password: Annotated[str, Form()] = ''
+):
+    try:
+        user = await User.get(user_id)  # type: ignore
+        if not user:
+            return JSONResponse(
+                {'success': False, 'message': 'User not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not new_password:
+            return JSONResponse(
+                {'success': False, 'message': 'Password is required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_password != confirm_password:
+            return JSONResponse(
+                {'success': False, 'message': 'Passwords do not match'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 6:
+            return JSONResponse(
+                {'success': False, 'message': 'Password must be at least 6 characters'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await user.reset_password(new_password)
+        return JSONResponse({'success': True, 'message': 'Password reset successfully'})
+    except Exception as e:
+        logging.exception('Error resetting user password')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@admin.post('/users/{user_id}/delete')
+@admin.post('/users/{user_id}/delete/')
+async def admin_delete_user(request: Request, user_id: str, background_task: BackgroundTasks):
+    try:
+        user = await User.get(user_id)  # type: ignore
+        if not user:
+            return JSONResponse(
+                {'success': False, 'message': 'User not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        projects = await Project.get_by_user(str(user.id))
+
+        for project in projects:
+            project_path = Path(PROJECTS_DIR, str(project.id))
+            if project_path.exists():
+                background_task.add_task(shutil.rmtree, project_path)
+            await Project.delete_many({'id': str(project.id), 'user_id': str(user.id)})
+
+        await Database.delete_many({'user_id': str(user.id)})
+        await Admin.delete_many({'email': user.email})
+        await User.delete_many({'id': str(user.id)})
+
+        return JSONResponse({'success': True, 'message': 'User deleted successfully'})
+    except Exception as e:
+        logging.exception('Error deleting user')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# --- Administrators ---
+@admin.get('/administrators/')
+async def admin_list_administrators(request: Request, view: Optional[str] = None):
+    admins = await Admin.all()
+    admins_data = []
+    for a in admins:
+        admins_data.append(await a.json())
+
+    if view:
+        request.session['administrators_view'] = view
+    elif 'administrators_view' not in request.session.keys():
+        request.session['administrators_view'] = 'grid'
+
+    raw_roles = await DBMS.Database.find(Role.TABLE_NAME, {})
+    roles = [{'name': r.get('name', '')} for r in raw_roles if r.get('name')]
+
+    return templates.TemplateResponse('admin/administrators/index.html', context={
+        'request': request, 'page': 'administrators', 'admins': admins_data,
+        'roles': roles, 'icons': LANGUAGE_TO_ICONS})
+
+
+@admin.get('/administrators/{admin_id}')
+@admin.get('/administrators/{admin_id}/')
+async def admin_get_administrator(request: Request, admin_id: str):
+    try:
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            raise Exception('Administrator not found')
+
+        admin_data = await admin_record.json()
+        raw_roles = await DBMS.Database.find(Role.TABLE_NAME, {})
+        roles = [{'name': r.get('name', '')} for r in raw_roles if r.get('name')]
+        is_self = str(request.session.get('admin_id', '')) == str(admin_id)
+
+        return templates.TemplateResponse('admin/administrators/details.html', context={
+            'request': request, 'page': 'administrators', 'admin': admin_data,
+            'roles': roles, 'is_self': is_self, 'icons': LANGUAGE_TO_ICONS})
+    except Exception as e:
+        flash(request, str(e), 'danger')
+        return RedirectResponse(request.url_for(ADMIN_ADMINISTRATORS_INDEX))
+
+
+@admin.post('/administrators')
+@admin.post('/administrators/')
+async def admin_create_administrator(
+    request: Request,
+    name: Annotated[str, Form()],
+    email: Annotated[str, Form()],
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    role: Annotated[str, Form()] = 'subadmin'
+):
+    try:
+        existing = await Admin.get_by_username(username)
+        if existing:
+            flash(request, 'Username already exists', 'danger')
+            return RedirectResponse(request.url_for(ADMIN_ADMINISTRATORS_INDEX), status_code=status.HTTP_303_SEE_OTHER)
+
+        new_admin = Admin(email=email, name=name, username=username, password=password, role=role)
+        await new_admin.save()
+        flash(request, 'Administrator created successfully', 'success')
+    except Exception as e:
+        flash(request, str(e), 'danger')
+    return RedirectResponse(request.url_for(ADMIN_ADMINISTRATORS_INDEX), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@admin.put('/administrators/{admin_id}')
+@admin.put('/administrators/{admin_id}/')
+@admin.post('/administrators/{admin_id}')
+@admin.post('/administrators/{admin_id}/')
+async def admin_update_administrator(
+    request: Request,
+    admin_id: str,
+    name: Annotated[str, Form()] = '',
+    email: Annotated[str, Form()] = '',
+    username: Annotated[str, Form()] = '',
+    role: Annotated[str, Form()] = 'subadmin'
+):
+    try:
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            return JSONResponse(
+                {'success': False, 'message': 'Administrator not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not name or not email or not username:
+            return JSONResponse(
+                {'success': False, 'message': 'Name, email and username are required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        existing = await Admin.get_by_username(username)
+        if existing and str(existing.id) != str(admin_id):
+            return JSONResponse(
+                {'success': False, 'message': 'Username already in use'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await admin_record.update({'name': name, 'email': email, 'username': username, 'role': role})
+        return JSONResponse({'success': True, 'message': 'Administrator updated successfully'})
+    except Exception as e:
+        logging.exception('Error updating administrator')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@admin.post('/administrators/{admin_id}/reset-password')
+@admin.post('/administrators/{admin_id}/reset-password/')
+async def admin_reset_administrator_password(
+    request: Request,
+    admin_id: str,
+    new_password: Annotated[str, Form()] = '',
+    confirm_password: Annotated[str, Form()] = ''
+):
+    try:
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            return JSONResponse(
+                {'success': False, 'message': 'Administrator not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not new_password:
+            return JSONResponse(
+                {'success': False, 'message': 'Password is required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_password != confirm_password:
+            return JSONResponse(
+                {'success': False, 'message': 'Passwords do not match'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 6:
+            return JSONResponse(
+                {'success': False, 'message': 'Password must be at least 6 characters'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await admin_record.reset_password(new_password)
+        return JSONResponse({'success': True, 'message': 'Password reset successfully'})
+    except Exception as e:
+        logging.exception('Error resetting administrator password')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@admin.post('/administrators/{admin_id}/delete')
+@admin.post('/administrators/{admin_id}/delete/')
+async def admin_delete_administrator(request: Request, admin_id: str):
+    try:
+        current_admin_id = request.session.get('admin_id')
+        if str(current_admin_id) == str(admin_id):
+            return JSONResponse(
+                {'success': False, 'message': 'You cannot delete your own account'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            return JSONResponse(
+                {'success': False, 'message': 'Administrator not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        await Admin.delete_many({'id': str(admin_id)})
+        return JSONResponse({'success': True, 'message': 'Administrator deleted successfully'})
+    except Exception as e:
+        logging.exception('Error deleting administrator')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 @admin.get('/projects')
 @admin.get('/projects/')
@@ -122,7 +440,7 @@ async def admin_get_project(request: Request, project_id):
         project_data = project.json()
         return templates.TemplateResponse('admin/projects/details.html', context={
             'request': request, 'page': 'projects', 'project': project_data,
-            'environs': environs, 'funcs': funcs})
+            'environs': environs, 'funcs': funcs, 'icons': LANGUAGE_TO_ICONS})
     else:
         flash(request, 'Project does not exist', 'danger')
         return RedirectResponse(request.url_for('admin_list_projects'))
@@ -319,6 +637,109 @@ async def admin_profile(request: Request):
     user_json = await user.json()
     return templates.TemplateResponse('admin/profile.html', context={
         'request': request, 'page': 'profile', 'user': user_json})
+
+
+@admin.post('/profile/')
+async def admin_update_profile(
+    request: Request,
+    name: Annotated[str, Form()] = '',
+    username: Annotated[str, Form()] = '',
+    email: Annotated[str, Form()] = ''
+):
+    try:
+        admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return JSONResponse(
+                {'success': False, 'message': 'Not authenticated'},
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            return JSONResponse(
+                {'success': False, 'message': 'Administrator not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not name or not username or not email:
+            return JSONResponse(
+                {'success': False, 'message': 'Name, username and email are required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        existing = await Admin.get_by_username(username)
+        if existing and str(existing.id) != str(admin_id):
+            return JSONResponse(
+                {'success': False, 'message': 'Username already in use'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await admin_record.update({'name': name, 'username': username, 'email': email})
+        return JSONResponse({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        logging.exception('Error updating profile')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@admin.post('/profile/change-password')
+@admin.post('/profile/change-password/')
+async def admin_change_password(
+    request: Request,
+    current_password: Annotated[str, Form()] = '',
+    new_password: Annotated[str, Form()] = '',
+    confirm_password: Annotated[str, Form()] = ''
+):
+    try:
+        admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return JSONResponse(
+                {'success': False, 'message': 'Not authenticated'},
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        admin_record = await Admin.get(admin_id)  # type: ignore
+        if not admin_record:
+            return JSONResponse(
+                {'success': False, 'message': 'Administrator not found'},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if not Utils.check_hashed_password(current_password, admin_record.password):
+            return JSONResponse(
+                {'success': False, 'message': 'Current password is incorrect'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not new_password:
+            return JSONResponse(
+                {'success': False, 'message': 'New password is required'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_password != confirm_password:
+            return JSONResponse(
+                {'success': False, 'message': 'Passwords do not match'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 6:
+            return JSONResponse(
+                {'success': False, 'message': 'Password must be at least 6 characters'},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        await admin_record.reset_password(new_password)
+        return JSONResponse({'success': True, 'message': 'Password changed successfully'})
+    except Exception as e:
+        logging.exception('Error changing password')
+        return JSONResponse(
+            {'success': False, 'message': str(e)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 @admin.get('/logout/')
 async def admin_logout(request: Request):

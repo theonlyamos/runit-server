@@ -221,7 +221,7 @@ async def user_project_details(request: Request, project_id: str):
         
         return templates.TemplateResponse('projects/details.html', context={
             'request': request, 'page': 'projects','project': project, 
-            'environs': environs, 'funcs': funcs, 'user': user})
+            'environs': environs, 'funcs': funcs, 'user': user, 'icons': LANGUAGE_TO_ICONS})
     else:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))

@@ -1,37 +1,47 @@
-<div class="card rounded-0 border-0 shadow-sm p-0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-light table-striped table-hover mb-0 fs-5">
-                <thead>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Language</th>
-                    <!-- <th>Updated At</th> -->
-                    <th class="text-center">Actions</th>
-                </thead>
-                <tbody>
-                    {% for project in projects %}
-                    <tr>
-                        <td><input type="checkbox" name="" id="" class="form-check custom"></td>
-                        <td>
-                            <a href="{{url_for('admin_get_project', project_id=project.id)}}" class="nav-link">
-                                {{ project['name'] }}
-                            </a>
-                        </td>
-                        <td>{{project['language']}}</td>
-                        <!-- <td>{{ project['updated_at'] }}</td> -->
-                        <td class="d-flex justify-content-center gap-3">
-                            <a href="{{url_for('admin_get_project', project_id=project.id)}}" class="nav-link">
-                                <i class="far fa-file-alt text-primary"></i>
-                            </a>
-                            <a href="#confirmModal" role="button" class="nav-link"  data-bs-toggle="modal">
-                                <i class="fas fa-trash-alt text-danger"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width: 40px;">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                </th>
+                <th>Name</th>
+                <th>Language</th>
+                <th style="width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for project in projects %}
+            <tr class="fade-in stagger-{{ loop.index % 6 + 1 }}">
+                <td>
+                    <input class="form-check-input" type="checkbox">
+                </td>
+                <td>
+                    <a href="{{ url_for('admin_get_project', project_id=project.id) }}" class="text-accent fw-medium">
+                        {{ project.name | title }}
+                    </a>
+                </td>
+                <td>
+                    <span class="badge badge-secondary">
+                        {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(project.language | lower, 'code') %}
+                        <i class="fab fa-{{ lang_icon }} fa-fw me-1"></i>
+                        {{ project.language | title }}
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ url_for('admin_get_project', project_id=project.id) }}" 
+                           class="btn btn-ghost btn-sm" title="Details">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        <a href="#confirmModal" 
+                           class="btn btn-ghost btn-sm text-danger" data-bs-toggle="modal" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>

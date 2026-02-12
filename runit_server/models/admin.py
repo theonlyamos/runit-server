@@ -89,7 +89,8 @@ class Admin(Model):
         @return None
         '''
 
-        await DBMS.Database.update_one(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': new_password})
+        hashed = Utils.hash_password(new_password)
+        await DBMS.Database.update_one(Admin.TABLE_NAME, Admin.normalise({'id': self.id}, 'params'), {'password': hashed})
     
 
     async def json(self) -> dict:

@@ -119,7 +119,7 @@ class User(Model):
 
         return DBMS.Database.find('projects', {'user_id': self.id})
     
-    def count_projects(self):
+    async def count_projects(self):
         '''
         Instance Method for counting User Projects
 
@@ -127,7 +127,7 @@ class User(Model):
         @return int Count of Projects
         '''
 
-        return DBMS.Database.count('projects', User.normalise({'user_id': self.id}, 'params'))
+        return await DBMS.Database.count('projects', User.normalise({'user_id': self.id}, 'params'))
     
     def json(self)-> dict:
         '''

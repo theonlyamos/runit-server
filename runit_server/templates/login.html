@@ -1,53 +1,60 @@
 {% extends "layout.html" %}
+{% block title %}Login - Runit{% endblock %}
 {% block content %}
-<main class="vh-100 vw-100 d-flex align-items-center justify-content-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-sm-10 col-md-7 col-lg-5">
-                <div class="card rounded-0 shadow align-self-center">
-                    <div class="card-body">
-                        <form class="form-floating bg-gradient" action="{{request.url_for('login')}}" method="post">
-                            <input type="hidden" name="_csrf_token" value="{{get_csrf_token(request)}}">
-                            <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-black-50 fs-4">LOGIN</h5>
-                            {% for (category, message) in get_flashed_messages(request) %}
-                            <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
-                                <strong>{{message}}</strong>
-                                <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                            {% endfor %}
-                            <div class="form-group mb-3">
-                                <label class="form-label" for="username">Email Address</label>
-                                <input type="email" class="form-control rounded-0" name="username" required>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label class="form-label" for="password">Password</label>
-                                <input type="password" class="form-control rounded-0" name="password" required>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input rounded-0" name="remember_me">
-                                    <lable class="form-check-label">Remember Me</lable>
-                                </div>
-                                <a href="{{request.url_for('login')}}" class="nav-link text-primary">
-                                    <small>Forgot Password?</small>
-                                </a>
-                            </div>
-                            <div class="form-group d-flex justify-content-end mb-3">
-                                <button type="submit" class="btn btn-outline-dark bg-gradient shadow-sm rounded-0 shadow px-4">Login</button>
-                            </div>
-                            <div class="form-group border-top text-center py-2">
-                                <a href="{{request.url_for('registration_page')}}" class="nav-link text-primary">
-                                    <small>REGISTER</small>
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+<div class="auth-container">
+    <div class="auth-card fade-in">
+        <div class="auth-header">
+            <div class="auth-logo">runit</div>
+            <div class="auth-title">Sign in to your account</div>
         </div>
-        <a href="{{request.url_for('admin_login_page')}}" class="nav-link p-0 position-absolute" style="top: 100px; right: 150px">
-            <i class="fas fa-user-shield" title="User Login"></i>
-        </a>
+        <div class="auth-body">
+            <form action="{{ request.url_for('login') }}" method="post">
+                <input type="hidden" name="_csrf_token" value="{{ get_csrf_token(request) }}">
+                
+                {% for (category, message) in get_flashed_messages(request) %}
+                <div class="alert alert-{{ category }} mb-3">
+                    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endfor %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="username">Email Address</label>
+                    <input type="email" class="form-control" name="username" id="username" required placeholder="you@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-control" name="password" id="password" required placeholder="Enter your password">
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <label class="form-check d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input" name="remember_me">
+                        <span class="text-muted" style="font-size: 0.875rem;">Remember me</span>
+                    </label>
+                    <a href="{{ request.url_for('login') }}" class="text-accent" style="font-size: 0.875rem;">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-accent w-100">
+                    <i class="fas fa-arrow-right fa-fw"></i>
+                    Sign In
+                </button>
+            </form>
+        </div>
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ request.url_for('registration_page') }}">Create one</a>
+        </div>
     </div>
-</main>
+    <a href="{{ request.url_for('admin_login_page') }}" class="position-absolute" style="bottom: 20px; right: 20px; opacity: 0.5;" title="Admin Login">
+        <i class="fas fa-user-shield fa-lg"></i>
+    </a>
+    <button class="theme-toggle position-absolute" style="bottom: 20px; left: 20px;" onclick="toggleTheme()" title="Toggle theme">
+        <i class="fas fa-sun"></i>
+        <i class="fas fa-moon"></i>
+    </button>
+</div>
 {% endblock %}

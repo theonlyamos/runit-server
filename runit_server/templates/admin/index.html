@@ -1,23 +1,276 @@
 {% extends "admin/layout.html" %}
+{% block title %}{{ super() }} - Dashboard{% endblock %}
+{% block pagetitle %}DASHBOARD{% endblock %}
 {% block content %}
-<div class="p-4 w-100">
-    <div class="h5 text-center">
-        Welcome to your dashboard, <strong class="text-primary"><em>{{admin_name}}</em></strong>
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">Admin Dashboard</p>
+                <h2 class="text-mono mb-0">
+                    <span class="text-accent">></span> <em>Overview</em>
+                </h2>
+            </div>
+            <div class="badge badge-accent">
+                <i class="fas fa-shield-alt fa-fw me-1"></i>
+                Administrator
+            </div>
+        </div>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value text-mono">{{ users | length if users else 0 }}</div>
+                        </div>
+                        <div class="badge rounded-circle p-2" style="background: rgba(59, 130, 246, 0.2);">
+                            <i class="fas fa-users" style="color: var(--info);"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('admin_list_users') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            Manage <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Projects</div>
+                            <div class="stat-value text-mono">{{ projects | length if projects else 0 }}</div>
+                        </div>
+                        <div class="badge rounded-circle p-2" style="background: rgba(34, 197, 94, 0.2);">
+                            <i class="fas fa-sitemap" style="color: var(--success);"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('admin_list_projects') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            Manage <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Databases</div>
+                            <div class="stat-value text-mono">{{ databases | length if databases else 0 }}</div>
+                        </div>
+                        <div class="badge rounded-circle p-2" style="background: var(--accent-glow);">
+                            <i class="fas fa-database" style="color: var(--accent);"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('admin_list_databases') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            Manage <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Active</div>
+                            <div class="stat-value text-mono" style="color: var(--success);">{{ active_users | default(0) }}</div>
+                        </div>
+                        <div class="badge rounded-circle p-2" style="background: rgba(34, 197, 94, 0.2);">
+                            <i class="fas fa-heartbeat" style="color: var(--success);"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-muted" style="font-size: 0.8125rem;">Users online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-users fa-fw text-accent me-2"></i>Recent Users</span>
+                        <a href="{{ url_for('admin_list_users') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            View all <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if users %}
+                        {% for u in users[:5] %}
+                        <a href="{{ url_for('admin_get_user', user_id=u.id) }}" 
+                           class="d-flex align-items-center justify-content-between p-3 {% if not loop.last %}border-bottom{% endif %} text-decoration-none">
+                            <div class="d-flex align-items-center gap-3">
+                                {% if u.image %}
+                                <img src="{{ url_for('uploads', path=u.id+'/'+u.image) }}" 
+                                     class="rounded-circle" 
+                                     style="width: 36px; height: 36px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 36px; height: 36px; background: var(--bg-tertiary);">
+                                    <i class="fas fa-user text-muted fa-sm"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="text-mono">{{ u.name }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ u.email }}</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        {% endfor %}
+                        {% else %}
+                        <div class="p-4 text-center text-muted">No users registered</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-sitemap fa-fw text-accent me-2"></i>Recent Projects</span>
+                        <a href="{{ url_for('admin_list_projects') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            View all <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if projects %}
+                        {% for p in projects[:5] %}
+                        <a href="{{ url_for('admin_get_project', project_id=p.id) }}" 
+                           class="d-flex align-items-center justify-content-between p-3 {% if not loop.last %}border-bottom{% endif %} text-decoration-none">
+                            <div class="d-flex align-items-center gap-3">
+                                {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(p.language | lower, 'code') %}
+                                <div class="badge rounded-circle p-2" style="background: var(--accent-glow);">
+                                    <i class="fab fa-{{ lang_icon }}" style="color: var(--accent);"></i>
+                                </div>
+                                <div>
+                                    <div class="text-mono">{{ p.name | title }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ p.language | title }}</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        {% endfor %}
+                        {% else %}
+                        <div class="p-4 text-center text-muted">No projects created</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-<div class="d-flex flex-wrap justify-content-center py-5 px-3">
-    {% set menu = [
-        {'name': 'users', 'icon': 'users', 'url': 'admin_list_users'},
-        {'name': 'projects', 'icon': 'sitemap', 'url': 'admin_list_projects'},
-        {'name': 'databases', 'icon': 'database', 'url': 'admin_list_databases'},
-        {'name': 'profile', 'icon': 'user', 'url': 'admin_profile'}
-    ] %}
-    {% for item in menu %}
-    <a href="{{ url_for(item['url']) }}" 
-        class="nav-link p-5 m-2 border hover:shadow-sm text-black-50 hover:text-dark"
-        title="{{ item['name'] | capitalize }}">
-        <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
-    </a>
-    {% endfor %}
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-bolt fa-fw text-accent me-2"></i>
+                Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin_list_users') }}" class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-user-plus fa-fw me-2 text-accent"></i>
+                        Create User
+                    </a>
+                    <a href="{{ url_for('admin_list_projects') }}" class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-plus fa-fw me-2 text-accent"></i>
+                        New Project
+                    </a>
+                    <a href="{{ url_for('admin_list_databases') }}" class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-database fa-fw me-2 text-accent"></i>
+                        New Database
+                    </a>
+                    <a href="{{ url_for('admin_profile') }}" class="btn btn-outline-secondary text-start">
+                        <i class="fas fa-user fa-fw me-2 text-accent"></i>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-pie fa-fw text-accent me-2"></i>
+                Language Distribution
+            </div>
+            <div class="card-body">
+                {% set python_count = projects | selectattr('language', 'equalto', 'python') | list | length %}
+                {% set js_count = projects | selectattr('language', 'equalto', 'javascript') | list | length %}
+                {% set php_count = projects | selectattr('language', 'equalto', 'php') | list | length %}
+                {% set other_count = (projects | length) - python_count - js_count - php_count %}
+                {% set total = projects | length if projects else 1 %}
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-mono"><i class="fab fa-python fa-fw me-1"></i>Python</span>
+                        <span class="text-muted">{{ python_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                        <div class="progress-bar" style="width: {{ (python_count / total * 100) | round }}%; background: var(--accent);"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-mono"><i class="fab fa-js fa-fw me-1"></i>JavaScript</span>
+                        <span class="text-muted">{{ js_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                        <div class="progress-bar" style="width: {{ (js_count / total * 100) | round }}%; background: #f7df1e;"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-mono"><i class="fab fa-php fa-fw me-1"></i>PHP</span>
+                        <span class="text-muted">{{ php_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                        <div class="progress-bar" style="width: {{ (php_count / total * 100) | round }}%; background: #777bb4;"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-mono"><i class="fas fa-code fa-fw me-1"></i>Other</span>
+                        <span class="text-muted">{{ other_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: var(--bg-tertiary);">
+                        <div class="progress-bar" style="width: {{ (other_count / total * 100) | round }}%; background: var(--text-tertiary);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-server fa-fw text-accent me-2"></i>
+                System Status
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                    <span class="text-muted">API Status</span>
+                    <span class="badge badge-success">
+                        <i class="fas fa-check fa-fw me-1"></i>Online
+                    </span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Database</span>
+                    <span class="badge badge-success">
+                        <i class="fas fa-check fa-fw me-1"></i>Connected
+                    </span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between py-2">
+                    <span class="text-muted">Version</span>
+                    <span class="text-mono" style="font-size: 0.8125rem;">v1.0.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

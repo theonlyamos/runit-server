@@ -1,36 +1,53 @@
 {% extends "layout.html" %}
+{% block title %}Admin Login - Runit{% endblock %}
 {% block content %}
-<main class="vh-100 vw-100 d-flex align-items-center justify-content-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-sm-10 col-md-7 col-lg-5">
-                <div class="card shadow align-self-center border-0">
-                    <div class="card-body">
-                        <form class="form-floating bg-gradient" action="{{ url_for('admin_login') }}" method="post">
-                            <h5 class="text-center text-danger fs-4 font-lato">Administrator</h5>
-                            <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-danger fs-4 font-lato">Login</h5>
-                            {% for (category, message) in get_flashed_messages(request) %}
-                            <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
-                                <strong>{{message}}</strong>
-                                <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                            {% endfor %}
-                            <div class="form-group mb-3">
-                                <label class="form-label" for="username">Username</label>
-                                <input type="username" class="form-control rounded-0" name="username" required>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label class="form-label" for="password">Password</label>
-                                <input type="password" class="form-control rounded-0" name="password" required>
-                            </div>
-                            <div class="form-group d-flex justify-content-end mb-3">
-                                <button type="submit" class="btn btn-outline-dark bg-gradient shadow-sm rounded-0 shadow px-4">Login</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<div class="auth-container">
+    <div class="auth-card fade-in">
+        <div class="auth-header" style="background: var(--danger); color: #fff;">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                <i class="fas fa-shield-alt fa-lg"></i>
+                <span class="auth-logo" style="color: #fff;">runit</span>
             </div>
+            <div class="auth-title" style="color: rgba(255,255,255,0.8);">Administrator Access</div>
+        </div>
+        <div class="auth-body">
+            <form action="{{ url_for('admin_login') }}" method="post">
+                {% for (category, message) in get_flashed_messages(request) %}
+                <div class="alert alert-{{ category }} mb-3">
+                    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endfor %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" class="form-control" name="username" id="username" required placeholder="Admin username">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-control" name="password" id="password" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn btn-danger w-100 mt-2">
+                    <i class="fas fa-sign-in-alt fa-fw"></i>
+                    Admin Sign In
+                </button>
+            </form>
+        </div>
+        <div class="auth-footer">
+            <a href="{{ url_for('index') }}" class="text-muted">
+                <i class="fas fa-arrow-left fa-fw me-1"></i>
+                Back to user login
+            </a>
         </div>
     </div>
-</main>
+    <button class="theme-toggle position-absolute" style="bottom: 20px; left: 20px;" onclick="toggleTheme()" title="Toggle theme">
+        <i class="fas fa-sun"></i>
+        <i class="fas fa-moon"></i>
+    </button>
+</div>
 {% endblock %}

@@ -1,18 +1,16 @@
 {% extends "admin/layout.html" %}
-{% block title %}{{ super() }} - {{ page | capitalize }} - {{ user.name }}{% endblock %}
+{% block title %}{{ super() }} - {{ page | capitalize }} - {{ admin.name }}{% endblock %}
 {% block pagetitle %}
 <div class="d-flex align-items-center gap-2">
-    <a href="{{ url_for('admin_list_users') }}" class="btn btn-ghost btn-sm">
+    <a href="{{ url_for('admin_list_administrators') }}" class="btn btn-ghost btn-sm">
         <i class="fas fa-arrow-left"></i>
     </a>
     <span class="text-muted">/</span>
-    <span class="text-mono">{{ user.name | upper }}</span>
+    <span class="text-mono">{{ admin.name | upper }}</span>
 </div>
 {% endblock %}
 
 {% block content %}
-{% include 'admin/users/modal.html' %}
-
 {% for (category, message) in get_flashed_messages(request) %}
 <div class="alert alert-{{ category }} mb-3">
     <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
@@ -26,71 +24,60 @@
         <div class="row g-0">
             <div class="col-lg-3 border-end">
                 <div class="p-4 text-center">
-                    {% if user.image %}
-                    <img src="{{ url_for('uploads', path=user.id+'/'+user.image) }}" 
-                         class="rounded-circle" 
-                         alt="{{ user.name }}" 
-                         style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--accent);">
-                    {% else %}
                     <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto" 
-                         style="width: 100px; height: 100px; background: var(--bg-tertiary); border: 3px solid var(--border-color);">
-                        <i class="fas fa-user fa-2x text-muted"></i>
+                         style="width: 100px; height: 100px; background: var(--accent-glow); border: 3px solid var(--accent);">
+                        <i class="fas fa-shield-alt fa-3x text-accent"></i>
                     </div>
-                    {% endif %}
                     
-                    <h4 class="text-mono mt-3 mb-1">{{ user.name }}</h4>
-                    <p class="text-muted mb-3" style="font-size: 0.875rem;">{{ user.email }}</p>
+                    <h4 class="text-mono mt-3 mb-1">{{ admin.name }}</h4>
+                    <p class="text-muted mb-2" style="font-size: 0.875rem;">@{{ admin.username }}</p>
+                    
+                    <span class="badge badge-accent mb-3">
+                        <i class="fas fa-crown fa-fw me-1"></i>
+                        {{ admin.role.get('name', admin.role) if admin.role else 'subadmin' | upper }}
+                    </span>
                     
                     <div class="d-flex justify-content-center gap-4 text-center mb-3">
                         <div>
-                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ user.projects | default(0) }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Projects</div>
+                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">
+                                {{ admin.role.get('permissions', []) | length if admin.role and admin.role.get('permissions') else 0 }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Permissions</div>
                         </div>
                         <div>
-                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ user.databases | default(0) }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Databases</div>
+                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">
+                                {{ admin.role.get('priority', 0) if admin.role else 0 }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Priority</div>
                         </div>
                     </div>
                     
-                    {% if user.is_admin %}
-                    <span class="badge badge-accent mb-3">
-                        <i class="fas fa-shield-alt fa-fw me-1"></i>
-                        Administrator
-                    </span>
-                    {% endif %}
-                    
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-user-modal">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('tab-settings-btn').click();">
                             <i class="fas fa-edit fa-fw me-1"></i>
-                            Edit User
+                            Edit Profile
                         </button>
                     </div>
                 </div>
                 
                 <hr class="my-0" style="border-color: var(--border-color);">
                 
-                <div class="nav flex-column nav-pills" id="user-tabs" role="tablist">
+                <div class="nav flex-column nav-pills" id="admin-tabs" role="tablist">
                     <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-overview" type="button" role="tab">
                         <i class="fas fa-user fa-fw me-2"></i>
                         Overview
                     </button>
-                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-projects" type="button" role="tab">
-                        <i class="fas fa-sitemap fa-fw me-2"></i>
-                        Projects
-                        <span class="badge badge-accent ms-auto">{{ user.projects | default(0) }}</span>
-                    </button>
-                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-databases" type="button" role="tab">
-                        <i class="fas fa-database fa-fw me-2"></i>
-                        Databases
-                        <span class="badge badge-secondary ms-auto">{{ user.databases | default(0) }}</span>
-                    </button>
-                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-settings" type="button" role="tab">
+                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-settings" type="button" role="tab" id="tab-settings-btn">
                         <i class="fas fa-cog fa-fw me-2"></i>
                         Settings
                     </button>
                     <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-security" type="button" role="tab">
                         <i class="fas fa-shield-alt fa-fw me-2"></i>
                         Security
+                    </button>
+                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-permissions" type="button" role="tab">
+                        <i class="fas fa-key fa-fw me-2"></i>
+                        Permissions
                     </button>
                     <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-activity" type="button" role="tab">
                         <i class="fas fa-history fa-fw me-2"></i>
@@ -100,33 +87,44 @@
             </div>
             
             <div class="col-lg-9">
-                <div class="tab-content p-4" id="user-tab-content">
+                <div class="tab-content p-4" id="admin-tab-content">
                     <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
                         <h5 class="text-mono mb-4">
-                            <i class="fas fa-user fa-fw text-accent me-2"></i>
-                            User Overview
+                            <i class="fas fa-shield-alt fa-fw text-accent me-2"></i>
+                            Administrator Overview
                         </h5>
                         
                         <div class="row g-4 mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="stat-card">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="stat-label">Total Projects</div>
-                                            <div class="stat-value">{{ user.projects | default(0) }}</div>
+                                            <div class="stat-label">Role</div>
+                                            <div class="stat-value" style="font-size: 1.25rem;">{{ admin.role.get('name', 'subadmin') if admin.role else 'subadmin' }}</div>
                                         </div>
-                                        <i class="fas fa-sitemap fa-2x text-accent" style="opacity: 0.5;"></i>
+                                        <i class="fas fa-user-tag fa-2x text-accent" style="opacity: 0.5;"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="stat-card">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="stat-label">Total Databases</div>
-                                            <div class="stat-value">{{ user.databases | default(0) }}</div>
+                                            <div class="stat-label">Priority Level</div>
+                                            <div class="stat-value">{{ admin.role.get('priority', 0) if admin.role else 0 }}</div>
                                         </div>
-                                        <i class="fas fa-database fa-2x text-accent" style="opacity: 0.5;"></i>
+                                        <i class="fas fa-layer-group fa-2x text-accent" style="opacity: 0.5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-label">Permissions</div>
+                                            <div class="stat-value">{{ admin.role.get('permissions', []) | length if admin.role and admin.role.get('permissions') else 0 }}</div>
+                                        </div>
+                                        <i class="fas fa-key fa-2x text-accent" style="opacity: 0.5;"></i>
                                     </div>
                                 </div>
                             </div>
@@ -142,43 +140,56 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Full Name</label>
-                                            <div class="text-mono">{{ user.name }}</div>
+                                            <div class="text-mono">{{ admin.name }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Username</label>
+                                            <div class="text-mono">@{{ admin.username }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Email Address</label>
-                                            <div class="text-mono">{{ user.email }}</div>
+                                            <div class="text-mono">{{ admin.email }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label text-muted">User ID</label>
-                                            <div class="text-mono" style="font-size: 0.875rem;">{{ user.id }}</div>
+                                            <label class="form-label text-muted">Administrator ID</label>
+                                            <div class="text-mono" style="font-size: 0.875rem;">{{ admin.id }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label text-muted">Member Since</label>
-                                            <div class="text-mono">{{ user.created_at | default('N/A') }}</div>
+                                            <label class="form-label text-muted">Role</label>
+                                            <div>
+                                                <span class="badge badge-accent">{{ admin.role.get('name', 'subadmin') if admin.role else 'subadmin' }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Account Status</label>
                                             <div>
-                                                {% if user.is_admin %}
-                                                <span class="badge badge-accent">Administrator</span>
-                                                {% else %}
-                                                <span class="badge badge-success">Active</span>
-                                                {% endif %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check fa-fw me-1"></i>
+                                                    Active
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
+                                            <label class="form-label text-muted">Created At</label>
+                                            <div class="text-mono">{{ admin.created_at | default('N/A') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
                                             <label class="form-label text-muted">Last Updated</label>
-                                            <div class="text-mono">{{ user.updated_at | default('N/A') }}</div>
+                                            <div class="text-mono">{{ admin.updated_at | default('N/A') }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -193,77 +204,24 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <button class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#edit-user-modal">
+                                        <button class="btn btn-outline-secondary w-100" onclick="document.getElementById('tab-settings-btn').click();">
                                             <i class="fas fa-edit fa-fw me-1"></i>
                                             Edit Profile
                                         </button>
                                     </div>
                                     <div class="col-md-4">
-                                        <button class="btn btn-outline-secondary w-100" onclick="document.querySelector('button[data-bs-target=\\'#tab-projects\\']').click();">
-                                            <i class="fas fa-sitemap fa-fw me-1"></i>
-                                            View Projects
+                                        <button class="btn btn-outline-secondary w-100" onclick="document.querySelector('button[data-bs-target=\\'#tab-security\\']').click();">
+                                            <i class="fas fa-key fa-fw me-1"></i>
+                                            Reset Password
                                         </button>
                                     </div>
                                     <div class="col-md-4">
-                                        <button class="btn btn-outline-secondary w-100" onclick="document.querySelector('button[data-bs-target=\\'#tab-databases\\']').click();">
-                                            <i class="fas fa-database fa-fw me-1"></i>
-                                            View Databases
+                                        <button class="btn btn-outline-secondary w-100" onclick="document.querySelector('button[data-bs-target=\\'#tab-permissions\\']').click();">
+                                            <i class="fas fa-key fa-fw me-1"></i>
+                                            View Permissions
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="tab-projects" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="text-mono mb-0">
-                                <i class="fas fa-sitemap fa-fw text-accent me-2"></i>
-                                User Projects
-                            </h5>
-                            <div class="btn-group" role="group">
-                                <a href="{{ url_for('admin_get_user', user_id=user.id) }}" 
-                                   class="btn {% if request.session['view'] != 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %} btn-sm">
-                                    <i class="fas fa-th-large fa-fw"></i>
-                                </a>
-                                <a href="{{ url_for('admin_get_user', user_id=user.id) }}?view=list" 
-                                   class="btn {% if request.session['view'] == 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %} btn-sm">
-                                    <i class="fas fa-th-list fa-fw"></i>
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-body p-0">
-                                {% if request.session['view'] == 'list' %}
-                                {% include 'admin/projects/list.html' %}
-                                {% else %}
-                                {% include 'admin/projects/grid.html' %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="tab-databases" role="tabpanel">
-                        <h5 class="text-mono mb-4">
-                            <i class="fas fa-database fa-fw text-accent me-2"></i>
-                            User Databases
-                        </h5>
-                        
-                        <div class="card">
-                            <div class="card-body">
-                                {% if user.databases | default(0) > 0 %}
-                                <p class="text-muted">This user has {{ user.databases }} database(s). View them in the databases section.</p>
-                                <a href="{{ url_for('admin_list_databases') }}?user={{ user.id }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-external-link-alt fa-fw me-1"></i>
-                                    View All Databases
-                                </a>
-                                {% else %}
-                                <div class="text-center py-4">
-                                    <i class="fas fa-database fa-3x text-muted mb-3" style="opacity: 0.5;"></i>
-                                    <p class="text-muted mb-0">This user has no databases yet.</p>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -271,38 +229,47 @@
                     <div class="tab-pane fade" id="tab-settings" role="tabpanel">
                         <h5 class="text-mono mb-4">
                             <i class="fas fa-cog fa-fw text-accent me-2"></i>
-                            Account Settings
+                            Edit Administrator
                         </h5>
                         
                         <div class="card mb-4">
                             <div class="card-header">
                                 <i class="fas fa-user-edit fa-fw text-accent me-2"></i>
-                                Edit User Profile
+                                Profile Settings
                             </div>
                             <div class="card-body">
-                                <form id="update-user-form">
+                                <form id="update-admin-form">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="user-name" class="form-label">Full Name</label>
-                                                <input type="text" value="{{ user.name }}" class="form-control" id="user-name" name="name" required>
+                                                <label for="admin-name" class="form-label">Full Name</label>
+                                                <input type="text" value="{{ admin.name }}" class="form-control" id="admin-name" name="name" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="user-email" class="form-label">Email Address</label>
-                                                <input type="email" value="{{ user.email }}" class="form-control form-control-mono" id="user-email" name="email" required>
+                                                <label for="admin-username" class="form-label">Username</label>
+                                                <input type="text" value="{{ admin.username }}" class="form-control form-control-mono" id="admin-username" name="username" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="admin-email" class="form-label">Email Address</label>
+                                                <input type="email" value="{{ admin.email }}" class="form-control form-control-mono" id="admin-email" name="email" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="admin-role" class="form-label">Role</label>
+                                                <select name="role" id="admin-role" class="form-select">
+                                                    {% for role in roles %}
+                                                    <option value="{{ role['name'] }}" {% if admin.role and admin.role.get('name') == role['name'] %}selected{% elif not admin.role and role['name'] == 'subadmin' %}selected{% endif %}>{{ role['name'] }}</option>
+                                                    {% endfor %}
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label class="form-label d-flex align-items-center gap-2">
-                                            <input type="checkbox" name="is_admin" {% if user.is_admin %}checked{% endif %} class="form-check-input m-0">
-                                            Administrator privileges
-                                        </label>
-                                        <small class="text-muted">Grant this user admin access to manage all resources.</small>
-                                    </div>
-                                    <button type="button" class="btn btn-accent" onclick="updateUser()">
+                                    <button type="button" class="btn btn-accent" onclick="updateAdmin()">
                                         <i class="fas fa-save fa-fw me-1"></i>
                                         Save Changes
                                     </button>
@@ -310,19 +277,31 @@
                             </div>
                         </div>
                         
+                        {% if not is_self %}
                         <div class="card border-danger">
                             <div class="card-header text-danger">
                                 <i class="fas fa-exclamation-triangle fa-fw me-2"></i>
                                 Danger Zone
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Permanently delete this user and all associated data. This action cannot be undone.</p>
-                                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-user-modal">
+                                <p class="text-muted mb-3">Permanently delete this administrator. They will no longer be able to access the admin panel. This action cannot be undone.</p>
+                                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-admin-modal">
                                     <i class="fas fa-trash-alt fa-fw me-1"></i>
-                                    Delete User
+                                    Delete Administrator
                                 </button>
                             </div>
                         </div>
+                        {% else %}
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-info-circle fa-fw text-accent me-2"></i>
+                                Self-Management
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-0">This is your account. Visit your <a href="{{ url_for('admin_profile') }}">profile page</a> to manage your settings.</p>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <div class="tab-pane fade" id="tab-security" role="tabpanel">
@@ -337,7 +316,7 @@
                                 Reset Password
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Set a new password for this user. They will need to use this password for their next login.</p>
+                                <p class="text-muted mb-3">Set a new password for this administrator. They will need to use this password for their next login.</p>
                                 <form id="reset-password-form">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -353,7 +332,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn btn-accent" onclick="resetPassword()">
+                                    <button type="button" class="btn btn-accent" onclick="resetAdminPassword()">
                                         <i class="fas fa-key fa-fw me-1"></i>
                                         Reset Password
                                     </button>
@@ -370,7 +349,7 @@
                                 <div class="d-flex align-items-center justify-content-between py-2">
                                     <div>
                                         <div class="text-mono">Account Status</div>
-                                        <div class="text-muted" style="font-size: 0.875rem;">Suspend or activate this user account</div>
+                                        <div class="text-muted" style="font-size: 0.875rem;">Suspend or activate this administrator account</div>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="account-status" checked>
@@ -391,7 +370,7 @@
                                         <i class="fas fa-sign-in-alt fa-lg text-accent"></i>
                                         <div>
                                             <div class="text-mono">Last Login</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.updated_at | default('Unknown') }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ admin.updated_at | default('Unknown') }}</div>
                                         </div>
                                     </div>
                                     <span class="badge badge-success">Success</span>
@@ -401,11 +380,69 @@
                                         <i class="fas fa-user-plus fa-lg text-muted"></i>
                                         <div>
                                             <div class="text-mono">Account Created</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.created_at | default('Unknown') }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ admin.created_at | default('Unknown') }}</div>
                                         </div>
                                     </div>
                                     <span class="badge badge-secondary">System</span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="tab-permissions" role="tabpanel">
+                        <h5 class="text-mono mb-4">
+                            <i class="fas fa-key fa-fw text-accent me-2"></i>
+                            Role Permissions
+                        </h5>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-user-tag fa-fw text-accent me-2"></i>
+                                Assigned Role
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="badge badge-accent rounded-circle p-3">
+                                            <i class="fas fa-crown fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-mono" style="font-size: 1.125rem;">{{ admin.role.get('name', 'subadmin') if admin.role else 'subadmin' }}</div>
+                                            <div class="text-muted" style="font-size: 0.875rem;">
+                                                Priority: {{ admin.role.get('priority', 0) if admin.role else 0 }} | 
+                                                {{ admin.role.get('permissions', []) | length if admin.role and admin.role.get('permissions') else 0 }} permissions
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-check fa-fw me-1"></i>
+                                        Active
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-lock fa-fw text-accent me-2"></i>
+                                Permissions List
+                            </div>
+                            <div class="card-body">
+                                {% if admin.role and admin.role.get('permissions') %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for permission in admin.role.get('permissions', []) %}
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-check fa-fw me-1"></i>
+                                        {{ permission }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-lock fa-3x text-muted mb-3" style="opacity: 0.5;"></i>
+                                    <p class="text-muted mb-0">No specific permissions assigned for this role.</p>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -428,41 +465,31 @@
                                             <i class="fas fa-sign-in-alt"></i>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="text-mono">User logged in</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.updated_at | default('Recently') }}</div>
+                                            <div class="text-mono">Administrator login</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ admin.updated_at | default('Recently') }}</div>
                                         </div>
+                                        <span class="badge badge-success">Success</span>
                                     </div>
                                     <div class="list-group-item d-flex align-items-center gap-3 py-3">
                                         <div class="badge badge-secondary rounded-circle p-2">
-                                            <i class="fas fa-user-plus"></i>
+                                            <i class="fas fa-user-shield"></i>
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="text-mono">Account created</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.created_at | default('N/A') }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ admin.created_at | default('N/A') }}</div>
                                         </div>
+                                        <span class="badge badge-secondary">System</span>
                                     </div>
-                                    {% if user.projects | default(0) > 0 %}
-                                    <div class="list-group-item d-flex align-items-center gap-3 py-3">
-                                        <div class="badge badge-success rounded-circle p-2">
-                                            <i class="fas fa-sitemap"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="text-mono">Created {{ user.projects }} project(s)</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">Lifetime activity</div>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if user.databases | default(0) > 0 %}
                                     <div class="list-group-item d-flex align-items-center gap-3 py-3">
                                         <div class="badge badge-info rounded-circle p-2">
-                                            <i class="fas fa-database"></i>
+                                            <i class="fas fa-user-tag"></i>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="text-mono">Created {{ user.databases }} database(s)</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">Lifetime activity</div>
+                                            <div class="text-mono">Role assigned: {{ admin.role.get('name', 'subadmin') if admin.role else 'subadmin' }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ admin.created_at | default('N/A') }}</div>
                                         </div>
+                                        <span class="badge badge-info">Role</span>
                                     </div>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -473,25 +500,25 @@
     </div>
 </div>
 
-<div class="modal fade" id="delete-user-modal" tabindex="-1">
+<div class="modal fade" id="delete-admin-modal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title text-mono">
                     <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                    Delete User
+                    Delete Administrator
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete <strong class="text-mono">{{ user.name }}</strong>?</p>
-                <p class="text-muted mb-0">This will permanently delete the user and all associated data including projects and databases. This action cannot be undone.</p>
+                <p>Are you sure you want to delete <strong class="text-mono">{{ admin.name }}</strong>?</p>
+                <p class="text-muted mb-0">This administrator will no longer be able to access the admin panel. This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="deleteUser()">
+                <button type="button" class="btn btn-danger" onclick="deleteAdmin()">
                     <i class="fas fa-trash-alt fa-fw me-1"></i>
-                    Delete User
+                    Delete Administrator
                 </button>
             </div>
         </div>
@@ -509,8 +536,6 @@
     border-radius: 0;
     border-left: 3px solid transparent;
     padding: 0.75rem 1.25rem;
-    display: flex;
-    align-items: center;
 }
 
 .nav-pills .nav-link:hover {
@@ -523,111 +548,69 @@
     color: var(--accent);
     border-left-color: var(--accent);
 }
-
-.nav-pills .nav-link .badge {
-    font-size: 0.65rem;
-}
 </style>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="/static/js/users.js"></script>
 <script>
-function updateUser() {
-    const form = document.getElementById('update-user-form');
+function updateAdmin() {
+    const form = document.getElementById('update-admin-form');
     const formData = new FormData(form);
     const btn = event.currentTarget;
     const originalText = btn.innerHTML;
-    
     btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Saving...';
     btn.disabled = true;
-    
-    fetch('{{ url_for("admin_update_user", user_id=user.id) }}', {
+    fetch('{{ url_for("admin_update_administrator", admin_id=admin.id) }}', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert(data.message || 'Failed to update user');
-        }
+        if (data.success) location.reload();
+        else alert(data.message || 'Failed to update');
     })
-    .catch(err => {
-        alert('An error occurred');
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
+    .catch(() => alert('An error occurred'))
+    .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
 }
 
-function resetPassword() {
+function resetAdminPassword() {
     const form = document.getElementById('reset-password-form');
     const formData = new FormData(form);
-    const newPass = formData.get('new_password');
-    const confirmPass = formData.get('confirm_password');
-    
-    if (newPass !== confirmPass) {
+    if (formData.get('new_password') !== formData.get('confirm_password')) {
         alert('Passwords do not match');
         return;
     }
-    
     const btn = event.currentTarget;
     const originalText = btn.innerHTML;
-    
     btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Resetting...';
     btn.disabled = true;
-    
-    fetch('{{ url_for("admin_reset_user_password", user_id=user.id) }}', {
+    fetch('{{ url_for("admin_reset_administrator_password", admin_id=admin.id) }}', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            alert('Password reset successfully');
-            form.reset();
-        } else {
-            alert(data.message || 'Failed to reset password');
-        }
+        if (data.success) { alert('Password reset successfully'); form.reset(); }
+        else alert(data.message || 'Failed to reset password');
     })
-    .catch(err => {
-        alert('An error occurred');
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
+    .catch(() => alert('An error occurred'))
+    .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
 }
 
-function deleteUser() {
+function deleteAdmin() {
     const btn = event.currentTarget;
     const originalText = btn.innerHTML;
-    
     btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Deleting...';
     btn.disabled = true;
-    
-    fetch('{{ url_for("admin_delete_user", user_id=user.id) }}', {
-        method: 'POST'
-    })
-    .then(response => response.json())
+    fetch('{{ url_for("admin_delete_administrator", admin_id=admin.id) }}', { method: 'POST' })
+    .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            window.location.href = '{{ url_for("admin_list_users") }}';
-        } else {
-            alert(data.message || 'Failed to delete user');
-        }
+        if (data.success) window.location.href = '{{ url_for("admin_list_administrators") }}';
+        else alert(data.message || 'Failed to delete');
     })
-    .catch(err => {
-        alert('An error occurred');
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
+    .catch(() => alert('An error occurred'))
+    .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
 }
 </script>
 {% endblock %}

@@ -1,27 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Runit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/images/dark-terminal.svg">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a3a3a3;
+            --accent: #ffb000;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--text-secondary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loader-text {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .loader-text::before {
+            content: '> ';
+            color: var(--accent);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body style="position: relative">
-    <img 
-        src="/static/images/loading.gif" 
-        alt="loading gif"
-        width="60"
-        height="60"
-        style="display: block; margin: 100px auto;"/>
+<body>
+    <div class="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">connecting...</div>
+    </div>
     <script>
-        let client_id =  Date.now()
+        let client_id = Date.now()
         let uri = location.origin.replace('http', 'ws')
         let ws = new WebSocket(`${uri}/ws/${client_id}`)
+        
         ws.onopen = () => {
-            let info = {type: 'browser'}
+            let info = { type: 'browser' }
             info.client = location.pathname.split('/e/')[1].split('/')[0]
             ws.send(JSON.stringify(info))
         }
-        ws.onmessage = (data)=>{
+        
+        ws.onmessage = (data) => {
             document.body.innerHTML = data.data
         }
     </script>

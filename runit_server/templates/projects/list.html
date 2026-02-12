@@ -1,44 +1,54 @@
-<div class="row bg-dark text-white w-100 rounded-0 border-0 shadow-sm d-flex justify-content-between fs-5 p-2 px-4 mt-3">
-    <div class="col d-flex gap-2">
-        <input class="form-check-input cursor-pointer" type="checkbox" value="" id="selectAll">
-        <span>Name</span>
-    </div>
-    <div class="col d-flex align-items-center gap-2">
-        <span>Language</span>
-    </div>
-    <div class="col d-flex align-items-center justify-content-end gap-2">
-        <span>Actions</span>
-    </div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width: 40px;">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                </th>
+                <th>Name</th>
+                <th>Language</th>
+                <th>Last Updated</th>
+                <th style="width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for project in projects %}
+            <tr id="{{ project.id }}" class="fade-in stagger-{{ loop.index % 6 + 1 }}">
+                <td>
+                    <input class="form-check-input" type="checkbox"
+                           data-project-id="{{ project.id }}"
+                           data-project-name="{{ project.name }}"
+                           id="input_{{ project.id }}">
+                </td>
+                <td>
+                    <a href="{{ url_for('user_project_details', project_id=project.id) }}" class="text-accent fw-medium">
+                        {{ project.name | title }}
+                    </a>
+                </td>
+                <td>
+                    <span class="badge badge-secondary">
+                        {% set lang_icon = {'python': 'fab fa-python', 'javascript': 'fab fa-js', 'php': 'fab fa-php', 'bun': 'fab fa-js'}.get(project.language | lower, 'fas fa-code') %}
+                        <i class="{{ lang_icon }} fa-fw me-1"></i>
+                        {{ project.language | title }}
+                    </span>
+                </td>
+                <td class="text-mono" style="font-size: 0.8125rem; color: var(--text-tertiary);">
+                    {{ project.updated_at }}
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ url_for('user_project_details', project_id=project.id) }}" 
+                           class="btn btn-ghost btn-sm" title="Details">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        <a href="javascript:onDeleteProject('{{ project.id }}')" 
+                           class="btn btn-ghost btn-sm text-danger" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
-{% for project in projects %}
-<div 
-    class="row bg-white w-100 rounded-0 border-0 shadow-sm hover:shadow d-flex justify-content-between fs-5 p-2 px-4 mt-3" 
-    id="{{project.id}}">
-    <div class="col d-flex gap-2">
-        <input 
-            class="form-check-input cursor-pointer" 
-            type="checkbox"
-            data-project-id="{{project.id}}"
-            data-project-name="{{project.name}}"
-            id="input_{{project.id}}">
-
-        <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link">
-            {{ project['name'] | title}}
-        </a>
-    </div>
-    <div class="col d-flex align-items-center gap-2">
-        <i class="{{ icons[project.language]}} fa-fw"></i>
-        <span>{{project['language'] | title}}</span>project
-    </div>
-    <div class="col d-flex align-items-center justify-content-end gap-2">
-        <a href="{{url_for('user_project_details', project_id=project.id)}}" class="nav-link" title="Details">
-            <i class="far fa-file-alt text-primary"></i>
-        </a>
-        <a href="javascript:onDeleteProject('{{project.id}}')" 
-            class="nav-link"
-            title="Delete">
-            <i class="fas fa-trash-alt text-danger"></i>
-        </a>
-    </div>
-</div>
-{% endfor %}

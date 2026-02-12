@@ -1,38 +1,38 @@
 <div class="modal fade" id="databaseModal" tabindex="-1" aria-labelledby="databaseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="dialog">
-        <div class="modal-content rounded-0">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
             <form action="{{ url_for('create_user_document', database_id=database.id) }}" method="post">
-                <div class="modal-header text-bg-secondary rounded-0">
-                    <h5 class="modal-title fw-bolder" id="databaseModalLabel">New Document</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-alt fa-fw text-accent me-2"></i>
+                        New Document
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <div class="modal-body">
                     {% for key, value in database.collection_schema.items() %}
-                    {% set id = 'schema'+(loop.index | string) %}
-                        <div class="{{ 'form-check form-switch' if value == 'bool' else  'form-group' }} mb-2">
-                            <label class="{{'form-check-label' if value == 'bool' else 'form-label'}} mb-0 text-muted" for="{{id}}">{{key | title}}</label>
-                            {% if value == 'text' %}
-                            <textarea 
-                                name="{{key}}" 
-                                id="{{id}}" rows="3" 
-                                class="form-control form-control-sm bg-light border-0 text-secondary hover:shadow-sm py-0"></textarea>
-                            {% else %}
-                            <input 
-                                type="{{inputTypes[value]}}" 
-                                name="{{key}}" 
-                                class="{{'form-check-input cursor-pointer' if value == 'bool' else 'form-control form-control-sm  bg-light border-0 text-secondary hover:shadow-sm py-0'}}" 
-                                id="{{id}}" 
-                                step="{{'0.1' if value == 'float' else ''}}"
-                                {{'' if value == 'bool' else 'required'}}>
-                            {% endif %}
-                        </div>
+                    {% set id = 'schema' + (loop.index | string) %}
+                    <div class="form-group {% if value == 'bool' %}d-flex align-items-center gap-2{% endif %}">
+                        <label class="form-label" for="{{ id }}">{{ key | title }}</label>
+                        {% if value == 'text' %}
+                        <textarea name="{{ key }}" id="{{ id }}" rows="3" class="form-control"></textarea>
+                        {% elif value == 'bool' %}
+                        <input type="checkbox" name="{{ key }}" class="form-check-input" id="{{ id }}">
+                        {% else %}
+                        <input type="{{ inputTypes[value] }}" name="{{ key }}" 
+                               class="form-control" id="{{ id }}"
+                               step="{% if value == 'float' %}0.1{% endif %}"
+                               {% if value != 'bool' %}required{% endif %}>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
-                <div class="modal-footer gap-3 border-0">
-                    <button type="button" class="btn btn-light border-0 hover:shadow-sm m-0" data-bs-dismiss="modal">
-                        Close
-                    </button>
-                    <button type="submit" class="btn btn-dark border-0 hover:shadow-sm m-0">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-accent">
+                        <i class="fas fa-plus fa-fw me-1"></i>
                         Create Document
                     </button>
                 </div>

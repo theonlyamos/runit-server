@@ -1,30 +1,42 @@
-<div class="d-flex flex-wrap">
+<div class="row g-4">
 {% for project in projects %}
-<div class="position-relative m-2 p-3 border rounded shadow-sm">
-    <a href="{{url_for('admin_get_project', project_id=project.id)}}" class="nav-link d-flex flex-column align-items-center p-2 text-black-50 hover:text-dark">
-        <i class="fab fa-{{ icons[project.language]}} fa-fw fa-3x mb-2"></i>
-        <span>{{ project['name'] }}</span>
-    </a>
-    <nav class="nav-item dropdown position-absolute" style="right: 13px; top: 8px">
-        <a class="nav-link" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-            <i class="fas fa-ellipsis-v text-secondary"></i>
+<div class="col-md-6 col-lg-4 col-xl-3 fade-in stagger-{{ loop.index % 6 + 1 }}">
+    <div class="database-card position-relative">
+        <nav class="nav-item dropdown card-menu">
+            <a class="btn btn-ghost btn-sm" data-bs-toggle="dropdown" href="#" role="button">
+                <i class="fas fa-ellipsis-v text-muted"></i>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="{{ url_for('run_project', project_id=project.id, function='index') }}" 
+                       class="dropdown-item" target="_blank">
+                        <i class="fas fa-play fa-fw me-2 text-accent"></i> Run
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_get_project', project_id=project.id) }}" class="dropdown-item">
+                        <i class="fas fa-info-circle fa-fw me-2 text-muted"></i> Details
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="#">
+                        <i class="fas fa-trash-alt fa-fw me-2"></i> Delete
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <a href="{{ url_for('admin_get_project', project_id=project.id) }}" 
+           class="text-decoration-none d-flex flex-column align-items-center py-4">
+            <div class="text-accent mb-3" style="font-size: 2.5rem;">
+                {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(project.language | lower, 'code') %}
+                <i class="fab fa-{{ lang_icon }}"></i>
+            </div>
+            <h5 class="text-mono mb-1">{{ project.name | title }}</h5>
+            <span class="badge badge-secondary">{{ project.language | title }}</span>
         </a>
-        <ul class="dropdown-menu rounded-0 shadow">
-            <li>
-                <a href="{{url_for('run_project', project_id=project.id, function='index')}}" class="dropdown-item small py-0" target="_blank">
-                    Run
-                </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <a href="{{url_for('admin_get_project', project_id=project.id)}}" class="dropdown-item small py-0">
-                    Details
-                </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger small py-0" href="#">Delete</a></li>
-        </ul>
-    </nav>
+    </div>
 </div>
 {% endfor %}
 </div>

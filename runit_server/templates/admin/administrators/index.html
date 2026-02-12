@@ -1,0 +1,52 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ super() }} - {{ page | capitalize }}{% endblock %}
+{% block pagetitle %}ADMINISTRATORS{% endblock %}
+{% block content %}
+{% include 'admin/administrators/modal.html' %}
+
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3 fade-in">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
+</div>
+{% endfor %}
+
+{% if admins %}
+<div class="tools d-flex justify-content-end mb-4 gap-2">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('admin_list_administrators') }}?view=grid" 
+           class="btn {% if request.session.get('administrators_view') != 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Grid view">
+            <i class="fas fa-th-large fa-fw"></i>
+        </a>
+        <a href="{{ url_for('admin_list_administrators') }}?view=list" 
+           class="btn {% if request.session.get('administrators_view') == 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Table view">
+            <i class="fas fa-th-list fa-fw"></i>
+        </a>
+    </div>
+    <a href="#adminModal" role="button" class="btn btn-accent" data-bs-toggle="modal">
+        <i class="fas fa-plus fa-fw"></i>
+        <span class="d-none d-sm-inline">New Administrator</span>
+    </a>
+</div>
+
+{% if request.session.get('administrators_view') == 'list' %}
+{% include 'admin/administrators/list.html' %}
+{% else %}
+{% include 'admin/administrators/grid.html' %}
+{% endif %}
+
+{% else %}
+<div class="empty-state fade-in">
+    <i class="fas fa-shield-alt"></i>
+    <div class="empty-state-title">No administrators yet</div>
+    <p class="empty-state-text mb-4">Add administrator accounts to manage the platform</p>
+    <a href="#adminModal" class="btn btn-accent" data-bs-toggle="modal">
+        <i class="fas fa-plus fa-fw"></i>
+        Add Administrator
+    </a>
+</div>
+{% endif %}
+{% endblock %}

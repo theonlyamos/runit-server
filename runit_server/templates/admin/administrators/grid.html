@@ -1,0 +1,24 @@
+<div class="row g-4">
+{% for admin in admins %}
+<div class="col-md-6 col-lg-4 col-xl-3 fade-in stagger-{{ loop.index % 6 + 1 }}">
+    <div class="database-card position-relative">
+        <a href="{{ url_for('admin_get_administrator', admin_id=admin.id) }}"
+            class="text-decoration-none d-flex flex-column align-items-center py-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+                style="width: 80px; height: 80px; background: var(--bg-tertiary); border: 3px solid var(--accent);">
+                <i class="fas fa-shield-alt fa-2x text-accent"></i>
+            </div>
+            <h5 class="text-mono mb-1">{{ admin.name }}</h5>
+            <span class="text-muted" style="font-size: 0.75rem;">{{ admin.username }}</span>
+
+            <div class="d-flex align-items-center gap-2 mt-3">
+                <span class="badge badge-accent">
+                    <i class="fas fa-user-tag fa-fw me-1"></i>
+                    {{ admin.role.get('name', admin.role) if admin.role else 'subadmin' }}
+                </span>
+            </div>
+        </a>
+    </div>
+</div>
+{% endfor %}
+</div>

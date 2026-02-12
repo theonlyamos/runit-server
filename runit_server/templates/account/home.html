@@ -1,22 +1,285 @@
 {% extends "account/layout.html" %}
+{% block pagetitle %}DASHBOARD{% endblock %}
 {% block content %}
-<div class="p-4 w-100">
-    <div class="h5 text-center">
-        Welcome to your dashboard, <strong class="text-primary"><em>{{user.name}}</em></strong>
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">Welcome back,</p>
+                <h2 class="text-mono mb-0">
+                    <span class="text-accent">></span> <em>{{ user.name }}</em>
+                </h2>
+            </div>
+            <div class="d-none d-md-block">
+                <span class="text-muted" style="font-size: 0.875rem;">{{ user.email }}</span>
+            </div>
+        </div>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Projects</div>
+                            <div class="stat-value text-mono">{{ projects | length if projects else 0 }}</div>
+                        </div>
+                        <div class="badge badge-accent rounded-circle p-2">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('list_user_projects') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            View all <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Databases</div>
+                            <div class="stat-value text-mono">{{ databases | length if databases else 0 }}</div>
+                        </div>
+                        <div class="badge badge-accent rounded-circle p-2">
+                            <i class="fas fa-database"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('list_user_databases') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            View all <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Functions</div>
+                            <div class="stat-value text-mono">{{ functions | length if functions else 0 }}</div>
+                        </div>
+                        <div class="badge badge-accent rounded-circle p-2">
+                            <i class="fas fa-code"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('list_user_functions') }}" class="text-accent" style="font-size: 0.8125rem;">
+                            View all <i class="fas fa-arrow-right fa-fw"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-bolt fa-fw text-accent me-2"></i>Quick Actions</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('list_user_projects') }}" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-plus fa-lg mb-2 text-accent"></i>
+                            <span>New Project</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('list_user_databases') }}" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-database fa-lg mb-2 text-accent"></i>
+                            <span>New Database</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('user_profile') }}" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-user fa-lg mb-2 text-accent"></i>
+                            <span>Edit Profile</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="https://github.com/login/oauth/authorize?client_id={{ git_client_id }}" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fab fa-github fa-lg mb-2 text-accent"></i>
+                            <span>Link GitHub</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-sitemap fa-fw text-accent me-2"></i>Recent Projects</span>
+                <a href="{{ url_for('list_user_projects') }}" class="text-accent" style="font-size: 0.8125rem;">
+                    View all <i class="fas fa-arrow-right fa-fw"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if projects %}
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Language</th>
+                                <th>Updated</th>
+                                <th style="width: 60px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in projects[:5] %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('user_project_details', project_id=project.id) }}" class="text-mono">
+                                        {{ project.name | title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php', 'bun': 'js'}.get(project.language | lower, 'code') %}
+                                    <span class="badge badge-secondary">
+                                        <i class="fab fa-{{ lang_icon }} fa-fw me-1"></i>
+                                        {{ project.language | title }}
+                                    </span>
+                                </td>
+                                <td class="text-muted" style="font-size: 0.8125rem;">{{ project.updated_at }}</td>
+                                <td>
+                                    <a href="{{ url_for('user_project_details', project_id=project.id) }}" class="btn btn-ghost btn-sm">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="fas fa-sitemap fa-2x"></i>
+                    <div class="empty-state-title">No projects yet</div>
+                    <p class="empty-state-text mb-3">Create your first project to get started</p>
+                    <a href="{{ url_for('list_user_projects') }}" class="btn btn-accent btn-sm">
+                        <i class="fas fa-plus fa-fw me-1"></i>
+                        Create Project
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</div>
-<div class="d-flex flex-wrap justify-content-center py-5 px-3">
-    {% set menu = [
-        {'name': 'projects', 'icon': 'sitemap', 'url': 'list_user_projects'},
-        {'name': 'databases', 'icon': 'database', 'url': 'list_user_databases'},
-		{'name': 'profile', 'icon': 'user', 'url': 'user_profile'}
-    ] %}
-    {% for item in menu %}
-    <a href="{{ url_for(item['url']) }}" 
-        class="nav-link p-5 m-2 border hover:shadow-sm text-black-50 hover:text-dark"
-        title="{{ item['name'] | capitalize }}">
-        <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
-    </a>
-    {% endfor %}
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-user fa-fw text-accent me-2"></i>
+                Account Status
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if user.image %}
+                    <img src="{{ url_for('uploads', path=user.id+'/'+user.image) }}" 
+                         class="rounded-circle" 
+                         alt="Profile" 
+                         style="width: 48px; height: 48px; object-fit: cover; border: 2px solid var(--accent);">
+                    {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 48px; height: 48px; background: var(--bg-tertiary); border: 2px solid var(--border-color);">
+                        <i class="fas fa-user text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="text-mono">{{ user.name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</div>
+                    </div>
+                </div>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Member Since</span>
+                        <span class="text-mono" style="font-size: 0.8125rem;">{{ user.created_at | default('N/A') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Account ID</span>
+                        <span class="text-mono" style="font-size: 0.8125rem;">{{ user.id[:12] }}...</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">GitHub</span>
+                        {% if user.gat %}
+                        <span class="badge badge-success"><i class="fas fa-check fa-fw me-1"></i>Connected</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Not linked</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-database fa-fw text-accent me-2"></i>
+                Recent Databases
+            </div>
+            <div class="card-body p-0">
+                {% if databases %}
+                {% for db in databases[:4] %}
+                <a href="{{ url_for('user_database_details', database_id=db.id) }}" 
+                   class="d-flex align-items-center justify-content-between p-3 {% if not loop.last %}border-bottom{% endif %} text-decoration-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="badge badge-accent rounded-circle p-2">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div>
+                            <div class="text-mono">{{ db.name | title }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ db.updated_at }}</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-muted"></i>
+                </a>
+                {% endfor %}
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-3">No databases yet</p>
+                    <a href="{{ url_for('list_user_databases') }}" class="btn btn-accent btn-sm">
+                        <i class="fas fa-plus fa-fw me-1"></i>
+                        Create Database
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-code fa-fw text-accent me-2"></i>
+                Getting Started
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-3 mb-3">
+                    <div class="badge badge-accent rounded-circle p-2 mt-1">
+                        <span class="text-mono">1</span>
+                    </div>
+                    <div>
+                        <div class="text-mono">Create a Project</div>
+                        <div class="text-muted" style="font-size: 0.8125rem;">Deploy your code to the cloud</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 mb-3">
+                    <div class="badge badge-secondary rounded-circle p-2 mt-1">
+                        <span class="text-mono">2</span>
+                    </div>
+                    <div>
+                        <div class="text-mono">Link GitHub</div>
+                        <div class="text-muted" style="font-size: 0.8125rem;">Connect for easy deployments</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-3">
+                    <div class="badge badge-secondary rounded-circle p-2 mt-1">
+                        <span class="text-mono">3</span>
+                    </div>
+                    <div>
+                        <div class="text-mono">Add a Database</div>
+                        <div class="text-muted" style="font-size: 0.8125rem;">Store your application data</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -1,12 +1,13 @@
-<div class="sidebar position-relative d-none d-sm-flex flex-column text-bg-dark vh-100">
+<div class="sidebar position-relative d-none d-sm-flex flex-column vh-100">
     {% for item in menu %}
     <a href="{{ url_for(item['url']) }}" 
-        class="nav-link p-2 py-3 opacity-75 {% if item['name'] == page %}opacity-100{% endif %}"
-        title="{{ item['name'] | capitalize }}">
-        <i class="fas fa-{{ item['icon']}} fa-fw fa-2x"></i>
+       class="nav-link {% if item['name'] == page %}active{% endif %}"
+       title="{{ item['name'] | capitalize }}"
+       {% if item['name'] == page %}aria-current="page"{% endif %}>
+        <i class="fas fa-{{ item['icon']}} fa-fw"></i>
     </a>
     {% endfor %}
-    <a href="{{ url_for('admin_logout') }}" class="nav-link p-2 py-3 text-danger position-absolute bottom-0">
-        <i class="fas fa-sign-out-alt fa-fw fa-2x"></i>
+    <a href="{{ url_for('admin_logout') }}" class="nav-link text-danger position-absolute bottom-0" title="Logout">
+        <i class="fas fa-sign-out-alt fa-fw"></i>
     </a>
 </div>

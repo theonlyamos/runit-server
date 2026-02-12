@@ -1,54 +1,58 @@
 {% extends "account/layout.html" %}
-
-{% block title %}
-{{super()}} - {{page | capitalize}}
-{% endblock %}
-
+{% block title %}{{ super() }} - {{ page | capitalize }}{% endblock %}
+{% block pagetitle %}DATABASES{% endblock %}
 {% block content %}
 {% include 'modals/confirm.html' %}
 {% include 'modals/create_database.html' %}
-<div class="container">
-    {% for (category, message) in get_flashed_messages(request) %}
-    <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">
-        <strong>{{message}}</strong>
-        <button type="button" class="btn btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-    {% if databases %}
 
-    <div class="tools d-flex justify-content-end">
-        <div class="btn-group shadow-sm" role="group" aria-label="tool buttons">
-            <a href="{{url_for('list_user_databases')}}?view=grid" class="btn btn-{{'' if request.session['view'] != 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Grid view">
-                <small><i class="fas fa-th-large fa-fw"></i></small>
-            </a>
-            <a href="{{url_for('list_user_databases')}}?view=list" class="btn btn-{{'' if request.session['view'] == 'list' else 'outline-'}}secondary bg-gradient" role="button" title="Table view">
-                <small><i class="fas fa-th-list fa-fw"></i></small>
-            </a>
-        </div>
-        <div class="btn-group shadow-sm ms-3" role="group" aria-label="tool buttons">
-            <a href="#confirmModal" role="button" class="btn btn-outline-danger bg-gradient" data-bs-toggle="modal">
-                <small><i class="fas fa-trash-alt fa-fw"></i></small>
-            </a>
-            <a href="#databaseModal" role="button" class="btn btn-outline-primary bg-gradient" data-bs-toggle="modal">
-               <small>
-                <i class="fas fa-plus fa-fw"></i>
-                New Database
-               </small>
-            </a>
-        </div>
-    </div>
-    {% if request.session['view'] == 'list' %} 
-    {% include 'databases/list.html' %} 
-    {% else %} 
-    {% include 'databases/grid.html' %}
-    {% endif %}
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3 fade-in">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
 </div>
+{% endfor %}
+
+{% if databases %}
+<div class="tools d-flex justify-content-end mb-4 gap-2">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('list_user_databases') }}?view=grid" 
+           class="btn {% if request.session['view'] != 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Grid view">
+            <i class="fas fa-th-large fa-fw"></i>
+        </a>
+        <a href="{{ url_for('list_user_databases') }}?view=list" 
+           class="btn {% if request.session['view'] == 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Table view">
+            <i class="fas fa-th-list fa-fw"></i>
+        </a>
+    </div>
+    <div class="btn-group" role="group">
+        <a href="#confirmModal" role="button" class="btn btn-outline-danger" data-bs-toggle="modal">
+            <i class="fas fa-trash-alt fa-fw"></i>
+        </a>
+        <a href="#databaseModal" role="button" class="btn btn-accent" data-bs-toggle="modal">
+            <i class="fas fa-plus fa-fw"></i>
+            <span class="d-none d-sm-inline">New Database</span>
+        </a>
+    </div>
+</div>
+
+{% if request.session['view'] == 'list' %}
+{% include 'databases/list.html' %}
+{% else %}
+{% include 'databases/grid.html' %}
 {% endif %}
-{% if not databases %}
-<a href="#databaseModal" class="nav-link d-flex flex-column text-center position-absolute" style="left: 50%; top: 25%; transform: translate(-50%, 50%);" data-bs-toggle="modal" role="button" aria-controls="databaseModal">
-    <i class="fas fa-database fa-4x p-3 border text-black-50 hover:text-dark" style="border-style: dashed !important;"></i>
-    <span>New</span>
-	<span>Database</span>
-</a>
+
+{% else %}
+<div class="empty-state fade-in">
+    <i class="fas fa-database"></i>
+    <div class="empty-state-title">No databases yet</div>
+    <p class="empty-state-text mb-4">Create your first database to store your application data</p>
+    <a href="#databaseModal" class="btn btn-accent" data-bs-toggle="modal">
+        <i class="fas fa-plus fa-fw"></i>
+        Create Database
+    </a>
+</div>
 {% endif %}
 {% endblock %}
