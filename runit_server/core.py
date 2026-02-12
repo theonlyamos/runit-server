@@ -1,9 +1,12 @@
 import os
 import json
 import logging
-from typing import Dict, Literal, Optional
+import asyncio
+import signal
+from typing import Dict, Literal, Optional, Set
 from pathlib import Path
 from contextlib import asynccontextmanager
+from threading import Lock
 
 from odbms import DBMS
 from dotenv import dotenv_values, find_dotenv
@@ -14,6 +17,7 @@ from fastapi.responses import RedirectResponse
 from .constants import DOTENV_FILE, RUNIT_WORKDIR, SUBSCRIPTION_EVENTS
 
 app_initialized = False
+startup_time = None
 
 def flash(request: Request, message: str, category: str = "primary") -> None:
    if "_messages" not in request.session:
@@ -28,7 +32,7 @@ templates = Jinja2Templates(templates_path)
 templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
 async def lifespan(request: Request):
-    global app_initialized
+    global app_initialized, startup_time
     
     if not RUNIT_WORKDIR.resolve().exists():
         RUNIT_WORKDIR.resolve().mkdir()
@@ -50,8 +54,9 @@ async def lifespan(request: Request):
     DB_DATABASE = os.getenv('DATABASE_NAME') or settings.get('DATABASE_NAME')
     
     if not app_initialized and setup and setup == 'completed':
-        DBMS.initialize(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD,DB_DATABASE) # type: ignore
+        DBMS.initialize(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
         app_initialized = True
+        startup_time = asyncio.get_event_loop().time()
     else:
         return RedirectResponse(request.url_for('setup_index'))
     return True
@@ -67,35 +72,56 @@ async def jsonify(data):
         A Python dictionary or the original string if no dictionary is found.
     """
 
-    # Check for the existence of '{' and '}'
+    if not isinstance(data, str):
+        return data
+
     if '{' not in data or '}' not in data:
         return data
 
-    # Extract the dictionary part
     dictionary_str = data[data.find('{'): data.rfind('}')+1]
-
-    # Replace single quotes with double quotes
     dictionary_str = dictionary_str.replace("'", '"')
 
-    # Convert string to dictionary
     try:
-        data = json.loads(dictionary_str)
+        import ast
+        data = ast.literal_eval(dictionary_str)
     except Exception:
-        logging.warning('Data is not a valid json string')
+        try:
+            data = json.loads(dictionary_str)
+        except Exception:
+            logging.warning('Data is not a valid json string')
     finally:
         return data
 
+
 class WSConnectionManager:
+    """Thread-safe WebSocket connection manager."""
     
     def __init__(self) -> None:
-        self.clients: Dict[str, WebSocket] = {}
-        self.receivers: Dict[str, str] = {}
-        self.subscribers: Dict[str, WebSocket] = {}
-        self.subscriptions = {}
+        self._lock = Lock()
+        self._clients: Dict[str, WebSocket] = {}
+        self._receivers: Dict[str, str] = {}
+        self._subscribers: Dict[str, WebSocket] = {}
+        self._subscriptions: Dict[str, list] = {}
+        
+    @property
+    def clients(self) -> Dict[str, WebSocket]:
+        with self._lock:
+            return self._clients.copy()
+    
+    @property
+    def receivers(self) -> Dict[str, str]:
+        with self._lock:
+            return self._receivers.copy()
+    
+    @property
+    def subscribers(self) -> Dict[str, WebSocket]:
+        with self._lock:
+            return self._subscribers.copy()
         
     async def connect(self, websocket: WebSocket, client_id: str):
         await websocket.accept()
-        self.clients[client_id] = websocket
+        with self._lock:
+            self._clients[client_id] = websocket
         
     async def subscribe(
         self, websocket: WebSocket, 
@@ -105,27 +131,26 @@ class WSConnectionManager:
         collection: str,
         document_id: Optional[str]=None):
         await websocket.accept()
-        self.subscribers[client_id] = websocket
+        with self._lock:
+            self._subscribers[client_id] = websocket
         
-        sub_info = {
-            "event": event,
-            "client_id": client_id,
-            "collection": collection,
-            "document_id": document_id
-        }
-        
-        if not project_id in self.subscriptions.keys():
-            self.subscriptions[project_id] = [sub_info]
-        else:
-            self.subscriptions[project_id].append(sub_info)
+            sub_info = {
+                "event": event,
+                "client_id": client_id,
+                "collection": collection,
+                "document_id": document_id
+            }
+            
+            if project_id not in self._subscriptions:
+                self._subscriptions[project_id] = [sub_info]
+            else:
+                self._subscriptions[project_id].append(sub_info)
     
     def disconnect(self, client_id: str):
-        if client_id in list(self.clients.keys()):
-            del self.clients[client_id]
-        if client_id in list(self.receivers.keys()):
-            del self.receivers[client_id]
-        if client_id in list(self.subscribers.keys()):
-            del self.subscribers[client_id]
+        with self._lock:
+            self._clients.pop(client_id, None)
+            self._receivers.pop(client_id, None)
+            self._subscribers.pop(client_id, None)
         
     async def send(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
@@ -135,15 +160,48 @@ class WSConnectionManager:
     
     async def has_subscription(
         self, event: SUBSCRIPTION_EVENTS, project_id: str, 
-        collection: str, document_id: str|list,
+        collection: str, document_id: str,
         data
         ):
         response = {'event': event, 'data': data}
         
-        if project_id in self.subscriptions.keys():
-            for subber in self.subscriptions[project_id]:
-                sub_client = subber['client_id']
-                if subber['collection'] == collection \
-                    and (subber['document_id'] == document_id or subber['document_id'] is None) \
-                    and (event == subber['event'] or subber['event'] == 'all'):
-                    await self.send(json.dumps(response), self.subscribers[sub_client])
+        with self._lock:
+            if project_id in self._subscriptions:
+                for subber in self._subscriptions[project_id]:
+                    sub_client = subber['client_id']
+                    if subber['collection'] == collection \
+                        and (subber['document_id'] == document_id or subber['document_id'] is None) \
+                        and (event == subber['event'] or subber['event'] == 'all'):
+                        if sub_client in self._subscribers:
+                            await self.send(json.dumps(response), self._subscribers[sub_client])
+
+    def get_stats(self) -> dict:
+        """Get connection statistics."""
+        with self._lock:
+            return {
+                "connected_clients": len(self._clients),
+                "subscribers": len(self._subscribers),
+                "active_subscriptions": sum(len(subs) for subs in self._subscriptions.values())
+            }
+
+
+ws_manager = WSConnectionManager()
+
+
+async def on_startup():
+    """Initialize server on startup."""
+    global startup_time
+    startup_time = asyncio.get_event_loop().time()
+    logging.info("Runit server starting up...")
+
+
+async def on_shutdown():
+    """Cleanup on shutdown."""
+    logging.info("Runit server shutting down...")
+
+
+def get_uptime() -> float:
+    """Get server uptime in seconds."""
+    if startup_time is None:
+        return 0
+    return asyncio.get_event_loop().time() - startup_time

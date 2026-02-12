@@ -7,7 +7,7 @@ from typing import Annotated, Optional
 
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect, Depends, status
+from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect, Depends, status, HTTPException
 
 from ..core import WSConnectionManager, flash, templates, jsonify
 from ..common.security import authenticate, create_access_token, get_session_user
@@ -15,7 +15,7 @@ from ..models import User
 from ..models import Admin
 from ..models import Project
 from ..models import Secret
-from ..common import Utils
+from ..common.utils import Utils, rate_limiter
 
 from runit import RunIt
 
@@ -95,6 +95,14 @@ async def index(request: Request):
 async def registration_page(request: Request):
     return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
 
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @public.post('/register')
 async def register(
     request: Request,
@@ -103,9 +111,21 @@ async def register(
     password: Annotated[str, Form()],
     cpassword: Annotated[str, Form()],
 ):
+    client_ip = get_client_ip(request)
+    allowed, retry_after = rate_limiter.is_allowed(f"register:{client_ip}", max_requests=5, window_seconds=300)
+    
+    if not allowed:
+        flash(request, f'Too many registration attempts. Try again in {retry_after} seconds.', 'danger')
+        return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+    
     try:
         if password != cpassword:
             flash(request, 'Passwords do not match!', 'danger')
+            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+        
+        is_strong, strength_msg = Utils.is_strong_password(password)
+        if not is_strong:
+            flash(request, strength_msg, 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
         user = User.get_by_email(email)
@@ -116,7 +136,6 @@ async def register(
         
         user = User(email, name, password).save()
 
-        #print(user.inserted_id)
         flash(request, 'Registration Successful!', 'success')
         return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_303_SEE_OTHER)
 
@@ -127,6 +146,13 @@ async def register(
 
 @public.post('/login')
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    client_ip = get_client_ip(request)
+    allowed, retry_after = rate_limiter.is_allowed(f"login:{client_ip}", max_requests=10, window_seconds=60)
+    
+    if not allowed:
+        flash(request, f'Too many login attempts. Try again in {retry_after} seconds.', 'danger')
+        return templates.TemplateResponse('login.html', context={'request': request})
+    
     user = authenticate(form_data.username, form_data.password)
     
     if not user:
@@ -138,6 +164,8 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     request.session['user_name'] = user.name
     request.session['user_email'] = user.email
     request.session['access_token'] = access_token
+    
+    rate_limiter.clear(f"login:{client_ip}")
 
     return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
 
