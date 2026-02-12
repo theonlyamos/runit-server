@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-app-deployment
+  labels:
+    app: main-app
+spec:
+  replicas: 1 # Adjust based on your needs
+  selector:
+    matchLabels:
+      app: main-app
+  template:
+    metadata:
+      labels:
+        app: main-app
+    spec:
+      containers:
+      - name: main-app-container
+        image: your-docker-hub-username/main-app-image:latest # Replace with your Docker image
+        ports:
+        - containerPort: 9000 # Port your main app listens on
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        command: ["runit"] # Assuming your main app uses runit for process management
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config # Mount a volume for configuration files (optional)
+      volumes:
+      - name: config-volume
+        configMap:
+          name: main-app-config # Name of your ConfigMap (optional)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: main-app-service
+spec:
+  type: LoadBalancer # Choose 'LoadBalancer' for external access, 'NodePort' for internal access
+  selector:
+    app: main-app
+  ports:
+  - protocol: TCP
+    port: 80 # External port (adjust if needed)
+    targetPort: 9000 # Port your main app listens on
+

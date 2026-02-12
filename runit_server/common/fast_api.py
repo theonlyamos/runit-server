@@ -26,7 +26,7 @@ load_dotenv()
 router = APIRouter(prefix='/api')
 
 @router.api_route('/login', methods=['POST'])
-def login(request):
+async def login(request):
     """Login Api Endpoint
 
     Args:
@@ -35,7 +35,7 @@ def login(request):
     
     data = request.json()
 
-    user = authenticate(data['email'], data['password'])
+    user = await authenticate(data['email'], data['password'])
     if user:
         access_token = create_access_token(user.id)
         return {'status': 'success', 'access_token': access_token}

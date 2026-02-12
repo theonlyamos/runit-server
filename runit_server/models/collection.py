@@ -4,10 +4,14 @@ class Collection(Model):
     TABLE_NAME = ''
 
     def __init__(self, created_at=None, updated_at=None, id=None, **kwargs):
-        super().__init__(created_at, updated_at, id)
-
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
+        init_kwargs = {**kwargs}
+        if created_at is not None:
+            init_kwargs['created_at'] = created_at
+        if updated_at is not None:
+            init_kwargs['updated_at'] = updated_at
+        if id is not None:
+            init_kwargs['id'] = id
+        super().__init__(**init_kwargs)
 
     @classmethod
     def get_by_user(cls, user_id: str)-> list:

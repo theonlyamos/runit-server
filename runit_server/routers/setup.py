@@ -68,7 +68,7 @@ async def initsetup(request: Request):
         if settings['DBMS'] == 'sqlite':
             settings['DATABASE_NAME'] = str(settings.get('DATABASE_NAME', 'runit'))+'.db'
         db_port = int(settings['DATABASE_PORT']) if settings.get('DATABASE_PORT') else None
-        DBMS.initialize(settings['DBMS'], settings['DATABASE_HOST'], db_port, # type: ignore
+        await DBMS.initialize_async(settings['DBMS'], settings['DATABASE_HOST'], db_port, # type: ignore
                     settings['DATABASE_USERNAME'], settings['DATABASE_PASSWORD'],  # type: ignore
                     settings['DATABASE_NAME']) # type: ignore
 

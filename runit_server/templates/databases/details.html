@@ -92,7 +92,7 @@
                         </div>
                         <div class="card-body">
                             <form action="{{url_for('user_database_schema', database_id=database.id)}}" method="post" class="schema-form mt-3">
-                                {% for key, value in database.schema.items() %}
+                                {% for key, value in database.collection_schema.items() %}
                                 {% set id = 'schema'+(loop.index | string) %}
                                 {% set schemaKey = 'schemaKey'+(loop.index | string) %}
                                     <div class="form-group d-flex gap-3 justify-content-between align-items-center pb-2" id="{{id}}">

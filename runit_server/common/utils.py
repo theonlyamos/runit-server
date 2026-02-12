@@ -96,13 +96,26 @@ class CSRFProtection:
         return token
     
     @staticmethod
-    def validate_token(request, token: Optional[str] = None) -> bool:
+    async def validate_token(request, token: Optional[str] = None) -> bool:
         """Validate CSRF token from request."""
         session_token = request.session.get(CSRFProtection._token_key)
         if not session_token:
             return False
         
-        provided_token = token or request.form.get("_csrf_token") or request.headers.get("X-CSRF-Token")
+        # Try to get token from provided param first
+        provided_token = token
+        
+        # If no token provided, try form data or headers
+        if not provided_token:
+            try:
+                form_data = await request.form()
+                provided_token = form_data.get("_csrf_token")
+            except Exception:
+                provided_token = None
+        
+        if not provided_token:
+            provided_token = request.headers.get("X-CSRF-Token")
+        
         if not provided_token:
             return False
         

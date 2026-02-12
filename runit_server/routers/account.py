@@ -42,7 +42,7 @@ account = APIRouter(
 
 @account.get('/')
 async def user_home(request: Request):
-    user = User.get(request.session['user_id'])
+    user = await User.get(request.session['user_id'])
     return templates.TemplateResponse('account/home.html', context={
         'request': request, 'page':'home', 'user':user
     })
@@ -50,8 +50,8 @@ async def user_home(request: Request):
 @account.get('/functions')
 @account.get('/functions/')
 async def list_user_functions(request: Request):
-    functions = Function.get_by_user(request.session['user_id'])
-    projects = Project.get_by_user(request.session['user_id'])
+    functions = await Function.get_by_user(request.session['user_id'])
+    projects = await Project.get_by_user(request.session['user_id'])
     
     return templates.TemplateResponse('functions/index.html', context={
         'request': request, 'page':'functions', 'functions': functions, 
@@ -62,7 +62,7 @@ async def list_user_functions(request: Request):
 @account.get('/profile/')
 async def user_profile(request: Request):
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
     
     if not user:
         flash(request, "User does not exist", "danger")
@@ -78,12 +78,12 @@ async def user_profile(request: Request):
 @account.post('/profile/')
 async def update_user_profile(request: Request, email: Annotated[str, Form()], name: Annotated[str, Form()], password: Annotated[str, Form()]):
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
 
     if user and Utils.check_hashed_password(password, user.password):
         user.email = email
         user.name = name
-        user.save()
+        await user.save()
 
         flash(request, "Profile updated successfully", "success")
     else:
@@ -96,7 +96,7 @@ async def update_user_profile(request: Request, email: Annotated[str, Form()], n
 @account.post('/password/')
 async def update_user_password(request: Request, password: Annotated[str, Form()], new_password: Annotated[str, Form()], confirm_password: Annotated[str, Form()]):
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
     
     if not user:
         flash(request, "User does not exist", "danger")
@@ -107,7 +107,7 @@ async def update_user_password(request: Request, password: Annotated[str, Form()
     elif new_password != confirm_password:
         flash(request, "Passwords do not watch", "danger")
     else:
-        user.reset_password(new_password)
+        await user.reset_password(new_password)
         request.session.clear()
         flash(request, "Password changed successfully. Log in", "success")
         return RedirectResponse(request.url_for('index'), status_code=status.HTTP_303_SEE_OTHER)
@@ -118,7 +118,7 @@ async def update_user_password(request: Request, password: Annotated[str, Form()
 @account.post('/image/')
 async def update_user_image(request: Request,  file: UploadFile):
     user_id = request.session['user_id']
-    user = User.get(user_id)  
+    user = await User.get(user_id)  
     if not user:
         flash(request, "User does not exist", "danger")
         return RedirectResponse(request.url_for('index'), status_code=status.HTTP_303_SEE_OTHER)
@@ -147,7 +147,7 @@ async def update_user_image(request: Request,  file: UploadFile):
         await file.close()
     
     user.image = filename
-    user.save()  
+    await user.save()  
     return JSONResponse({'status': 'success', 'filepath': str(request.url_for('uploads', path=user.id+'/'+user.image))})
     # return RedirectResponse(request.url_for('user_profile'), status_code=status.HTTP_303_SEE_OTHER)
 

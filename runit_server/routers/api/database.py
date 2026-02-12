@@ -1,7 +1,6 @@
-
 import json
 import logging
-from typing import Annotated, Optional
+from typing import Annotated, Dict, List, Optional, Union
 
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import APIRouter, BackgroundTasks, Request, Depends, WebSocket, WebSocketDisconnect
@@ -13,6 +12,8 @@ from ...models import User
 from ...models import Database
 from ...models import Collection
 from ...constants import SUBSCRIPTION_EVENTS
+from odbms import DBMS
+from odbms.model import Model
 
 from runit import RunIt
 
@@ -28,24 +29,26 @@ database_api = APIRouter(
 
 wsmanager = WSConnectionManager()
 
-async def get_collection(project_id: str, collection: str, document_id: list|str, _filter: dict):
-    db = Database.find_one({
+async def get_collection(project_id: str, collection: str, document_id: Union[list, str], _filter: dict):
+    db = await Database.find_one({
         'project_id': project_id,
         'name': collection
     })
-    
-    Collection.TABLE_NAME = db.collection_name
+    if not db:
+        return {}
+
+    Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
     if isinstance(document_id, list):
         results = []
         for _id in document_id:
-            _filter['id'] = _id
-            document = Collection.find_one(_filter)
-            results.append(document.json())
+            flt = {**_filter, 'id': _id}
+            document = await Collection.find_one(flt)
+            results.append(document.json() if document else {})
         return results
     elif document_id:
         _filter['id'] = document_id
 
-    document = Collection.find_one(_filter)
+    document = await Collection.find_one(_filter)
 
     if document:
         return document.json()
@@ -97,10 +100,10 @@ async def api_list_user_documents(
     document_id: Optional[str] = None
     ) -> JSONResponse:
     
-    response = {
+    response: dict = {
         'status': 'success',
     }
-    
+
     try:
         data = request.query_params._dict
         
@@ -108,29 +111,29 @@ async def api_list_user_documents(
         params = {'user_id': user_id}
         params['name'] = collection
         params['project_id'] = project_id
-            
-        db = Database.find_one(params)
-        
+
+        db = await Database.find_one(params)
+
         if not db:
             raise NameError("Collection wasn't found")
 
-        Collection.TABLE_NAME = db.collection_name
-        
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
+
         _filter = json.loads(data['_filter']) if '_filter' in data.keys() else {}
-        projection: Union[Dict, List] = json.loads(data['projection']) if 'projection' in data.keys() else [] # type: ignore
+        raw_projection = json.loads(data['projection']) if 'projection' in data.keys() else []
+        projection_keys: List = list(raw_projection.keys()) if isinstance(raw_projection, dict) else raw_projection
 
         if not document_id:
-            results = Collection.find(_filter, projection) # type: ignore
+            results = await Collection.find(_filter)
             documents = [result.json() for result in results]
-            response['data'] = documents # type: ignore
+            response['data'] = documents
         else:
-            document = Collection.find_one({'id': document_id}, projection)
-            json_document = document.json() if document else {} # type: ignore
-            projection = projection if isinstance(projection, list) else projection.keys()
-            if len(projection):
-                json_document = {key: json_document[key] for key in projection if key in json_document}
-            
-            response['data'] = json_document # type: ignore
+            document = await Collection.find_one({'id': document_id})
+            json_document = document.json() if document else {}
+            if projection_keys:
+                json_document = {k: json_document[k] for k in projection_keys if k in json_document}
+
+            response['data'] = json_document
             
     except Exception as e:
         logging.exception(e)
@@ -146,7 +149,7 @@ async def api_create_user_database(
     user: Annotated[User, Depends(get_current_user)],
     project_id: Optional[str] = None
 ):
-    response = {
+    response: dict = {
         'status': 'success',
     }
     try:
@@ -154,17 +157,21 @@ async def api_create_user_database(
         name = str(form_data['name'])
         
         if name and project_id:
-            
+
             collection_name = f"{name}_{user.id}_{project_id}"
             data = {'name': name, 'collection_name': collection_name,
-                    'project_id': project_id,'user_id': user.id}
-            
+                    'project_id': project_id, 'user_id': user.id}
+
             new_db = Database(**data)
-            database_id = new_db.save().inserted_id     # type: ignore
-            
+            await new_db.save()
+            database_id = new_db.id
+
+            Collection.TABLE_NAME = collection_name  # type: ignore[assignment]
+            Collection.create_table()  # type: ignore[misc]
+
             response['message'] = 'Successfully created database'
-            response['data'] = { # type: ignore
-                'id': str(database_id), 
+            response['data'] = {
+                'id': str(database_id),
                 'collection_name': collection_name,
                 'user_id': user.id,
                 'project_id': project_id
@@ -185,32 +192,39 @@ async def api_create_user_document(
     collection: str,
     background_task: BackgroundTasks
 ):
-    response = {
+    response: dict = {
         'status': 'success',
     }
     try:
         form_data = await request.json()
         documents = form_data['documents']
-        
-        db = Database.find_one({
+
+        db = await Database.find_one({
             'project_id': project_id,
             'name': collection
         })
-        
+
         if not db:
             raise NameError("Database was not found")
-        
-        Collection.TABLE_NAME = db.collection_name
-        
+
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
+
         if isinstance(documents, list):
-            results = Collection.insert_many(documents).inserted_ids
-            response['data'] = [str(_id) for _id in results] # type: ignore
+            normalised = [Model.normalise(doc, 'params') for doc in documents]
+            db_conn = DBMS.Database
+            if db_conn is not None:
+                results = await db_conn.insert_many(Collection.table_name(), normalised)  # type: ignore[union-attr]
+                response['data'] = [str(oid) for oid in (results if isinstance(results, (list, tuple)) else [results])]
+            else:
+                raise RuntimeError("Database not initialized")
         else:
-            document_id = Collection(**documents).save().inserted_id
-            response['data'] = str(document_id)
-            
-        data = await get_collection(project_id, collection, response['data'], {})
-        background_task.add_task(wsmanager.has_subscription, 'create', project_id, collection, response['data'], data)
+            doc = Collection(**documents)
+            await doc.save()
+            response['data'] = str(doc.id)
+
+        doc_ids = response['data']
+        data = await get_collection(project_id, collection, doc_ids if isinstance(doc_ids, (list, str)) else str(doc_ids), {})
+        background_task.add_task(wsmanager.has_subscription, 'create', project_id, collection, doc_ids, data)  # type: ignore[arg-type]
         
     except NameError:
         response['status'] = 'error'
@@ -235,34 +249,34 @@ async def api_update_user_document(
     background_task: BackgroundTasks,
     document_id: Optional[str] = None,
 ):
-    response = {
+    response: dict = {
         'status': 'success',
     }
     try:
         form_data = await request.json()
         document = form_data['document']
-        
-        db = Database.find_one({
+
+        db = await Database.find_one({
             'user_id': user.id,
             'project_id': project_id,
             'name': collection
         })
-        
+
         if not db:
             raise NameError("Document was not found")
-        
-        Collection.TABLE_NAME = db.collection_name
+
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
         _filter = form_data['filter'] if 'filter' in form_data.keys() else {}
         if document_id:
             _filter['id'] = document_id
         params = _filter.copy()
-        Collection.update(_filter, document)        # type: ignore
+        await Collection.update_one(_filter, document)        # type: ignore
         
         response['message'] = 'Document updated successfully'
 
-        data = await get_collection(project_id, collection, document_id, params)
-        if data:
-            background_task.add_task(wsmanager.has_subscription, 'update', project_id, collection, data['id'], data)
+        data = await get_collection(project_id, collection, document_id or '', params)
+        if isinstance(data, dict) and data:
+            background_task.add_task(wsmanager.has_subscription, 'update', project_id, collection, data.get('id', document_id or ''), data)
         
     except NameError:
         response['status'] = 'error'
@@ -285,27 +299,31 @@ async def api_delete_user_document(
     background_task: BackgroundTasks,
     document_id: Optional[str] = None,
 ):
-    response = {
+    response: dict = {
         'status': 'success',
     }
     try:
         params = request.query_params._dict
-        
-        db = Database.find_one({
+
+        db = await Database.find_one({
             'user_id': user.id,
             'project_id': project_id,
             'name': collection
         })
-        
+
         if not db:
             raise NameError("Document was not found")
-        
-        Collection.TABLE_NAME = db.collection_name
 
-        result = Collection.remove(params)
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
+
+        if DBMS.Database:
+            params_normalised = Model.normalise(params, 'params')
+            result = await DBMS.Database.delete_one(Collection.table_name(), params_normalised)
+        else:
+            raise RuntimeError("Database not initialized")
         response['message'] = 'Document deleted successfully'
-        
-        background_task.add_task(wsmanager.has_subscription, 'delete', project_id, collection, document_id, response)
+
+        background_task.add_task(wsmanager.has_subscription, 'delete', project_id, collection, document_id or '', response)
         
     except NameError:
         response['status'] = 'error'

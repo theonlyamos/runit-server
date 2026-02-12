@@ -32,7 +32,7 @@ async def get_access_token(user: User, code: str):
     
     user.gat = token.token
     user.grt = str(token.refresh_token)
-    user.save()
+    await user.save()
     
     return g
 
@@ -52,7 +52,7 @@ async def refresh_access_token(user: User):
     
     user.gat = token.token
     user.grt = str(token.refresh_token)
-    user.save()
+    await user.save()
     logging.info(f"New Token: {token.token}")
     return g
 
@@ -87,7 +87,7 @@ async def github_webhook(request: Request):
     
 @github_router.get('/callback', dependencies=[Depends(get_session)])
 async def github_callback(request: Request):
-    user = User.get(request.session['user_id'])
+    user = await User.get(request.session['user_id'])
     response = {'status': 'success'}
     try:
         code = request.query_params.get('code')
@@ -109,7 +109,7 @@ async def github_callback(request: Request):
 @github_router.get('/repos', dependencies=[Depends(get_session)])
 @github_router.get('/repos/{repo_name}', dependencies=[Depends(get_session)])
 async def get_repos(request: Request, repo_name: Optional[str] = None):
-    user = User.get(request.session['user_id'])  
+    user = await User.get(request.session['user_id'])  
     error_count = 0
     response: dict = {'status': 'success'}
     repos: list[dict] = []

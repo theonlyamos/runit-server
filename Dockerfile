@@ -55,8 +55,18 @@ RUN mv .env.development .env
 
 RUN pip install -e .
 
-EXPOSE 9000
-
 # RUN ln -sf /bin/bash /bin/sh
+
+# Install Nginx
+RUN apk add nginx
+
+# Copy Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+
+EXPOSE 9000 # Port for your FastAPI app
+EXPOSE 80 # Port for Nginx
 
 ENTRYPOINT ["runit-server"]

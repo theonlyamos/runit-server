@@ -53,7 +53,7 @@ class UserData(BaseModel):
 # Login endpoint
 @public_api.post("/login", response_model=Token)
 async def api_login(form_data: LoginData):
-    user = authenticate(form_data.email, form_data.password)
+    user = await authenticate(form_data.email, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -78,7 +78,7 @@ async def api_register(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user = User.get_by_email(data.email)
+    user = await User.get_by_email(data.email)
     if user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -86,7 +86,7 @@ async def api_register(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    User(data.email, data.name, data.password).save()
+    await User(data.email, data.name, data.password).save()
     
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
@@ -103,7 +103,7 @@ async def run_project_api(request: Request, project_id: str, function: Optional[
         excluded = ['favicon.ico']
         if project_id in excluded:
             return None
-        project = Project.get(project_id)
+        project = await Project.get(project_id)
         if not project:
             logging.warning('Project not found')
             return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
@@ -111,13 +111,13 @@ async def run_project_api(request: Request, project_id: str, function: Optional[
         #     logging.warning('Project is private')
         #     return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
         
-        secret = Secret.find_one({'project_id': project_id})
+        secret = await Secret.find_one({'project_id': project_id})
         if secret and secret.variables:
             environs = secret.variables
             for key, value in environs.items():
                 os.environ[key] = value
         
-        current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
+        current_project_dir = Path(PROJECTS_DIR, str(project_id)).resolve()
         function = function if function else 'index'
         if current_project_dir.is_dir():
             result = RunIt.start(project_id, function, PROJECTS_DIR, request.query_params._dict)

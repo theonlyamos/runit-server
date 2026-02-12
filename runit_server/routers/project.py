@@ -58,7 +58,7 @@ def create_runit_project(config: dict, name: str):
 @project.get('/')
 async def list_user_projects(request: Request, view: Optional[str] = None):
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
     user = user.json() if user else None
     
     if view:
@@ -66,7 +66,7 @@ async def list_user_projects(request: Request, view: Optional[str] = None):
     elif 'view' not in request.session.keys():
         request.session['view'] = 'grid'
         
-    results = Project.get_by_user(user_id)
+    results = await Project.get_by_user(user_id)
     projects = []
     for project in results:
         projects.append(project.json())
@@ -87,7 +87,7 @@ async def create_user_project(
     }
 
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
     
     if not user:
         response['status'] = 'error'
@@ -113,12 +113,11 @@ async def create_user_project(
             config['github_repo_branch'] = project_data.github_repo_branch
         
         project = Project(user_id, **config)
-        project_id = project.save().inserted_id     # type: ignore
-        project_id = str(project_id)
-        project.id = project_id
+        await project.save()
+        project_id = str(project.id)
         
         homepage = f"{request.base_url}{project_id}/"
-        project.update({'homepage': homepage})
+        await project.update({'homepage': homepage})
 
         config['_id'] = project_id
         config['homepage'] = homepage
@@ -169,7 +168,8 @@ async def create_user_project(
         if (project_data.database):
             # Create database for project
             collection_name = f"{project_data.name}_db_{user_id}_{project_id}"
-            Database(project_data.name, collection_name, project_id).save()
+            new_db = Database(project_data.name + '_db', collection_name, user_id, project_id)
+            await new_db.save()
         
         response['project_id'] = project_id
     else:
@@ -183,11 +183,11 @@ async def create_user_project(
 @project.get('/{project_id}/')
 async def user_project_details(request: Request, project_id: str):
     user_id = request.session['user_id']
-    user = User.get(user_id)
+    user = await User.get(user_id)
     user = user.json() if user else None
     old_curdir = os.curdir
     
-    project = Project.get(project_id)
+    project = await Project.get(project_id)
     if not project:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
@@ -215,7 +215,7 @@ async def user_project_details(request: Request, project_id: str):
     del project['author']
     project['functions'] = len(funcs)
     if project:
-        secret = Secret.find_one({'user_id': user_id, 'project_id': project_id})
+        secret = await Secret.find_one({'user_id': user_id, 'project_id': project_id})
         if secret:
             environs = secret.variables
         
@@ -232,7 +232,7 @@ async def reinstall_project_dependencies(request: Request, project_id: str, back
     try:
         old_curdir = os.curdir
         
-        project = Project.get(project_id)
+        project = await Project.get(project_id)
         if not project:
             flash(request, PROJECT_404_ERROR, 'danger')
             return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
@@ -258,10 +258,10 @@ async def reinstall_project_dependencies(request: Request, project_id: str, back
 async def delete_user_project(request: Request, project_id, background_task: BackgroundTasks):
     try:
         user_id = request.session['user_id']
-        project = Project.get(project_id)
+        project = await Project.get(project_id)
         
         if project:
-            Project.remove({'id': project_id, 'user_id': user_id})
+            await Project.delete_many({'id': project_id, 'user_id': user_id})
             project_folder = Path(PROJECTS_DIR, str(project.id)).resolve()
             if project_folder.exists() and project_folder.is_dir():
                 background_task.add_task(shutil.rmtree, project_folder)
@@ -277,21 +277,20 @@ async def delete_user_project(request: Request, project_id, background_task: Bac
 @project.post('/environ/{project_id}/')
 async def user_project_environ(request: Request, project_id):
     user_id = request.session['user_id']
-    project = Project.get(project_id)
+    project = await Project.get(project_id)
     if not project:
         flash(request, PROJECT_404_ERROR, 'danger')
         return RedirectResponse(request.url_for(PROJECT_INDEX_URL_NAME))
     
-    secret = Secret.find_one({'user_id': user_id, 'project_id': project_id})
+    secret = await Secret.find_one({'user_id': user_id, 'project_id': project_id})
     if not secret:
         secret = Secret(user_id, project_id)
     
     form = await request.form()
-    data = form._dict
-    print(data)
+    data = dict(form)
     
     secret.variables = data
-    secret.save()
+    await secret.save()
 
     # project = Project.get(project_id)
     flash(request, 'Environment variables updated successfully', category='success')

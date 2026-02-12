@@ -26,7 +26,7 @@ class UserData(BaseModel):
     name: str
     password: str
     
-def authenticate(email: str, password: str):
+async def authenticate(email: str, password: str):
     '''
     Function for authenticating user
 
@@ -34,7 +34,7 @@ def authenticate(email: str, password: str):
     @param password Password
     @return User Instance or None
     '''
-    user = User.get_by_email(email)
+    user = await User.get_by_email(email)
     
     if user and Utils.check_hashed_password(password, user.password):
         return user
@@ -74,7 +74,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = User.get_by_email(token_data.username)
+    user = await User.get_by_email(token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -83,8 +83,8 @@ async def get_session_user(session: Annotated[dict, Depends(get_session)]):
     user_id = session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401)
-    return User.get(user_id)
+    return await User.get(user_id)
 
-def identity(payload):
+async def identity(payload):
     user_id = payload['identity']
-    return User.get(user_id)
+    return await User.get(user_id)

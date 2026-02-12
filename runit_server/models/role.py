@@ -10,15 +10,20 @@ class Role(Model):
     '''A model class for role'''
     TABLE_NAME = 'roles'
 
-    def __init__(self, name: str, permission_ids: list, created_at=None, updated_at=None, id=None):
-        super().__init__(created_at, updated_at, id)
-        self.name = name
-        #self.permission_ids =  permission_ids.split('::') if type(permission_ids) == str \
-        #                        else permission_ids
-        self.permission_ids = permission_ids
+    def __init__(self, name: str, permission_ids: list, created_at=None, updated_at=None, id=None, **kwargs):
+        # Build kwargs dynamically, only including non-None values for datetime fields
+        init_kwargs = {'name': name, 'permission_ids': permission_ids}
+        if created_at is not None:
+            init_kwargs['created_at'] = created_at
+        if updated_at is not None:
+            init_kwargs['updated_at'] = updated_at
+        if id is not None:
+            init_kwargs['id'] = id
+        init_kwargs.update(kwargs)
+        super().__init__(**init_kwargs)
         
 
-    def save(self):
+    async def save(self):
         '''
         Instance Method for saving Role instance to database
 
@@ -32,7 +37,7 @@ class Role(Model):
             del data["created_at"]
             del data["updated_at"]
 
-        return DBMS.Database.insert(Role.TABLE_NAME, Role.normalise(data, 'params'))
+        return await DBMS.Database.insert_one(Role.TABLE_NAME, Role.normalise(data, 'params'))
     
     def json(self)-> dict:
         '''

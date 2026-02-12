@@ -1,5 +1,6 @@
 from datetime import datetime
 from bson.objectid import ObjectId
+from typing import Optional
 from odbms import DBMS, Model
 
 from ..common.utils import Utils
@@ -9,12 +10,52 @@ from ..common.cache import cached, cache
 class User(Model):
     '''A model class for user'''
     TABLE_NAME = 'users'
+    email: Optional[str] = None
+    name: Optional[str] = None
+    password: Optional[str] = None
+    image: Optional[str] = ''
+    gat: Optional[str] = ''
+    grt: Optional[str] = ''
+
+    @staticmethod
+    def _parse_datetime(value):
+        if not isinstance(value, str):
+            return value
+        for parser in (datetime.fromisoformat,):
+            try:
+                return parser(value)
+            except ValueError:
+                pass
+        for fmt in ("%a %b %d %Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                pass
+        return None
 
     def __init__(self, email: str, name: str, password: str, 
                  image: str = '', gat: str ='', 
                  grt: str ='', created_at=None, 
                  updated_at=None, id=None):
-        super().__init__(created_at, updated_at, id)
+        created_at = User._parse_datetime(created_at)
+        updated_at = User._parse_datetime(updated_at)
+
+        init_kwargs = {
+            'email': email,
+            'name': name,
+            'password': password,
+            'image': image,
+            'gat': gat,
+            'grt': grt
+        }
+        if created_at is not None:
+            init_kwargs['created_at'] = created_at
+        if updated_at is not None:
+            init_kwargs['updated_at'] = updated_at
+        if id is not None:
+            init_kwargs['id'] = id
+
+        super().__init__(**init_kwargs)
         self.email = email
         self.name = name
         self.password = password
@@ -23,7 +64,7 @@ class User(Model):
         self.grt = grt
         
 
-    def save(self):
+    async def save(self):
         '''
         Instance Method for saving User instance to Database
 
@@ -31,26 +72,29 @@ class User(Model):
         @return None
         '''
         
-        data = self.__dict__.copy()
-        data['updated_at'] = (datetime.now()).strftime("%a %b %d %Y %H:%M:%S")
+        data = self.model_dump()
+        data['updated_at'] = datetime.now()
         
         if DBMS.Database.dbms != 'mongodb':
             del data["created_at"]
             del data["updated_at"]
 
-        if isinstance(self.id, ObjectId):
+        if isinstance(self.id, ObjectId) or self.id is None:
             data['password'] = Utils.hash_password(self.password)
             cache.delete(f"user:email:{self.email}")
-            return DBMS.Database.insert(User.TABLE_NAME, Model.normalise(data, 'params'))
+            result = await DBMS.Database.insert_one(User.TABLE_NAME, Model.normalise(data, 'params'))
+            if result:
+                self.id = str(result) if isinstance(result, ObjectId) else result
+            return result
         
         cache.delete(f"user:id:{self.id}")
         cache.delete(f"user:email:{self.email}")
         del data['password']
-        return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), self.normalise(data, 'params'))
+        return await DBMS.Database.update_one(User.TABLE_NAME, self.normalise({'id': self.id}, 'params'), self.normalise(data, 'params'))
         
         
     
-    def reset_password(self, new_password: str):
+    async def reset_password(self, new_password: str):
         '''
         Instance Method for resetting user password
 
@@ -63,7 +107,7 @@ class User(Model):
         cache.delete(f"user:id:{self.id}")
         cache.delete(f"user:email:{self.email}")
 
-        DBMS.Database.update(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
+        await DBMS.Database.update_one(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
     
     def projects(self):
         '''
@@ -94,12 +138,10 @@ class User(Model):
         '''
         
         data = super().json()
-        data['projects'] = self.count_projects()
-
         return data
 
     @classmethod
-    def get_by_email(cls, email: str):
+    async def get_by_email(cls, email: str):
         '''
         Class Method for retrieving user by email address
 
@@ -111,7 +153,7 @@ class User(Model):
         if cached:
             return cls(**cls.normalise(cached)) if cached else None
         
-        user = DBMS.Database.find_one(User.TABLE_NAME, {"email": email})
+        user = await DBMS.Database.find_one(User.TABLE_NAME, {"email": email})
         
         if isinstance(user, dict):
             if len(user.keys()):
@@ -122,7 +164,7 @@ class User(Model):
             return cls(*user) if len(user) else None
     
     @classmethod
-    def get(cls, user_id: str):
+    async def get(cls, user_id: str):
         '''
         Class Method for retrieving user by ID
 
@@ -134,7 +176,7 @@ class User(Model):
         if cached:
             return cls(**cls.normalise(cached)) if cached else None
         
-        user = DBMS.Database.find_one(User.TABLE_NAME, Model.normalise({'id': user_id}, 'params'))
+        user = await DBMS.Database.find_one(User.TABLE_NAME, Model.normalise({'id': user_id}, 'params'))
         
         if isinstance(user, dict):
             if len(user.keys()):

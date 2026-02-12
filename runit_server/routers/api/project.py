@@ -44,7 +44,7 @@ projects_api = APIRouter(
 @projects_api.get('/')
 async def api_list_user_projects(user: Annotated[User, Depends(get_current_user)]):
     
-    projects = Project.get_by_user(user.id) # type: ignore
+    projects = await Project.find_many({'user_id': user.id}) # type: ignore
     json_projects = []
     for project in projects:
         json_projects.append(project.json())
@@ -91,7 +91,7 @@ async def api_create_user_project(
             project.id = project_id
             
             homepage = f"{request.base_url}{project_id}"
-            Project.update({'id': project_id}, {'homepage': homepage})
+            await Project.update_one({'id': project_id}, {'homepage': homepage})
 
             config['_id'] = project_id
             config['homepage'] = homepage
@@ -116,12 +116,13 @@ async def api_create_user_project(
             if (project_data.database):
                 # Create database for project
                 collection_name = f"{project_data.name}_{str(user.id)}_{project_id}"
-                Database(
+                database = Database(
                     project_data.name+'_db',
                     collection_name,
                     str(user.id),
                     project_id
-                ).save()
+                )
+                await database.save()
                 Collection.TABLE_NAME = collection_name # type: ignore
                 Collection.create_table()
             flash(request, 'Project created successfully', category='success')
@@ -150,38 +151,44 @@ async def api_publish_user_project(
     @return Projects: dict Get all projects
     '''
 
-    data = await request.form()
-    data = data._dict
-    file = data['file']
-    del data['file']
-    
-    result = {'status': 'success'}
-
     try:
-        if '_id' not in data.keys() or not data['_id']:
-            del data['_id']
-            
+        form_data = await request.form()
+        data = dict(form_data)
+        file = data.pop('file', None)
+        if file is None:
+            return JSONResponse({'status': 'error', 'message': 'No project file provided.'}, status_code=400)
+
+        result = {'status': 'success'}
+        raw_project_id = str(data.get('_id', '')).strip().lower()
+
+        if 'private' in data and isinstance(data['private'], str):
+            data['private'] = data['private'].strip().lower() in ('1', 'true', 'yes', 'on')
+
+        if raw_project_id in ('', 'none', 'null', 'undefined'):
+            data.pop('_id', None)
             project = Project(user_id=user.id, **data)      # type: ignore
-            saved_project = project.save()
-            project_id = saved_project
-            project_id = str(project_id)
+
+            saved_project = await project.save()
+            if not saved_project.id:
+                return JSONResponse({'status': 'error', 'message': 'Unable to create project record.'}, status_code=500)
+            project_id = str(saved_project.id)
             project.id = project_id
             homepage = f"{request.base_url}{project_id}"
-            Project.update({'id': project_id}, {'homepage': homepage})
+            await Project.update_one({'id': project_id}, {'homepage': homepage})
             result['project_id'] = project_id
         else:
-            project_id = str(data['_id'])
-            project = Project.get(str(data['_id']))
+            project_id = str(data['_id']).strip()
+            project = await Project.get(str(data['_id']))
             if project:
                 del data['_id']
-                Project.update({'id': project_id}, data)
+                await Project.update_one({'id': project_id}, data)
 
         PROJECT_PATH = Path(PROJECTS_DIR, project_id).resolve()
         if not PROJECT_PATH.exists():
             os.mkdir(PROJECT_PATH)
             
         filepath = Path(PROJECT_PATH, file.filename)                                 # type: ignore
-        contents = await file.read()                                    # type: ignore
+        contents = await file.read()                                                 # type: ignore
         async with aiofiles.open(filepath, 'wb') as f:
             await f.write(contents)
         await file.close()                                                           # type: ignore
@@ -238,7 +245,7 @@ async def api_clone_user_project(
     global PROJECTS_DIR
     
     try:
-        project = Project.find_one({'name': project_name, 'user_id': user.id})
+        project = await Project.find_one({'name': project_name, 'user_id': user.id})
         
         if project:
             project_path = Path(PROJECTS_DIR, str(project.id)).resolve()
@@ -278,7 +285,7 @@ async def api_get_project_details(
     old_curdir = os.curdir
     response = {}
     
-    project = Project.get(project_id)
+    project = await Project.get(project_id)
     
     if not project:
         logging.error(f'Project {project_id} does not exist')
@@ -302,7 +309,7 @@ async def api_get_project_details(
         funcs.append(func)
     
     os.chdir(old_curdir)
-    project = Project.find_one({
+    project = await Project.find_one({
         'id': project_id,
         'user_id': user.id
     })
@@ -334,13 +341,13 @@ async def api_delete_user_project(
         user_id = user.id
         
         for project_id in project_ids:
-            project = Project.find_one({
+            project = await Project.find_one({
                 'id': project_id,
                 'user_id': user_id
             })
             
             if project:
-                Project.remove({'_id': project_id, 'user_id': user_id})
+                await project.delete()
                 background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)).resolve())
 
     except Exception:

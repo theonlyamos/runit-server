@@ -49,13 +49,59 @@ def setup_database():
      
     # print('[--] Database setup complete')
     # Populate tables initially
-    if not Role.count():
-        print('[#] Populating Roles')
-        Role('developer', []).save()
-        Role('superadmin', []).save()
-        Role('subadmin', []).save()
-        print('[--] Roles populated')
+    _run_async(_populate_roles_async())
+
+
+def _run_async(coro):
+    """Helper to run async code from sync context, handling nested event loops."""
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context, create a task
+        return loop.create_task(coro)
+    except RuntimeError:
+        # No event loop running, use asyncio.run
+        return asyncio.run(coro)
+
+
+async def _setup_database_async():
+    """Async version: Connect to database using connection settings from .env"""
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    if settings.get('DBMS') == 'sqlite':
+        await DBMS.initialize_async('sqlite', database=settings.get('DATABASE_NAME'))
+    else:
+        db_port = int(settings['DATABASE_PORT']) if settings.get('DATABASE_PORT') else None
+        await DBMS.initialize_async(
+            settings['DBMS'], 
+            settings['DATABASE_HOST'], 
+            db_port,
+            settings['DATABASE_USERNAME'], 
+            settings['DATABASE_PASSWORD'],
+            settings['DATABASE_NAME']
+        )
     
+    # Create tables if they do not exist in relational datatabases
+    Admin.create_table()
+    User.create_table()
+    Permission.create_table()
+    Role.create_table()
+    
+    # Populate tables initially
+    await _populate_roles_async()
+
+
+async def _populate_roles_async():
+    """Async helper to populate roles."""
+    # Use DBMS.Database.count() directly since Model doesn't have count() method
+    count = await DBMS.Database.count(Role.TABLE_NAME, {})
+    if not count:
+        print('[#] Populating Roles')
+        # Use keyword arguments for the new Pydantic-based Model class
+        await Role(name='developer', permission_ids=[]).save()
+        await Role(name='superadmin', permission_ids=[]).save()
+        await Role(name='subadmin', permission_ids=[]).save()
+        print('[--] Roles populated')
+
 
 def create_folders():
     if not os.path.exists(RUNIT_WORKDIR):
@@ -81,29 +127,32 @@ def create_dot_env(settings: dict):
     for key, value in settings.items():
         set_key(str(DOTENV_FILE), key, value)
 
-def create_default_admin(args_is_true: bool = False):
+async def _create_default_admin_async(args_is_true: bool = False):
     '''
-    Create the default administrator account
+    Async version: Create the default administrator account
     
     @params None
     @return None
     '''
     if args_is_true:
-        setup_database()
+        await _setup_database_async()
         
     create_account = True
 
-    if Admin.count():
+    # Use DBMS.Database.count() directly since Model doesn't have count() method
+    count = await DBMS.Database.count(Admin.TABLE_NAME, {})
+    if count:
         create_account = False
         
-        result = Admin.find({})
+        result = await Admin.find({})
         if len(result):
             admin = result[0]
             print(f'[!] Default Administrator account already exists [{admin.username}]')
             
             answer = input('[?] Would you like to reset the account? [yes|no]: ')
             if answer.lower() == 'yes':
-                Admin.remove({'username': admin.username})
+                # Use DBMS.Database.delete_many() directly
+                await DBMS.Database.delete_many(Admin.TABLE_NAME, {'username': admin.username})
                 create_account = True
             
     if create_account:
@@ -116,8 +165,18 @@ def create_default_admin(args_is_true: bool = False):
         adminrole = adminrole if adminrole else 'superadmin'
         
         if adminemail and adminusername and adminpassword and adminrole:
-            Admin(adminemail, adminname, adminusername, adminpassword, adminrole).save()
+            admin = Admin(adminemail, adminname, adminusername, adminpassword, adminrole)
+            await admin.save()
             print('[!] Administrator account created successfully.')
+
+def create_default_admin(args_is_true: bool = False):
+    '''
+    Create the default administrator account
+    
+    @params None
+    @return None
+    '''
+    _run_async(_create_default_admin_async(args_is_true))
         
 
 def setup_runit(args):

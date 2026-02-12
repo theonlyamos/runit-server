@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, \
     Depends, status, UploadFile
 from dotenv import load_dotenv, dotenv_values, set_key
+from odbms.model import MongoDB
 
 from ..core import flash, templates
 from ..common import get_session, get_session_user
@@ -46,15 +47,20 @@ async def list_user_databases(request: Request, view: Optional[str] = None):
     elif 'view' not in request.session.keys():
         request.session['view'] = 'grid'
     
-    databases = Database.get_by_user(user_id)
+    databases = await Database.get_by_user(user_id)
     for db in databases:
-        Collection.TABLE_NAME = db.collection_name
-        if Collection.count():
-            stats = DBMS.Database.db.command('collstats', db.collection_name)   # type: ignore
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
+        db_conn = DBMS.Database
+        if db_conn is not None:
+            count = await db_conn.count(Collection.TABLE_NAME, {})  # type: ignore[misc]
+        else:
+            count = 0
+        if count and isinstance(db_conn, MongoDB):
+            stats = await db_conn.db.command('collstats', db.collection_name)  # type: ignore
             if stats:
                 db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
         
-    projects = Project.get_by_user(user_id)
+    projects = await Project.get_by_user(user_id)
     
     return templates.TemplateResponse('databases/index.html', context={
         'request': request, 'page': 'databases', 'databases': databases, 
@@ -73,11 +79,13 @@ async def create_user_database(
         data = {'name': name, 'collection_name': collection_name,
                 'project_id': project_id,'user_id': user_id}
         
-        result = Database(**data).save()
+        new_db = Database(**data)
+        await new_db.save()
+        result = new_db.id
 
         if result:
-            Collection.TABLE_NAME = collection_name # type: ignore
-            Collection.create_table()
+            Collection.TABLE_NAME = collection_name  # type: ignore[assignment]
+            Collection.create_table()  # type: ignore[reportUnusedCoroutine]
             flash(request, 'Database Created Successfully.', category='success')
         else:
             flash(request, 'Error creating database', category='danger')
@@ -88,15 +96,15 @@ async def create_user_database(
 @database.get('/{database_id}')
 @database.get('/{database_id}/')
 async def user_database_details(request: Request, database_id: str, view: Optional[str] = None):
-    database = Database.get(database_id)
+    database = await Database.get(database_id)
     
     if database:
         Collection.TABLE_NAME = database.collection_name                # type: ignore
-        results = Collection.all()
+        results = await Collection.all()
 
         documents = [doc.json() for doc in results]
         
-        table_names = documents[0].keys() if len(documents) else database.schema.values()
+        table_names = documents[0].keys() if len(documents) else (database.collection_schema or {}).values()
         
         if view:
             request.session['view'] = view
@@ -117,17 +125,17 @@ async def user_database_details(request: Request, database_id: str, view: Option
 async def user_database_schema(request: Request, database_id: str):
     try:
         form = await request.form()
-        data = form._dict.copy()
-        schema = form._dict.copy()
+        data = dict(form)
+        schema = dict(form)
         
         for key, value in data.items():
             data[key] = TYPE_MAPPING.get(str(value), str)
         
-        database = Database.get(database_id)
+        database = await Database.get(database_id)
         if database:
-            Collection.TABLE_NAME = database.collection_name
-            update = Collection.alter_table(data)
-            Database.update({'id': database_id}, {'schema': schema})
+            Collection.TABLE_NAME = database.collection_name  # type: ignore[assignment]
+            await Collection._alter_table_async(data)  # type: ignore[attr-defined]
+            await Database.update_one({'id': database_id}, {'schema': schema})
             
                 
             flash(request, 'Schema updated successfully', category='success')
@@ -147,9 +155,9 @@ async def update_user_database(request: Request):
 @database.get('/delete/{database_id}/')
 async def delete_user_database(request: Request, database_id):
     user_id = request.session['user_id']
-    db = Database.get(database_id)
+    db = await Database.get(database_id)
     if db:
-        result = Database.remove({'_id': database_id, 'user_id': user_id})
+        result = await Database.delete_many({'id': database_id, 'user_id': user_id})
         flash(request, 'Database deleted successfully', category='success')
     else:
         flash(request, 'Database was not found. Operation not successful.', category='danger')
@@ -159,16 +167,16 @@ async def delete_user_database(request: Request, database_id):
 @database.post('/documents/{database_id}/')
 async def create_user_document(request: Request, database_id: str):
     user_id = request.session['user_id']
-    db = Database.get(database_id)
+    db = await Database.get(database_id)
     if db and db.user_id == user_id:
         form = await request.form()
-        data = form._dict
+        data = dict(form)
         
-        Collection.TABLE_NAME = db.collection_name
+        Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
         document = Collection(**data)
-        result = document.save()
+        await document.save()
         
-        if result:
+        if document.id:
             flash(request, 'Document Created Successfully.', category='success')
         else:
             flash(request, 'Error creating document', category='danger')

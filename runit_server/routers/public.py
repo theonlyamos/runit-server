@@ -130,13 +130,13 @@ async def register(
             flash(request, strength_msg, 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
-        user = User.get_by_email(email)
+        user = await User.get_by_email(email)
  
         if user:
             flash(request, 'User already exists!', 'danger')
             return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
         
-        user = User(email, name, password).save()
+        user = await User(email, name, password).save()
 
         flash(request, 'Registration Successful!', 'success')
         return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_303_SEE_OTHER)
@@ -156,11 +156,11 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
         return templates.TemplateResponse('login.html', context={'request': request})
     
     csrf_token = form_data.scopes[0] if form_data.scopes else None
-    if not csrf.validate_token(request, csrf_token):
+    if not await csrf.validate_token(request, csrf_token):
         flash(request, 'Invalid security token. Please try again.', 'danger')
         return templates.TemplateResponse('login.html', context={'request': request})
     
-    user = authenticate(form_data.username, form_data.password)
+    user = await authenticate(form_data.username, form_data.password)
     
     if not user:
         flash(request, 'Invalid Login Credentials', 'danger')
@@ -184,11 +184,12 @@ def admin_login_page(request: Request):
     return templates.TemplateResponse('admin/login.html', context={'request': request, 'title':'Admin Login'})
 
 @public.post('/admin/login')
-def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    admin = Admin.get_by_username(form_data.username)
+async def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    admin = await Admin.get_by_username(form_data.username)
 
     if admin and Utils.check_hashed_password(form_data.password, admin.password):
-        access_token = create_access_token(admin.json())
+        admin_json = await admin.json()
+        access_token = create_access_token(admin_json)
         request.session['admin_id'] = admin.id
         request.session['admin_name'] = admin.name
         request.session['admin_username'] = admin.email
@@ -223,17 +224,18 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
         excluded = ['favicon.ico']
         if project_id in excluded:
             return None
-        project = Project.get(project_id)
+        project = await Project.get(project_id)
+
         if not project:
             logging.warning('Project not found')
             return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)
         
-        secret = Secret.find_one({'project_id': project_id})
+        secret = await Secret.find_one({'project_id': project_id})
         env_vars = {}
         if secret and secret.variables:
             env_vars = secret.variables.copy()
         
-        current_project_dir = Path(PROJECTS_DIR, str(project.id)).resolve()
+        current_project_dir = Path(PROJECTS_DIR, str(project_id)).resolve()
         function = function if function else 'index'
         if current_project_dir.is_dir():
             original_env = dict(os.environ)
@@ -258,7 +260,11 @@ async def run_project(request: Request, project_id: str, function: Optional[str]
             t1 = time.perf_counter()
             elapsed_time = t1 - t0
             logging.info(f'Project {project_id} executed in {elapsed_time:.4f}s')
-            return JSONResponse(response) if isinstance(response, dict) else response
+            if isinstance(response, dict):
+                return JSONResponse(response)
+            if response is None:
+                return JSONResponse(None)
+            return JSONResponse(response)
     except Exception as e:
         logging.exception(e)
         return JSONResponse(RunIt.notfound(), status.HTTP_404_NOT_FOUND)

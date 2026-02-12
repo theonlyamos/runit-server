@@ -61,7 +61,7 @@ async def lifespan(request: Request):
     DB_DATABASE = os.getenv('DATABASE_NAME') or settings.get('DATABASE_NAME')
     
     if not app_initialized and setup and setup == 'completed':
-        DBMS.initialize(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
+        await DBMS.initialize_async(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
         app_initialized = True
         startup_time = asyncio.get_event_loop().time()
     else:

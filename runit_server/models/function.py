@@ -92,12 +92,12 @@ class Function(Model):
         return [cls(**Model.normalise(elem)) for elem in functions]
     
     @classmethod
-    def get_by_user(cls, user_id: str):
+    async def get_by_user(cls, user_id: str):
         '''
         Class Method for retrieving functions by a user
 
         @param user_id:str _id of the user
         @return List of Function instances
         '''
-        functions = DBMS.Database.find(cls.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
+        functions = await DBMS.Database.find(cls.TABLE_NAME, Model.normalise({'user_id': user_id}, 'params'))
         return [cls(**Model.normalise(elem)) for elem in functions]

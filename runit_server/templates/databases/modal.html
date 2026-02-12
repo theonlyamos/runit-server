@@ -7,7 +7,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    {% for key, value in database.schema.items() %}
+                    {% for key, value in database.collection_schema.items() %}
                     {% set id = 'schema'+(loop.index | string) %}
                         <div class="{{ 'form-check form-switch' if value == 'bool' else  'form-group' }} mb-2">
                             <label class="{{'form-check-label' if value == 'bool' else 'form-label'}} mb-0 text-muted" for="{{id}}">{{key | title}}</label>

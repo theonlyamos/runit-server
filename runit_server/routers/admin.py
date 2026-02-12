@@ -45,13 +45,14 @@ admin = APIRouter(
 
 @admin.get('/')
 async def admin_dashboard(request: Request):
-    admin = Admin.get(request.session['admin_id'])
+    admin = await Admin.get(request.session['admin_id'])
     return templates.TemplateResponse('admin/index.html', context={
-        'request': request, 'page': 'home', 'admin': admin})
+        'request': request, 'page': 'home', 'admin': admin,
+        'admin_name': admin.name if admin else ''})
 
 @admin.get('/users/')
 async def admin_list_users(request: Request, view: Optional[str] = None):
-    users = User.all()
+    users = await User.all()
     
     if view:
         request.session['view'] = view
@@ -66,11 +67,11 @@ async def admin_list_users(request: Request, view: Optional[str] = None):
 @admin.get('/users/{user_id}/')
 async def admin_get_user(request: Request, user_id: str):
     try:
-        user: User = User.get(user_id) # type: ignore
-        if not User:
+        user = await User.get(user_id)  # type: ignore
+        if not user:
             raise Exception('User not found')
         
-        projects = Project.get_by_user(str(user.id))
+        projects = await Project.get_by_user(str(user.id))
         
         return templates.TemplateResponse('admin/users/details.html', context={
             'request': request, 'page': 'users', 'user': user.json(),
@@ -81,8 +82,8 @@ async def admin_get_user(request: Request, user_id: str):
 
 @admin.get('/projects')
 @admin.get('/projects/')
-def admin_list_projects(request: Request, view: Optional[str] = None):
-    projects = Project.all()
+async def admin_list_projects(request: Request, view: Optional[str] = None):
+    projects = await Project.all()
     
     if view:
         request.session['view'] = view
@@ -98,7 +99,7 @@ def admin_list_projects(request: Request, view: Optional[str] = None):
 async def admin_get_project(request: Request, project_id):
     old_curdir = os.curdir
     
-    project = Project.get(project_id)
+    project = await Project.get(project_id)
     if not project:
         flash(request, 'Project does not exist', 'danger')
         return RedirectResponse(request.url_for('admin_list_projects'))
@@ -118,8 +119,9 @@ async def admin_get_project(request: Request, project_id):
     os.chdir(old_curdir)
 
     if project:
+        project_data = project.json()
         return templates.TemplateResponse('admin/projects/details.html', context={
-            'request': request, 'page': 'projects', 'project': project.json(),
+            'request': request, 'page': 'projects', 'project': project_data,
             'environs': environs, 'funcs': funcs})
     else:
         flash(request, 'Project does not exist', 'danger')
@@ -135,13 +137,9 @@ async def admin_create_project(
     database: Annotated[Optional[str], Form()] = None):
     
     user_id = request.session['user_id']
-    user: User= User.get(user_id) # type: ignore
+    user = await User.get(user_id)  # type: ignore
     
-    if name and language:
-        # name = RunIt.set_project_name(args.name)
-        # if RunIt.exists(name):
-        # flash(request, f'{name} project already Exists', category='danger')
-        
+    if name and language and user:
         config = {}
         config['name'] = name
         config['language'] = language
@@ -152,12 +150,11 @@ async def admin_create_project(
         config['author']['email'] = user.email
         
         project = Project(user_id, **config)
-        project_id = project.save().inserted_id # type: ignore
-        project_id = str(project_id)
-        project.id = project_id
+        await project.save()
+        project_id = str(project.id)
         
         homepage = f"{request.base_url}{project_id}/"
-        project.update({'homepage': homepage})
+        await project.update({'homepage': homepage})
 
         config['_id'] = project_id
         config['homepage'] = homepage
@@ -173,18 +170,17 @@ async def admin_create_project(
         os.chdir(Path(PROJECTS_DIR, project_id))
         new_runit.update_config()
         
-        # os.chdir(RUNIT_HOMEDIR)
-        
         if (database):
-            # Create database for project
-            Database(name+'_db', user_id, project_id).save()
+            collection_name = f"{name}_db_{user_id}_{project_id}"
+            new_db = Database(name+'_db', collection_name, user_id, project_id)
+            await new_db.save()
         
         flash(request, 'Project Created Successfully.', category='success')
     else:
         flash(request, 'Missing required fields.', category='danger')
     
     user_id = request.session['user_id']
-    projects = Project.get_by_user(user_id)
+    projects = await Project.get_by_user(user_id)
     
     return templates.TemplateResponse('projects/index.html', context={
         'request': request, 'page': 'projects', 'projects': projects, 
@@ -195,10 +191,10 @@ async def admin_create_project(
 async def admin_delete_project(request: Request, project_id, background_task: BackgroundTasks):
     try:
         user_id = request.session['user_id']
-        project = Project.get(project_id)
+        project = await Project.get(project_id)
         
         if project:
-            Project.remove({'_id': project_id, 'user_id': user_id})
+            await Project.delete_many({'id': project_id, 'user_id': user_id})
             background_task.add_task(shutil.rmtree, Path(PROJECTS_DIR, str(project.id)))
             flash(request, 'Project deleted successfully', category='success')
         else:
@@ -216,15 +212,16 @@ async def admin_list_databases(request: Request, view: Optional[str] = None):
     global LANGUAGE_TO_ICONS
 
     view = view if view else 'grid'
-    databases = Database.all()
+    databases = await Database.all()
     for db in databases:
         Collection.TABLE_NAME = db.collection_name
-        if Collection.count():
-            stats = DBMS.Database.db.command('collstats', db.collection_name) # type: ignore
+        count = await DBMS.Database.count(Collection.TABLE_NAME, {})
+        if count and DBMS.Database.dbms == 'mongodb':
+            stats = await DBMS.Database.db.command('collstats', db.collection_name)  # type: ignore
             if stats:
                 db.stats = {'size': int(stats['storageSize'])/1024, 'count': stats['count']}
         
-    projects = Project.all()
+    projects = await Project.all()
     
     return templates.TemplateResponse('admin/databases/index.html', context={
             'request': request, 'page': 'databases', 'databases': databases,
@@ -233,11 +230,11 @@ async def admin_list_databases(request: Request, view: Optional[str] = None):
 @admin.get('/databases/{database_id}')
 @admin.get('/databases/{database_id}/')
 async def admin_get_database(request: Request, database_id: str):
-    database = Database.get(database_id)
+    database = await Database.get(database_id)
     
     if database:
         Collection.TABLE_NAME = database.collection_name            # type: ignore
-        collections = Collection.find({})
+        collections = await Collection.find({})
         
         result = []
         for col in collections:
@@ -266,15 +263,15 @@ async def admin_create_database(
     project_id: Annotated[str, Form()]
 ):
 
-    project = Project.get(project_id)
+    project = await Project.get(project_id)
     
-    if name and project_id:
-        collection_name = f"{name}_{project.user_id}_{project_id}" # type: ignore
+    if name and project_id and project:
+        collection_name = f"{name}_{project.user_id}_{project_id}"  # type: ignore
         data = {'name': name, 'collection_name': collection_name,
-                'project_id': project_id,'user_id': project.user_id} # type: ignore
+                'project_id': project_id, 'user_id': project.user_id}  # type: ignore
 
         new_db = Database(**data)
-        results = new_db.save().inserted_id # type: ignore
+        await new_db.save()
                 
         flash(request, 'Database Created Successfully.', category='success')
     else:
@@ -285,7 +282,7 @@ async def admin_create_database(
 async def admin_database_schema(request: Request, database_id: str):
     try:
         data = await request.form()
-        Database.update({'id': database_id}, {'schema': data})
+        await Database.update_one({'id': database_id}, {'schema': dict(data)})
         
         flash(request, 'Schema updated successfully', category='success')
     except Exception as e:
@@ -302,9 +299,9 @@ async def admin_update_database(request: Request, database_id: str):
 
 @admin.get('/databases/delete/{database_id}/')
 async def admin_delete_database(request: Request, database_id: str):
-    db = Database.get(database_id)
+    db = await Database.get(database_id)
     if db:
-        result = Database.remove({'_id': database_id})
+        result = await Database.delete_many({'id': database_id})
         flash(request, 'Database deleted successfully', category='success')
     else:
         flash(request, 'Database was not found. Operation not successful.', category='danger')
@@ -313,14 +310,15 @@ async def admin_delete_database(request: Request, database_id: str):
 @admin.get('/profile/')
 async def admin_profile(request: Request):
     user_id = request.session['admin_id']
-    user = Admin.get(user_id)
+    user = await Admin.get(user_id)
     
     if not user:
         flash(request, "User does not exist", "danger")
         return RedirectResponse(request.url_for('admin_dashboard'), status_code=status.HTTP_303_SEE_OTHER)
     
+    user_json = await user.json()
     return templates.TemplateResponse('admin/profile.html', context={
-        'request': request, 'page': 'profile', 'user': user.json()})
+        'request': request, 'page': 'profile', 'user': user_json})
 
 @admin.get('/logout/')
 async def admin_logout(request: Request):
