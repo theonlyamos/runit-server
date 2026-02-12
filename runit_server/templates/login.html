@@ -7,6 +7,7 @@
                 <div class="card rounded-0 shadow align-self-center">
                     <div class="card-body">
                         <form class="form-floating bg-gradient" action="{{request.url_for('login')}}" method="post">
+                            <input type="hidden" name="_csrf_token" value="{{get_csrf_token(request)}}">
                             <h5 class="text-center mt-2 mb-3 pb-3 border-bottom text-black-50 fs-4">LOGIN</h5>
                             {% for (category, message) in get_flashed_messages(request) %}
                             <div class="alert alert-{{category}} alert-dismissible bg-gradient d-flex justify-content-between rounded-0">

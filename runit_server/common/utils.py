@@ -13,20 +13,27 @@ class RateLimiter:
     
     _instance = None
     _lock = Lock()
-    _requests = None
-    _rate_lock = None
     
     def __init__(self):
-        if RateLimiter._requests is None:
-            RateLimiter._requests = defaultdict(list)
-            RateLimiter._rate_lock = Lock()
+        pass
     
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
-                    cls._instance = super().__new__(cls)
+                    instance = super().__new__(cls)
+                    instance._requests_local = defaultdict(list)
+                    instance._rate_lock_local = Lock()
+                    cls._instance = instance
         return cls._instance
+    
+    @property
+    def _requests(self):
+        return self._requests_local
+    
+    @property
+    def _rate_lock(self):
+        return self._rate_lock_local
     
     def is_allowed(self, key: str, max_requests: int = 5, window_seconds: int = 60) -> Tuple[bool, int]:
         """
@@ -41,29 +48,73 @@ class RateLimiter:
         current_time = time.time()
         cutoff_time = current_time - window_seconds
         
-        with RateLimiter._rate_lock:
-            RateLimiter._requests[key] = [
-                t for t in RateLimiter._requests[key] if t > cutoff_time
+        with self._rate_lock:
+            self._requests[key] = [
+                t for t in self._requests[key] if t > cutoff_time
             ]
             
-            if len(RateLimiter._requests[key]) >= max_requests:
-                oldest = RateLimiter._requests[key][0]
+            if len(self._requests[key]) >= max_requests:
+                oldest = self._requests[key][0]
                 retry_after = int(oldest + window_seconds - current_time)
                 return False, max(1, retry_after)
             
-            RateLimiter._requests[key].append(current_time)
+            self._requests[key].append(current_time)
             return True, 0
     
     def clear(self, key = None):
         """Clear rate limit for a key or all keys."""
-        with RateLimiter._rate_lock:
+        with self._rate_lock:
             if key:
-                RateLimiter._requests.pop(key, None)
+                self._requests.pop(key, None)
             else:
-                RateLimiter._requests.clear()
+                self._requests.clear()
 
 
 rate_limiter = RateLimiter()
+
+
+import secrets
+from typing import Optional
+
+class CSRFProtection:
+    """CSRF token generation and validation."""
+    
+    _token_key = "_csrf_token"
+    
+    @staticmethod
+    def generate_token() -> str:
+        """Generate a secure CSRF token."""
+        return secrets.token_urlsafe(32)
+    
+    @staticmethod
+    def get_token(request) -> str:
+        """Get or create CSRF token for session."""
+        token = request.session.get(CSRFProtection._token_key)
+        if not token:
+            token = CSRFProtection.generate_token()
+            request.session[CSRFProtection._token_key] = token
+        return token
+    
+    @staticmethod
+    def validate_token(request, token: Optional[str] = None) -> bool:
+        """Validate CSRF token from request."""
+        session_token = request.session.get(CSRFProtection._token_key)
+        if not session_token:
+            return False
+        
+        provided_token = token or request.form.get("_csrf_token") or request.headers.get("X-CSRF-Token")
+        if not provided_token:
+            return False
+        
+        return secrets.compare_digest(str(session_token), str(provided_token))
+    
+    @staticmethod
+    def rotate_token(request):
+        """Rotate CSRF token after use."""
+        request.session[CSRFProtection._token_key] = CSRFProtection.generate_token()
+
+
+csrf = CSRFProtection()
 
 
 class Utils(object):

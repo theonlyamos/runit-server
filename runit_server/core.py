@@ -31,6 +31,13 @@ templates_path = Path(__file__).resolve().parent / 'templates'
 templates = Jinja2Templates(templates_path)
 templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
+def get_csrf_token(request: Request) -> str:
+    """Get CSRF token for the current session."""
+    from .common.utils import csrf
+    return csrf.get_token(request)
+
+templates.env.globals['get_csrf_token'] = get_csrf_token
+
 async def lifespan(request: Request):
     global app_initialized, startup_time
     

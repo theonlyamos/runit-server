@@ -3,6 +3,8 @@ from bson.objectid import ObjectId
 from odbms import DBMS, Model
 
 from ..common.utils import Utils
+from ..common.cache import cached, cache
+
 
 class User(Model):
     '''A model class for user'''
@@ -38,9 +40,11 @@ class User(Model):
 
         if isinstance(self.id, ObjectId):
             data['password'] = Utils.hash_password(self.password)
+            cache.delete(f"user:email:{self.email}")
             return DBMS.Database.insert(User.TABLE_NAME, Model.normalise(data, 'params'))
         
-        # Update the existing record in database
+        cache.delete(f"user:id:{self.id}")
+        cache.delete(f"user:email:{self.email}")
         del data['password']
         return DBMS.Database.update(self.TABLE_NAME, self.normalise({'id': self.id}, 'params'), self.normalise(data, 'params'))
         
@@ -55,10 +59,13 @@ class User(Model):
         '''
         
         new_password = Utils.hash_password(new_password)
+        
+        cache.delete(f"user:id:{self.id}")
+        cache.delete(f"user:email:{self.email}")
 
         DBMS.Database.update(User.TABLE_NAME, User.normalise({'id': self.id}, 'params'), {'password': new_password})
     
-    def projects(self):#-> List[Project]:
+    def projects(self):
         '''
         Instance Method for retrieving Projects of User Instance
 
@@ -99,9 +106,40 @@ class User(Model):
         @param email email address of the user 
         @return User instance
         '''
+        cache_key = f"user:email:{email}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cls(**cls.normalise(cached)) if cached else None
+        
         user = DBMS.Database.find_one(User.TABLE_NAME, {"email": email})
         
         if isinstance(user, dict):
-            return cls(**cls.normalise(user)) if len(user.keys()) else None
+            if len(user.keys()):
+                cache.set(cache_key, user, ttl=60)
+                return cls(**cls.normalise(user))
+            return None
+        elif isinstance(user, list) or isinstance(user, tuple):
+            return cls(*user) if len(user) else None
+    
+    @classmethod
+    def get(cls, user_id: str):
+        '''
+        Class Method for retrieving user by ID
+
+        @param user_id User ID
+        @return User instance
+        '''
+        cache_key = f"user:id:{user_id}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cls(**cls.normalise(cached)) if cached else None
+        
+        user = DBMS.Database.find_one(User.TABLE_NAME, Model.normalise({'id': user_id}, 'params'))
+        
+        if isinstance(user, dict):
+            if len(user.keys()):
+                cache.set(cache_key, user, ttl=60)
+                return cls(**cls.normalise(user))
+            return None
         elif isinstance(user, list) or isinstance(user, tuple):
             return cls(*user) if len(user) else None
