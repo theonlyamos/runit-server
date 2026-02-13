@@ -8,7 +8,7 @@
             <div class="auth-title">Sign in to your account</div>
         </div>
         <div class="auth-body">
-            <form action="{{ request.url_for('login') }}" method="post">
+            <form action="{{ login_action }}" method="post">
                 <input type="hidden" name="_csrf_token" value="{{ get_csrf_token(request) }}">
                 
                 {% for (category, message) in get_flashed_messages(request) %}
@@ -46,7 +46,7 @@
             </form>
         </div>
         <div class="auth-footer">
-            Don't have an account? <a href="{{ request.url_for('registration_page') }}">Create one</a>
+            Don't have an account? <a href="{{ register_page_url }}">Create one</a>
         </div>
     </div>
     <a href="{{ request.url_for('admin_login_page') }}" class="position-absolute" style="bottom: 20px; right: 20px; opacity: 0.5;" title="Admin Login">

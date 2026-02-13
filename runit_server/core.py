@@ -31,6 +31,15 @@ templates_path = Path(__file__).resolve().parent / 'templates'
 templates = Jinja2Templates(templates_path)
 templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
+def escape_attr(value):
+    """Escape a value for safe use in HTML data attributes."""
+    if value is None:
+        return ''
+    return str(value).replace('&', '&amp;').replace('"', '&quot;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;')
+
+templates.env.filters['escape_attr'] = escape_attr
+templates.env.globals['escape_attr'] = escape_attr
+
 def get_csrf_token(request: Request) -> str:
     """Get CSRF token for the current session."""
     from .common.utils import csrf
@@ -197,9 +206,22 @@ ws_manager = WSConnectionManager()
 
 async def on_startup():
     """Initialize server on startup."""
-    global startup_time
+    global app_initialized, startup_time
     startup_time = asyncio.get_event_loop().time()
     logging.info("Runit server starting up...")
+
+    # Initialize database before scheduler starts (when setup is completed)
+    settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
+    setup = os.getenv('SETUP') or settings.get('SETUP')
+    if setup and setup == 'completed':
+        DB_DBMS = os.getenv('DBMS') or settings.get('DBMS')
+        DB_HOST = os.getenv('DATABASE_HOST') or settings.get('DATABASE_HOST')
+        DB_PORT = os.getenv('DATABASE_PORT') or settings.get('DATABASE_PORT')
+        DB_USERNAME = os.getenv('DATABASE_USERNAME') or settings.get('DATABASE_USERNAME')
+        DB_PASSWORD = os.getenv('DATABASE_PASSWORD') or settings.get('DATABASE_PASSWORD')
+        DB_DATABASE = os.getenv('DATABASE_NAME') or settings.get('DATABASE_NAME')
+        await DBMS.initialize_async(DB_DBMS, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
+        app_initialized = True
 
 
 async def on_shutdown():

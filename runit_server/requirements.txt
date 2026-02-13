@@ -17,3 +17,4 @@ idna
 importlib-metadata
 itsdangerous
 uvicorn
+apscheduler

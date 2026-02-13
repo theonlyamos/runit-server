@@ -788,6 +788,7 @@ h6 { font-size: 0.875rem; }
 
 .nav-tabs .nav-link.active {
     color: var(--accent);
+    background: var(--bg-hover);
     border-bottom-color: var(--accent);
 }
 

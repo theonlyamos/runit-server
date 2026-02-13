@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 import time
 from typing import Annotated, Optional, Dict, Any
+from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
 
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -37,6 +38,59 @@ wsmanager = WSConnectionManager()
 public = APIRouter(
     tags=["public"]
 )
+
+
+def _is_safe_next_path(next_path: Optional[str]) -> bool:
+    if not next_path:
+        return False
+    parsed = urlparse(next_path)
+    return bool(next_path.startswith("/")) and not parsed.scheme and not parsed.netloc
+
+
+def _url_with_next(base_url: str, next_path: Optional[str]) -> str:
+    if not _is_safe_next_path(next_path):
+        return base_url
+    separator = "&" if "?" in base_url else "?"
+    return f"{base_url}{separator}{urlencode({'next': next_path})}"
+
+
+def _login_template_context(request: Request, next_path: Optional[str]) -> dict:
+    return {
+        "request": request,
+        "next": next_path if _is_safe_next_path(next_path) else "",
+        "login_action": _url_with_next(str(request.url_for("login")), next_path),
+        "register_page_url": _url_with_next(str(request.url_for("registration_page")), next_path),
+    }
+
+
+def _register_template_context(request: Request, next_path: Optional[str]) -> dict:
+    return {
+        "request": request,
+        "next": next_path if _is_safe_next_path(next_path) else "",
+        "register_action": _url_with_next(str(request.url_for("register")), next_path),
+        "signin_page_url": _url_with_next(str(request.url_for("index")), next_path),
+    }
+
+
+def _append_access_token(redirect_uri: str, access_token: str) -> str:
+    parsed = urlparse(redirect_uri)
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    params["access_token"] = access_token
+    new_query = urlencode(params)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+def _is_valid_cli_redirect_uri(redirect_uri: Optional[str]) -> bool:
+    if not redirect_uri:
+        return False
+    parsed = urlparse(redirect_uri)
+    if parsed.scheme != "http":
+        return False
+    if parsed.hostname not in {"127.0.0.1", "localhost"}:
+        return False
+    if not parsed.port:
+        return False
+    return bool(parsed.path and parsed.path.startswith("/"))
 
 @public.websocket('/ws/{client_id}')
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
@@ -86,16 +140,20 @@ async def expose_with_func(request: Request, client_id: str, func: str):
 async def index(request: Request):
     settings = dotenv_values(find_dotenv(str(DOTENV_FILE)))
     setup = os.getenv('SETUP') or settings.get('SETUP')
+    next_path = request.query_params.get("next")
     
     if setup != 'completed':
         return RedirectResponse(request.url_for('setup_index'))
     if 'user_id' in request.session.keys():
+        if _is_safe_next_path(next_path):
+            return RedirectResponse(str(next_path), status_code=status.HTTP_303_SEE_OTHER)
         return RedirectResponse(request.url_for('user_home'))
-    return templates.TemplateResponse('login.html', context={'request': request})
+    return templates.TemplateResponse('login.html', context=_login_template_context(request, next_path))
 
 @public.get('/register')
 async def registration_page(request: Request):
-    return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+    next_path = request.query_params.get("next")
+    return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context=_register_template_context(request, next_path))
 
 def get_client_ip(request: Request) -> str:
     """Extract client IP address from request."""
@@ -113,58 +171,65 @@ async def register(
     password: Annotated[str, Form()],
     cpassword: Annotated[str, Form()],
 ):
+    next_path = request.query_params.get("next")
     client_ip = get_client_ip(request)
     allowed, retry_after = rate_limiter.is_allowed(f"register:{client_ip}", max_requests=5, window_seconds=300)
     
     if not allowed:
         flash(request, f'Too many registration attempts. Try again in {retry_after} seconds.', 'danger')
-        return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+        return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context=_register_template_context(request, next_path))
     
     try:
         if password != cpassword:
             flash(request, 'Passwords do not match!', 'danger')
-            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context=_register_template_context(request, next_path))
         
         is_strong, strength_msg = Utils.is_strong_password(password)
         if not is_strong:
             flash(request, strength_msg, 'danger')
-            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context=_register_template_context(request, next_path))
         
         user = await User.get_by_email(email)
  
         if user:
             flash(request, 'User already exists!', 'danger')
-            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context={'request': request})
+            return templates.TemplateResponse(REGISTER_HTML_TEMPLATE, context=_register_template_context(request, next_path))
         
         user = await User(email, name, password).save()
 
         flash(request, 'Registration Successful!', 'success')
+        if _is_safe_next_path(next_path):
+            return RedirectResponse(str(next_path), status_code=status.HTTP_303_SEE_OTHER)
         return RedirectResponse(request.url_for(HOME_PAGE), status_code=status.HTTP_303_SEE_OTHER)
 
     except Exception as e:
         logging.exception(e)
         flash(request, 'Error during registration', 'danger')
-        return RedirectResponse(request.url_for('registration_page'), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            _url_with_next(str(request.url_for('registration_page')), next_path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
 @public.post('/login')
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    next_path = request.query_params.get("next")
     client_ip = get_client_ip(request)
     allowed, retry_after = rate_limiter.is_allowed(f"login:{client_ip}", max_requests=10, window_seconds=60)
     
     if not allowed:
         flash(request, f'Too many login attempts. Try again in {retry_after} seconds.', 'danger')
-        return templates.TemplateResponse('login.html', context={'request': request})
+        return templates.TemplateResponse('login.html', context=_login_template_context(request, next_path))
     
     csrf_token = form_data.scopes[0] if form_data.scopes else None
     if not await csrf.validate_token(request, csrf_token):
         flash(request, 'Invalid security token. Please try again.', 'danger')
-        return templates.TemplateResponse('login.html', context={'request': request})
+        return templates.TemplateResponse('login.html', context=_login_template_context(request, next_path))
     
     user = await authenticate(form_data.username, form_data.password)
     
     if not user:
         flash(request, 'Invalid Login Credentials', 'danger')
-        return templates.TemplateResponse('login.html', context={'request': request})
+        return templates.TemplateResponse('login.html', context=_login_template_context(request, next_path))
 
     access_token = create_access_token(user.json())
     request.session['user_id'] = user.id
@@ -175,7 +240,55 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     rate_limiter.clear(f"login:{client_ip}")
     csrf.rotate_token(request)
 
+    if _is_safe_next_path(next_path):
+        return RedirectResponse(str(next_path), status_code=status.HTTP_303_SEE_OTHER)
     return RedirectResponse(request.url_for('user_home'), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@public.get('/auth/cli')
+async def cli_auth(request: Request, redirect_uri: Optional[str] = None):
+    if not _is_valid_cli_redirect_uri(redirect_uri):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid redirect_uri')
+    redirect_uri_str = str(redirect_uri)
+
+    next_path = f"/auth/cli?{urlencode({'redirect_uri': redirect_uri_str})}"
+    if 'user_id' not in request.session:
+        return RedirectResponse(
+            _url_with_next(str(request.url_for('index')), next_path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    access_token = request.session.get('access_token')
+    if not access_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authenticated')
+
+    return RedirectResponse(
+        _append_access_token(redirect_uri_str, str(access_token)),
+        status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@public.get('/auth/cli/register')
+async def cli_auth_register(request: Request, redirect_uri: Optional[str] = None):
+    if not _is_valid_cli_redirect_uri(redirect_uri):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid redirect_uri')
+    redirect_uri_str = str(redirect_uri)
+
+    next_path = f"/auth/cli?{urlencode({'redirect_uri': redirect_uri_str})}"
+    if 'user_id' not in request.session:
+        return RedirectResponse(
+            _url_with_next(str(request.url_for('registration_page')), next_path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    access_token = request.session.get('access_token')
+    if not access_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authenticated')
+
+    return RedirectResponse(
+        _append_access_token(redirect_uri_str, str(access_token)),
+        status_code=status.HTTP_303_SEE_OTHER
+    )
 
 @public.get('/admin/login')
 def admin_login_page(request: Request):
@@ -187,7 +300,7 @@ def admin_login_page(request: Request):
 async def admin_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     admin = await Admin.get_by_username(form_data.username)
 
-    if admin and Utils.check_hashed_password(form_data.password, admin.password):
+    if admin and admin.password and Utils.check_hashed_password(form_data.password, admin.password):
         admin_json = await admin.json()
         access_token = create_access_token(admin_json)
         request.session['admin_id'] = admin.id

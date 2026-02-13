@@ -1,0 +1,87 @@
+<div class="row g-4">
+    {% for schedule in schedules %}
+    <div class="col-md-6 col-lg-4">
+        <div class="schedule-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" 
+                           id="schedule-{{ schedule.id }}" 
+                           {% if schedule.enabled %}checked{% endif %}
+                           onchange="toggleSchedule('{{ schedule.id }}')">
+                    <label class="form-check-label" for="schedule-{{ schedule.id }}">
+                        <span class="text-mono">{{ schedule.name }}</span>
+                    </label>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item" href="{{ url_for('get_schedule_details', schedule_id=schedule.id) }}">
+                            <i class="fas fa-eye fa-fw me-2"></i>View Details
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="editSchedule('{{ schedule.id }}')">
+                            <i class="fas fa-edit fa-fw me-2"></i>Edit
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="#" onclick="deleteSchedule('{{ schedule.id }}')">
+                            <i class="fas fa-trash-alt fa-fw me-2"></i>Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="fas fa-code text-accent"></i>
+                    <span class="text-mono text-truncate">{{ schedule.function }}</span>
+                </div>
+                {% if schedule.project %}
+                <div class="d-flex align-items-center gap-2">
+                    {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php'}.get(schedule.project.language | lower, 'code') %}
+                    <i class="fab fa-{{ lang_icon }} text-accent"></i>
+                    <span class="text-muted text-truncate">{{ schedule.project.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="schedule-cron mb-3">
+                <code class="text-accent">{{ schedule.cron_expression }}</code>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <small class="text-muted">
+                    <i class="fas fa-clock fa-fw me-1"></i>
+                    {{ schedule.timezone }}
+                </small>
+                <small class="text-muted">
+                    <i class="fas fa-play fa-fw me-1"></i>
+                    {{ schedule.run_count | default(0) }} runs
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.schedule-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    transition: all var(--transition-base);
+}
+
+.schedule-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-accent);
+}
+
+.schedule-cron code {
+    background: var(--bg-tertiary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+}
+</style>

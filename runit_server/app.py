@@ -25,6 +25,7 @@ from .routers import github_router
 from .routers import admin
 from .routers import public
 from .routers import setup
+from .routers import schedule
 
 from .routers.api import api_router
 
@@ -37,6 +38,9 @@ async def app_lifespan(app: FastAPI):
     """Application lifespan context manager."""
     await on_startup()
     
+    from .services.scheduler import schedule_service
+    await schedule_service.start()
+    
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         try:
@@ -45,6 +49,8 @@ async def app_lifespan(app: FastAPI):
             pass
     
     yield
+    
+    await schedule_service.shutdown()
     
     await on_shutdown()
 
@@ -124,6 +130,7 @@ app.include_router(admin)
 app.include_router(account)
 app.include_router(project)
 app.include_router(database)
+app.include_router(schedule)
 app.include_router(github_router)
 app.include_router(public)
 app.include_router(setup)

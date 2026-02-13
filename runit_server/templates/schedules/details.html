@@ -1,0 +1,463 @@
+{% extends "account/layout.html" %}
+{% block title %}{{ super() }} - {{ page | capitalize }} - {{ schedule.name }}{% endblock %}
+{% block pagetitle %}
+<div class="d-flex align-items-center gap-2">
+    <a href="{{ url_for('list_user_schedules') }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <span class="text-muted">/</span>
+    <span class="text-mono">{{ schedule.name | upper }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
+</div>
+{% endfor %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <div class="col-lg-3 border-end">
+                <div class="p-4 text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                         style="width: 80px; height: 80px; background: {% if schedule.enabled %}var(--accent-glow){% else %}var(--bg-tertiary){% endif %}; border: 3px solid {% if schedule.enabled %}var(--accent){% else %}var(--border-color){% endif %};">
+                        <i class="fas fa-clock fa-2x {% if schedule.enabled %}text-accent{% else %}text-muted{% endif %}"></i>
+                    </div>
+                    
+                    <h4 class="text-mono mb-1">{{ schedule.name }}</h4>
+                    <p class="text-muted mb-2" style="font-size: 0.875rem;">
+                        {% if schedule.enabled %}
+                        <span class="badge badge-success">
+                            <i class="fas fa-check fa-fw me-1"></i>Active
+                        </span>
+                        {% else %}
+                        <span class="badge badge-secondary">
+                            <i class="fas fa-pause fa-fw me-1"></i>Paused
+                        </span>
+                        {% endif %}
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-4 text-center mb-3">
+                        <div>
+                            <div class="text-accent text-mono" style="font-size: 1.25rem; font-weight: 600;">{{ schedule.run_count | default(0) }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Total Runs</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check form-switch d-flex justify-content-center">
+                        <input class="form-check-input" type="checkbox" id="schedule-status" 
+                               {% if schedule.enabled %}checked{% endif %} onchange="toggleSchedule('{{ schedule.id }}')">
+                        <label class="form-check-label ms-2" for="schedule-status">Enabled</label>
+                    </div>
+                </div>
+                
+                <hr class="my-0" style="border-color: var(--border-color);">
+                
+                <div class="nav flex-column nav-pills" id="schedule-tabs" role="tablist">
+                    <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-overview" type="button" role="tab">
+                        <i class="fas fa-info-circle fa-fw me-2"></i>
+                        Overview
+                    </button>
+                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-settings" type="button" role="tab">
+                        <i class="fas fa-cog fa-fw me-2"></i>
+                        Settings
+                    </button>
+                    <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-history" type="button" role="tab">
+                        <i class="fas fa-history fa-fw me-2"></i>
+                        History
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <div class="tab-content p-4" id="schedule-tab-content">
+                    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+                        <h5 class="text-mono mb-4">
+                            <i class="fas fa-clock fa-fw text-accent me-2"></i>
+                            Schedule Overview
+                        </h5>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-label">Status</div>
+                                            <div class="stat-value" style="font-size: 1.25rem;">
+                                                {% if schedule.enabled %}Active{% else %}Paused{% endif %}
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-power-off fa-2x text-accent" style="opacity: 0.5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-label">Total Runs</div>
+                                            <div class="stat-value">{{ schedule.run_count | default(0) }}</div>
+                                        </div>
+                                        <i class="fas fa-play fa-2x text-accent" style="opacity: 0.5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-label">Timezone</div>
+                                            <div class="stat-value" style="font-size: 1rem;">{{ schedule.timezone }}</div>
+                                        </div>
+                                        <i class="fas fa-globe fa-2x text-accent" style="opacity: 0.5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-info-circle fa-fw text-accent me-2"></i>
+                                Schedule Details
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Schedule Name</label>
+                                            <div class="text-mono">{{ schedule.name }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Function</label>
+                                            <code class="text-accent">{{ schedule.function }}</code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Project</label>
+                                            <div>
+                                                {% if schedule.project %}
+                                                {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php'}.get(schedule.project.language | lower, 'code') %}
+                                                <i class="fab fa-{{ lang_icon }} text-accent me-2"></i>
+                                                {{ schedule.project.name }}
+                                                {% else %}
+                                                <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Cron Expression</label>
+                                            <code>{{ schedule.cron_expression }}</code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Last Run</label>
+                                            <div class="text-mono">{{ schedule.last_run | default('Never') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Next Run</label>
+                                            <div class="text-mono">{{ schedule.next_run | default('Pending') }}</div>
+                                        </div>
+                                    </div>
+                                    {% if schedule.description %}
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Description</label>
+                                            <div>{{ schedule.description }}</div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Created At</label>
+                                            <div class="text-mono">{{ schedule.created_at | default('N/A') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Last Updated</label>
+                                            <div class="text-mono">{{ schedule.updated_at | default('N/A') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-bolt fa-fw text-accent me-2"></i>
+                                Quick Actions
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary w-100" onclick="document.querySelector('button[data-bs-target=\\'#tab-settings\\']').click();">
+                                            <i class="fas fa-edit fa-fw me-1"></i>
+                                            Edit Schedule
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary w-100" onclick="runNow('{{ schedule.id }}')">
+                                            <i class="fas fa-play fa-fw me-1"></i>
+                                            Run Now
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-danger w-100" onclick="deleteSchedule('{{ schedule.id }}')">
+                                            <i class="fas fa-trash-alt fa-fw me-1"></i>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="tab-settings" role="tabpanel">
+                        <h5 class="text-mono mb-4">
+                            <i class="fas fa-cog fa-fw text-accent me-2"></i>
+                            Edit Schedule
+                        </h5>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <form id="edit-schedule-form">
+                                    <div class="form-group mb-3">
+                                        <label for="edit-name" class="form-label">Schedule Name</label>
+                                        <input type="text" class="form-control" id="edit-name" name="name" value="{{ schedule.name }}" required>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="edit-function" class="form-label">Function</label>
+                                        <input type="text" class="form-control form-control-mono" id="edit-function" name="function" value="{{ schedule.function }}" required>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="edit-cron" class="form-label">Cron Expression</label>
+                                        <input type="text" class="form-control form-control-mono" id="edit-cron" name="cron_expression" value="{{ schedule.cron_expression }}" required>
+                                        <small class="text-muted">minute hour day month weekday</small>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="edit-timezone" class="form-label">Timezone</label>
+                                        <select class="form-select" id="edit-timezone" name="timezone">
+                                            {% for tz in timezones %}
+                                            <option value="{{ tz }}" {% if tz == schedule.timezone %}selected{% endif %}>{{ tz }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="edit-description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="edit-description" name="description" rows="2">{{ schedule.description | default('') }}</textarea>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label class="form-label d-flex align-items-center gap-2">
+                                            <input type="checkbox" name="enabled" id="edit-enabled" {% if schedule.enabled %}checked{% endif %} class="form-check-input m-0">
+                                            Enabled
+                                        </label>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-accent" onclick="updateSchedule('{{ schedule.id }}')">
+                                        <i class="fas fa-save fa-fw me-1"></i>
+                                        Save Changes
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="tab-history" role="tabpanel">
+                        <h5 class="text-mono mb-4">
+                            <i class="fas fa-history fa-fw text-accent me-2"></i>
+                            Run History
+                        </h5>
+                        
+                        {% if logs %}
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Executed At</th>
+                                            <th>Duration</th>
+                                            <th>Result</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for log in logs %}
+                                        <tr>
+                                            <td>
+                                                {% if log.success %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check fa-fw me-1"></i>Success
+                                                </span>
+                                                {% else %}
+                                                <span class="badge badge-danger">
+                                                    <i class="fas fa-times fa-fw me-1"></i>Failed
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="text-mono">{{ log.created_at | default('N/A') }}</span>
+                                            </td>
+                                            <td>
+                                                {% if log.duration_ms %}
+                                                <span class="text-muted">{{ log.duration_ms }}ms</span>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if log.success and log.result %}
+                                                <button class="btn btn-ghost btn-sm" data-result="{{ log.result | escape_attr }}">
+                                                    <i class="fas fa-eye fa-fw"></i>
+                                                </button>
+                                                {% elif not log.success and log.error_message %}
+                                                <button class="btn btn-ghost btn-sm text-danger" data-error="{{ log.error_message | escape_attr }}">
+                                                    <i class="fas fa-exclamation-triangle fa-fw"></i>
+                                                </button>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-history fa-3x text-muted mb-3" style="opacity: 0.5;"></i>
+                                    <p class="text-muted mb-0">No runs yet.</p>
+                                    <p class="text-muted">Runs will appear here when the scheduled job executes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-mono">
+                    <i class="fas fa-code text-accent me-2"></i>
+                    <span id="resultModalTitle">Execution Result</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <pre id="resultContent" class="code-block p-3 rounded" style="background: var(--bg-tertiary); overflow-x: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.nav-pills .nav-link {
+    border-radius: 0;
+    border-left: 3px solid transparent;
+    padding: 0.75rem 1.25rem;
+}
+
+.nav-pills .nav-link:hover {
+    background: var(--bg-hover);
+    border-left-color: var(--border-light);
+}
+
+.nav-pills .nav-link.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-left-color: var(--accent);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/static/js/schedules.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-result]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var result = this.getAttribute('data-result');
+            showResult(result);
+        });
+    });
+    
+    document.querySelectorAll('[data-error]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var error = this.getAttribute('data-error');
+            showError(error);
+        });
+    });
+});
+
+function runNow(scheduleId) {
+    alert('Run Now functionality will trigger the function immediately.');
+}
+
+function showResult(result) {
+    document.getElementById('resultModalTitle').textContent = 'Execution Result';
+    document.getElementById('resultContent').textContent = result;
+    new bootstrap.Modal(document.getElementById('resultModal')).show();
+}
+
+function showError(error) {
+    document.getElementById('resultModalTitle').textContent = 'Execution Error';
+    document.getElementById('resultContent').textContent = error;
+    new bootstrap.Modal(document.getElementById('resultModal')).show();
+}
+
+function updateSchedule(scheduleId) {
+    const form = document.getElementById('edit-schedule-form');
+    const formData = new FormData(form);
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-fw me-1"></i> Saving...';
+    btn.disabled = true;
+    
+    fetch(`/schedules/${scheduleId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to update schedule');
+        }
+    })
+    .catch(() => alert('An error occurred'))
+    .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
+}
+</script>
+{% endblock %}

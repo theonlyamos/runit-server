@@ -1,0 +1,84 @@
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Name</th>
+                    <th>User</th>
+                    <th>Project</th>
+                    <th>Function</th>
+                    <th>Schedule</th>
+                    <th>Timezone</th>
+                    <th>Runs</th>
+                    <th style="width: 100px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in schedules %}
+                <tr>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="admin-schedule-row-{{ schedule.id }}" 
+                                   {% if schedule.enabled %}checked{% endif %}
+                                   onchange="toggleAdminSchedule('{{ schedule.id }}')">
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin_get_schedule', schedule_id=schedule.id) }}" class="text-mono">
+                            {{ schedule.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if schedule.user %}
+                        <span>{{ schedule.user.name }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if schedule.project %}
+                        <div class="d-flex align-items-center gap-2">
+                            {% set lang_icon = {'python': 'python', 'javascript': 'js', 'php': 'php'}.get(schedule.project.language | lower, 'code') %}
+                            <i class="fab fa-{{ lang_icon }} text-accent"></i>
+                            <span>{{ schedule.project.name }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <code class="text-accent">{{ schedule.function }}</code>
+                    </td>
+                    <td>
+                        <code>{{ schedule.cron_expression }}</code>
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ schedule.timezone }}</small>
+                    </td>
+                    <td>
+                        <span class="badge badge-secondary">{{ schedule.run_count | default(0) }}</span>
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-ghost btn-sm" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ url_for('admin_get_schedule', schedule_id=schedule.id) }}">
+                                    <i class="fas fa-eye fa-fw me-2"></i>View
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" href="#" onclick="deleteAdminSchedule('{{ schedule.id }}')">
+                                    <i class="fas fa-trash-alt fa-fw me-2"></i>Delete
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

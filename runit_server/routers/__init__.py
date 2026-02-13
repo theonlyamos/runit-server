@@ -5,3 +5,4 @@ from .database import database
 from .github import github_router
 from .admin import admin
 from .setup import setup
+from .schedule import schedule

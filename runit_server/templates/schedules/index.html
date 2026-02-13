@@ -1,0 +1,57 @@
+{% extends "account/layout.html" %}
+{% block title %}{{ super() }} - {{ page | capitalize }}{% endblock %}
+{% block pagetitle %}SCHEDULES{% endblock %}
+{% block content %}
+{% include 'schedules/modal.html' %}
+
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3 fade-in">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
+</div>
+{% endfor %}
+
+{% if schedules %}
+<div class="tools d-flex justify-content-end mb-4 gap-2">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('list_user_schedules') }}?view=grid" 
+           class="btn {% if request.session.get('schedules_view') != 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Grid view">
+            <i class="fas fa-th-large fa-fw"></i>
+        </a>
+        <a href="{{ url_for('list_user_schedules') }}?view=list" 
+           class="btn {% if request.session.get('schedules_view') == 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Table view">
+            <i class="fas fa-th-list fa-fw"></i>
+        </a>
+    </div>
+    <a href="#scheduleModal" role="button" class="btn btn-accent" data-bs-toggle="modal">
+        <i class="fas fa-plus fa-fw"></i>
+        <span class="d-none d-sm-inline">New Schedule</span>
+    </a>
+</div>
+
+{% if request.session.get('schedules_view') == 'list' %}
+{% include 'schedules/list.html' %}
+{% else %}
+{% include 'schedules/grid.html' %}
+{% endif %}
+
+{% else %}
+<div class="empty-state fade-in">
+    <i class="fas fa-clock"></i>
+    <div class="empty-state-title">No scheduled jobs yet</div>
+    <p class="empty-state-text mb-4">Create scheduled jobs to run your project functions periodically</p>
+    <a href="#scheduleModal" class="btn btn-accent" data-bs-toggle="modal">
+        <i class="fas fa-plus fa-fw"></i>
+        Create Schedule
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/static/js/schedules.js"></script>
+{% endblock %}

@@ -24,6 +24,8 @@ from ..models import Role
 from ..models import Function
 from ..models import Database
 from ..models import Collection
+from ..models import Schedule
+from ..models import ScheduleLog
 
 from ..constants import (
     PROJECTS_DIR,
@@ -745,4 +747,145 @@ async def admin_change_password(
 async def admin_logout(request: Request):
     request.session.clear()
     return RedirectResponse(request.url_for(ADMIN_LOGIN_PAGE), status_code=status.HTTP_303_SEE_OTHER)
+
+
+# --- Schedules ---
+ADMIN_SCHEDULES_INDEX = 'admin_list_schedules'
+
+@admin.get('/schedules/')
+async def admin_list_schedules(request: Request, view: Optional[str] = None):
+    schedules = await Schedule.all()
+    schedules_data = []
+    
+    for sched in schedules:
+        sched_data = sched.json()
+        project = await Project.get(sched.project_id)
+        user = await User.get(sched.user_id)
+        sched_data['project'] = project.json() if project else None
+        sched_data['user'] = user.json() if user else None
+        schedules_data.append(sched_data)
+    
+    if view:
+        request.session['schedules_view'] = view
+    elif 'schedules_view' not in request.session.keys():
+        request.session['schedules_view'] = 'grid'
+    
+    projects = await Project.all()
+    projects_data = [p.json() for p in projects]
+    
+    return templates.TemplateResponse('admin/schedules/index.html', context={
+        'request': request, 'page': 'schedules', 'schedules': schedules_data,
+        'projects': projects_data, 'icons': LANGUAGE_TO_ICONS})
+
+
+@admin.get('/schedules/{schedule_id}')
+@admin.get('/schedules/{schedule_id}/')
+async def admin_get_schedule(request: Request, schedule_id: str):
+    sched = await Schedule.get(schedule_id)
+    if not sched:
+        flash(request, 'Schedule not found', 'danger')
+        return RedirectResponse(request.url_for(ADMIN_SCHEDULES_INDEX))
+    
+    sched_data = sched.json()
+    project = await Project.get(sched.project_id)
+    user = await User.get(sched.user_id)
+    sched_data['project'] = project.json() if project else None
+    sched_data['user'] = user.json() if user else None
+    
+    logs = await ScheduleLog.get_by_schedule(schedule_id, limit=50)
+    logs_data = [log.json() for log in logs]
+    
+    projects = await Project.all()
+    projects_data = [p.json() for p in projects]
+    
+    return templates.TemplateResponse('admin/schedules/details.html', context={
+        'request': request, 'page': 'schedules', 'schedule': sched_data,
+        'projects': projects_data, 'logs': logs_data, 'icons': LANGUAGE_TO_ICONS})
+
+
+@admin.post('/schedules/{schedule_id}')
+@admin.post('/schedules/{schedule_id}/')
+async def admin_update_schedule(
+    request: Request,
+    schedule_id: str,
+    name: Annotated[str, Form()] = '',
+    function: Annotated[str, Form()] = '',
+    cron_expression: Annotated[str, Form()] = '',
+    timezone: Annotated[str, Form()] = 'UTC',
+    enabled: Annotated[Optional[str], Form()] = None,
+    description: Annotated[Optional[str], Form()] = ''
+):
+    sched = await Schedule.get(schedule_id)
+    if not sched:
+        return JSONResponse(
+            {'success': False, 'message': 'Schedule not found'},
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    update_data = {}
+    
+    if name:
+        update_data['name'] = name
+    if function:
+        update_data['function'] = function
+    if cron_expression:
+        update_data['cron_expression'] = cron_expression
+    if timezone:
+        update_data['timezone'] = timezone
+    update_data['enabled'] = enabled == 'on'
+    if description is not None:
+        update_data['description'] = description
+    
+    await sched.update(update_data)
+    
+    from ..services.scheduler import schedule_service
+    if sched.enabled:
+        await schedule_service.add_job(sched)
+    else:
+        await schedule_service.remove_job(schedule_id)
+    
+    return JSONResponse({'success': True, 'message': 'Schedule updated successfully'})
+
+
+@admin.post('/schedules/{schedule_id}/toggle')
+@admin.post('/schedules/{schedule_id}/toggle/')
+async def admin_toggle_schedule(request: Request, schedule_id: str):
+    sched = await Schedule.get(schedule_id)
+    if not sched:
+        return JSONResponse(
+            {'success': False, 'message': 'Schedule not found'},
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    new_status = not sched.enabled
+    await sched.update({'enabled': new_status})
+    
+    from ..services.scheduler import schedule_service
+    if new_status:
+        await schedule_service.add_job(sched)
+    else:
+        await schedule_service.remove_job(schedule_id)
+    
+    return JSONResponse({
+        'success': True,
+        'message': f'Schedule {"enabled" if new_status else "disabled"} successfully',
+        'enabled': new_status
+    })
+
+
+@admin.post('/schedules/{schedule_id}/delete')
+@admin.post('/schedules/{schedule_id}/delete/')
+async def admin_delete_schedule(request: Request, schedule_id: str):
+    sched = await Schedule.get(schedule_id)
+    if not sched:
+        return JSONResponse(
+            {'success': False, 'message': 'Schedule not found'},
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    from ..services.scheduler import schedule_service
+    await schedule_service.remove_job(schedule_id)
+    await Schedule.delete_many({'id': schedule_id})
+    
+    return JSONResponse({'success': True, 'message': 'Schedule deleted successfully'})
 

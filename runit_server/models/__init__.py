@@ -7,5 +7,7 @@ from .role import Role
 from .admin import Admin
 from .permission import Permission
 from .secret import Secret
+from .schedule import Schedule
+from .schedule_log import ScheduleLog
 
 from .data import ProjectData

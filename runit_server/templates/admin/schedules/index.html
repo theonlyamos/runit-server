@@ -1,0 +1,47 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ super() }} - {{ page | capitalize }}{% endblock %}
+{% block pagetitle %}SCHEDULES{% endblock %}
+{% block content %}
+{% for (category, message) in get_flashed_messages(request) %}
+<div class="alert alert-{{ category }} mb-3 fade-in">
+    <i class="fas fa-{% if category == 'danger' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"><i class="fas fa-times"></i></button>
+</div>
+{% endfor %}
+
+{% if schedules %}
+<div class="tools d-flex justify-content-end mb-4 gap-2">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('admin_list_schedules') }}?view=grid" 
+           class="btn {% if request.session.get('schedules_view') != 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Grid view">
+            <i class="fas fa-th-large fa-fw"></i>
+        </a>
+        <a href="{{ url_for('admin_list_schedules') }}?view=list" 
+           class="btn {% if request.session.get('schedules_view') == 'list' %}btn-accent{% else %}btn-outline-secondary{% endif %}" 
+           title="Table view">
+            <i class="fas fa-th-list fa-fw"></i>
+        </a>
+    </div>
+</div>
+
+{% if request.session.get('schedules_view') == 'list' %}
+{% include 'admin/schedules/list.html' %}
+{% else %}
+{% include 'admin/schedules/grid.html' %}
+{% endif %}
+
+{% else %}
+<div class="empty-state fade-in">
+    <i class="fas fa-clock"></i>
+    <div class="empty-state-title">No scheduled jobs yet</div>
+    <p class="empty-state-text mb-4">Users can create scheduled jobs to run their project functions periodically</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/static/js/schedules.js"></script>
+{% endblock %}
