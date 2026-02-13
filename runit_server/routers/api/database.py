@@ -1,6 +1,8 @@
+import ast
 import json
 import logging
 from typing import Annotated, Dict, List, Optional, Union
+from urllib.parse import parse_qs, unquote
 
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import APIRouter, BackgroundTasks, Request, Depends, WebSocket, WebSocketDisconnect
@@ -106,7 +108,6 @@ async def api_list_user_documents(
 
     try:
         data = request.query_params._dict
-        
         user_id = user.id
         params = {'user_id': user_id}
         params['name'] = collection
@@ -119,7 +120,16 @@ async def api_list_user_documents(
 
         Collection.TABLE_NAME = db.collection_name  # type: ignore[assignment]
 
-        _filter = json.loads(data['_filter']) if '_filter' in data.keys() else {}
+        # Parse filter: support both 'filter' and '_filter' params, URL-encoded or plain
+        raw_filter = data.get('filter') or data.get('_filter')
+        if raw_filter:
+            decoded = unquote(raw_filter) if '%' in str(raw_filter) else raw_filter
+            try:
+                _filter = json.loads(decoded)
+            except json.JSONDecodeError:
+                _filter = ast.literal_eval(decoded)
+        else:
+            _filter = {}
         raw_projection = json.loads(data['projection']) if 'projection' in data.keys() else []
         projection_keys: List = list(raw_projection.keys()) if isinstance(raw_projection, dict) else raw_projection
 
