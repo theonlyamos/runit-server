@@ -4,7 +4,7 @@
 #
 
 app = "runit"
-primary_region = "hkg"
+primary_region = "sin"
 
 [build]
   # builder = "paketobuildpacks/builder:full"
