@@ -66,7 +66,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
 
-EXPOSE 9000 # Port for your FastAPI app
-EXPOSE 80 # Port for Nginx
+# Port for your FastAPI app
+EXPOSE 9000
+
+# Port for Nginx
+EXPOSE 80
 
 ENTRYPOINT ["runit-server"]
