@@ -19,6 +19,9 @@ primary_region = "iad"
   PORT = "9000"
   RUNIT_WORKDIR = '/root/RUNIT_WORKDIR'
   SETUP='completed'
+  RUNTIME_PYTHON='python'
+  RUNTIME_PHP='php'
+  RUNTIME_JAVASCRIPT='bun'
 
 [http_service]
   internal_port = 9000
