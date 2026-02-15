@@ -8,8 +8,8 @@ primary_region = "sin"
 
 [build]
   # builder = "paketobuildpacks/builder:full"
-  # dockerfile = "Dockerfile"
-  image = "theonlyamos/runit_server:latest"
+  dockerfile = "Dockerfile"
+  # image = "theonlyamos/runit_server:latest"
 
 [mounts]
   source = "runit_data"
