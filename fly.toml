@@ -9,7 +9,7 @@ primary_region = "iad"
 [build]
   # builder = "paketobuildpacks/builder:full"
   # dockerfile = "Dockerfile"
-  image = "theonlyamos/runit_server:v0.4.5"
+  image = "theonlyamos/runit_server:v0.4.6"
 
 [mounts]
   source = "runit_data"
