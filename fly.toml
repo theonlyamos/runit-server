@@ -9,7 +9,7 @@ primary_region = "hkg"
 [build]
   # builder = "paketobuildpacks/builder:full"
   # dockerfile = "Dockerfile"
-  dockerfile = "theonlyamos/runit_server:latest"
+  image = "theonlyamos/runit_server:latest"
 
 [mounts]
   source = "runit_data"
