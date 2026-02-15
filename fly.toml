@@ -8,7 +8,8 @@ primary_region = "hkg"
 
 [build]
   # builder = "paketobuildpacks/builder:full"
-  dockerfile = "Dockerfile"
+  # dockerfile = "Dockerfile"
+  dockerfile = "theonlyamos/runit_server:latest"
 
 [mounts]
   source = "runit_data"
