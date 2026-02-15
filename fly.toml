@@ -4,7 +4,7 @@
 #
 
 app = "runit"
-primary_region = "sin"
+primary_region = "iad"
 
 [build]
   # builder = "paketobuildpacks/builder:full"
