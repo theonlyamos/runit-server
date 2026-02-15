@@ -20,7 +20,7 @@ setup(
                       'odbms', 'fastapi', 'python-multipart',
                       'python-jose[cryptography]', 'passlib', 'docker',
                       'aiofiles', 'pydantic', 'pydantic[email]',
-                      'jinja2', 'PyGithub', 'itsdangerous'],
+                      'jinja2', 'PyGithub', 'itsdangerous', 'apscheduler'],
     keywords='python3 runit server backend developer serverless architecture docker',
     project_urls={
         'Source': 'https://github.com/theonlyamos/runit-server/',
